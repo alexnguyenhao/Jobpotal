@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "esnext",
+    "jsx": "react-jsx", // Hoặc "react" tùy phiên bản React
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "baseUrl": ".", // Cấu hình của bạn
+    "paths": {      // Cấu hình của bạn
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
