@@ -27,29 +27,23 @@ A web application connecting job seekers and employers, allowing users to regist
    git clone https://github.com/alexnguyenhao/Jobpotal.git
    cd Jobpotal
 2. Install backend dependencies:
-- cd backend
-- npm install
+   - cd backend
+   - npm install
 
 3. Create a .env file in the backend folder using backend/.env.example as a template:
-- DB_URI=your_mongodb_connection_string
-- PORT=3000
-- JWT_SECRET=your_secret_key
+   - DB_URI=your_mongodb_connection_string
+   - PORT=3000
+   - JWT_SECRET=your_secret_key
 4. Start the backend server
-- npm start
-  Usage
-  Open http://localhost:3000 in your browser (or the port specified in .env).
-  Register a new account or log in to explore job listings.
-  Post jobs or apply as a job seeker.
+   - npm start
+   - Usage
+   - Open http://localhost:3000 in your browser (or the port specified in .env).
+   Register a new account or log in to explore job listings.
+   Post jobs or apply as a job seeker.
 
-- Jobpotal/
-├── backend/                 # Backend source code
-│   ├── models/             # Mongoose schemas (e.g., User, Job)
-│   ├── routes/             # API endpoints
-│   ├── controllers/        # Request handlers
-│   ├── .env.example        # Template for environment variables
-│   └── server.js           # Main server file
-├── .gitignore              # Ignored files (e.g., .env, node_modules)
-└── README.md               # Project documentation
+
+- Project Structure
+   ![img.png](img.png)
 
 Contributing
 Fork the repository.
