@@ -20,20 +20,6 @@ const SettingAccount = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Đổi email nếu khác email hiện tại
-      if (emailInput !== user?.email) {
-        const res = await axios.post(
-          `${USER_API_END_POINT}/change-email`,
-          {
-            newEmail: emailInput,
-            password: oldPassword,
-          },
-          { withCredentials: true }
-        );
-        toast.success(res.data.message || "Đổi email thành công");
-        dispatch(setUser({ ...user, email: emailInput }));
-      }
-      // Đổi mật khẩu nếu có nhập mật khẩu mới
       if (newPassword) {
         const res = await axios.post(
           `${USER_API_END_POINT}/change-password`,
@@ -60,15 +46,6 @@ const SettingAccount = () => {
     <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-lg">
       <h2 className="font-bold text-lg mb-4">Cài đặt tài khoản</h2>
       <form onSubmit={handleAccountSetting} className="flex flex-col gap-4">
-        <div>
-          <Label>Email mới</Label>
-          <input
-            type="email"
-            className="w-full border rounded px-3 py-2 mt-1"
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-          />
-        </div>
         <div>
           <Label>Mật khẩu cũ</Label>
           <input

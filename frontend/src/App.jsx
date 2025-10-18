@@ -11,6 +11,9 @@ import Jobs from "@/components/Jobs.jsx";
 import Browse from "@/components/Browse.jsx";
 import Profile from "@/components/Profile.jsx";
 import JobDescription from "@/components/JobDescription.jsx";
+import Verification from "@/components/auth/verification.jsx";
+import ResetPassword from "@/components/auth/resetPassword.jsx";
+import ForgotPassword from "@/components/auth/ForgotPassword.jsx";
 
 // Admin pages
 import Companies from "@/components/admin/Companies.jsx";
@@ -28,10 +31,13 @@ const appRouter = createBrowserRouter([
   { path: "/", element: <Home /> },
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <Signup /> },
+  { path: "/verify-email", element: <Verification /> },
   { path: "/jobs", element: <Jobs /> },
   { path: "/browse", element: <Browse /> },
   { path: "/description/:id", element: <JobDescription /> },
   { path: "/profile", element: <Profile /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
 
   // Admin routes
   { path: "/admin/companies", element: <Companies /> },
