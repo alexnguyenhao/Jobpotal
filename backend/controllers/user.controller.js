@@ -12,17 +12,14 @@ export const register = async (req, res) => {
   try {
     // ✅ ARCJET rate limit
     const decision = await aj.protect(req, {
-      requested: 5, // số token (rate limit)
-      email: req.body.email, // truyền email cho Arcjet kiểm tra
+      requested: 5,
+      email: req.body.email,
     });
-    console.log("Arcjet decision:", decision.isDenied());
     if (decision.isDenied()) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Invalid email", success: false }));
-      return;
+      return res.status(403).json({ message: "Invalid email", success: false });
     }
 
-    // ✅ Lấy dữ liệu từ body
+    // ✅ Lấy dữ liệu
     const {
       fullName,
       email,
@@ -34,33 +31,35 @@ export const register = async (req, res) => {
       role,
     } = req.body;
 
-    // ✅ Kiểm tra dữ liệu thiếu
-    if (
-      !fullName ||
-      !email ||
-      !phoneNumber ||
-      !password ||
-      !role ||
-      !address ||
-      !dateOfBirth ||
-      !gender
-    ) {
+    // ✅ Kiểm tra dữ liệu bắt buộc tùy theo role
+    if (role === "student") {
+      if (
+        !fullName ||
+        !email ||
+        !phoneNumber ||
+        !password ||
+        !address ||
+        !dateOfBirth ||
+        !gender
+      ) {
+        return res.status(400).json({
+          message: "Please fill all required fields for student registration.",
+          success: false,
+        });
+      }
+    } else if (role === "recruiter") {
+      if (!fullName || !email || !password || !role || !gender) {
+        return res.status(400).json({
+          message: "Please fill name, email, password, and role.",
+          success: false,
+        });
+      }
+    } else {
       return res.status(400).json({
-        message: "Something is missing",
+        message: "Invalid role type",
         success: false,
       });
     }
-
-    // ✅ Ảnh đại diện
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({
-        message: "Profile photo is required",
-        success: false,
-      });
-    }
-    const fileUri = getDataURI(file);
-    const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
 
     // ✅ Kiểm tra email trùng
     const existingUser = await User.findOne({ email });
@@ -71,14 +70,22 @@ export const register = async (req, res) => {
       });
     }
 
-    // ✅ Hash mật khẩu
+    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Tạo profile theo role
+    // ✅ Upload ảnh nếu là student (recruiter thì không bắt buộc)
+    let profilePhotoUrl = "";
+    if (req.file && role === "student") {
+      const fileUri = getDataURI(req.file);
+      const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+      profilePhotoUrl = cloudResponse.secure_url;
+    }
+
+    // ✅ Tạo profile phù hợp role
     const profileData =
       role === "student"
         ? {
-            profilePhoto: cloudResponse.secure_url,
+            profilePhoto: profilePhotoUrl || "",
             bio: "",
             skills: [],
             resume: "",
@@ -90,22 +97,27 @@ export const register = async (req, res) => {
             achievements: [],
             projects: [],
           }
-        : { profilePhoto: cloudResponse.secure_url };
+        : {
+            profilePhoto: "",
+            companyName: "",
+            companyWebsite: "",
+            position: "",
+          };
 
-    // ✅ Tạo user mới
+    // ✅ Tạo user
     const newUser = await User.create({
       fullName,
       email,
-      phoneNumber,
+      phoneNumber: phoneNumber || "",
       password: hashedPassword,
-      address,
-      dateOfBirth,
-      gender,
+      address: address || "",
+      dateOfBirth: dateOfBirth || "",
+      gender: gender || "",
       role,
       profile: profileData,
     });
 
-    // ✅ Token xác thực email
+    // ✅ Gửi email xác thực
     const verificationToken = jwt.sign(
       { userId: newUser._id, purpose: "email-verification" },
       process.env.SECRET_KEY,
@@ -117,16 +129,17 @@ export const register = async (req, res) => {
       token: verificationToken,
     });
 
-    // ✅ Gửi email xác thực (non-blocking)
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
     const emailSubject = "Verify Your Email";
-    const emailBody = verifyEmailTemplate({ fullName, verificationLink });
+    const emailBody = verifyEmailTemplate({
+      fullName,
+      verificationLink,
+    });
 
     sendEmail(email, emailSubject, emailBody)
       .then(() => console.log("✅ Verification email sent:", email))
       .catch((err) => console.error("❌ Failed to send email:", err));
 
-    // ✅ Trả về phản hồi nhanh
     return res.status(201).json({
       message: "User registered successfully. Please verify your email.",
       success: true,
@@ -134,12 +147,12 @@ export const register = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Register error:", err);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
+
 export const verifyEmail = async (req, res) => {
   try {
     const token = req.query.token; // ✅ GET param
