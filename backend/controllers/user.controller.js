@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataURI from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
+import { sendEmail } from "../libs/send-email.js";
+import Verification from "../models/verification.js";
+
 export const register = async (req, res) => {
   try {
     const {
@@ -76,7 +79,7 @@ export const register = async (req, res) => {
     }
     // recruiter chỉ cần profilePhoto (và company nếu có, bạn có thể bổ sung sau)
 
-    await User.create({
+    const newUser = await User.create({
       fullName,
       email,
       phoneNumber,
@@ -87,10 +90,39 @@ export const register = async (req, res) => {
       role,
       profile: profileData,
     });
+    // Tạo token xác thực email
+    const verificationToken = jwt.sign(
+      { userId: newUser._id, property: "email-Verification" },
+      process.env.SECRET_KEY,
+      { expiresIn: "1h" }
+    );
 
+    await Verification.create({
+      userId: newUser._id,
+      token: verificationToken,
+      expiresAt: Date.now() + 3600000, // 1 hour
+    });
+    // Gửi email xác thực
+    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const emailSubject = "Email Verification";
+    const emailBody = `
+  <p>Hello <strong>${fullName}</strong>,</p>
+  <p>Please verify your email by clicking the link below:</p>
+  <p><a href="${verificationLink}" target="_blank">Verify Email</a></p>
+  <p>This link will expire in 1 hour.</p>
+  <p>Thank you!</p>
+`;
+    const isEmailSent = await sendEmail(email, emailSubject, emailBody);
+    if (!isEmailSent) {
+      return res.status(500).json({
+        message: "Failed to send verification email",
+        success: false,
+      });
+    }
     return res.status(201).json({
-      message: "Account created successfully",
+      message: "User registered successfully. Please verify your email.",
       success: true,
+      user: newUser,
     });
   } catch (err) {
     console.log(err);
@@ -100,6 +132,7 @@ export const register = async (req, res) => {
     });
   }
 };
+
 export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;

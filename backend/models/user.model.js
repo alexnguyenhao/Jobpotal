@@ -14,9 +14,28 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       match: [/.+\@.+\..+/, "Please fill a valid email address"],
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    is2FAEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFAOtp: {
+      type: String,
+      default: null,
+    },
+    twoFAOtpExpires: {
+      type: Date,
+      default: null,
+    },
     phoneNumber: {
       type: String,
-      required: true,
       trim: true,
     },
     password: {
@@ -25,17 +44,14 @@ const userSchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: true,
       trim: true,
     },
     dateOfBirth: {
       type: Date,
-      required: true,
     },
     gender: {
       type: String,
       enum: ["male", "female", "other"],
-      required: true,
     },
     role: {
       type: String,

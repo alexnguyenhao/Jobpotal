@@ -166,13 +166,15 @@ const NavBar = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-4 bg-white shadow-lg rounded-lg border border-gray-100">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12">
+                    <Avatar className="cursor-pointer w-10 h-10 ring-2 ring-gray-200 hover:ring-[#F83002] transition-all">
                       <AvatarImage
-                        src={user?.profile?.profilePhoto}
-                        alt={user?.fullName}
+                        src={
+                          user?.profile?.profilePhoto || "/default-avatar.png"
+                        }
+                        alt={user?.fullName || "User"}
                       />
                       <AvatarFallback className="bg-gray-100 text-gray-600">
-                        {user?.fullName?.charAt(0) || "AN"}
+                        {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
