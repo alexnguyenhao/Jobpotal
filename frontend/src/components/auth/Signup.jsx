@@ -6,7 +6,7 @@ import { RadioGroup } from "@/components/ui/radio-group.js"; // Giữ RadioGroup
 import { Button } from "@/components/ui/button.js";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import {COMPANY_API_END_POINT, USER_API_END_POINT} from "@/utils/constant.js";
+import { COMPANY_API_END_POINT, USER_API_END_POINT } from "@/utils/constant.js";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +18,10 @@ const Signup = () => {
     email: "",
     phoneNumber: "",
     password: "",
+    address: "",
+    dateOfBirth: "",
+    // Mặc định là ngày
+    gender: "",
     role: "",
     file: "",
   });
@@ -39,22 +43,21 @@ const Signup = () => {
     formData.append("email", input.email);
     formData.append("phoneNumber", input.phoneNumber);
     formData.append("password", input.password);
+    formData.append("address", input.address);
+    formData.append("dateOfBirth", input.dateOfBirth); // Thay đổi nếu cần
+    formData.append("gender", input.gender);
     formData.append("role", input.role);
     if (input.file) {
       formData.append("file", input.file);
     }
     try {
       dispatch(setLoading(true));
-      const res = await axios.post(
-        `${USER_API_END_POINT}/register`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
+      const res = await axios.post(`${USER_API_END_POINT}/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
       if (res.data.success) {
         navigate("/login");
         toast.success(res.data.message);
@@ -68,155 +71,170 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 flex flex-col pt-[100px]">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 flex flex-col">
       {/* Navigation Bar */}
       <NavBar />
 
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-6 sm:p-8 transform transition-all hover:shadow-xl">
+        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-8 space-y-8">
           {/* Form Header */}
-          <h1 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
-            Join Us Today
-          </h1>
-          <p className="text-center text-gray-500 mb-8">
-            Create an account to get started
-          </p>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Join Us Today
+            </h1>
+            <p className="text-gray-500">Create an account to get started</p>
+          </div>
 
           {/* Signup Form */}
-          <form onSubmit={submitHandler} className="space-y-5">
-            {/* Full Name */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700">
-                Full Name
-              </Label>
-              <Input
-                type="text"
-                placeholder="John Doe"
-                value={input.fullName}
-                onChange={changeEventHandler}
-                name="fullName"
-                className="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-              />
+          <form onSubmit={submitHandler} className="space-y-8">
+            {/* Group: User Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label>Full Name</Label>
+                <Input
+                  type="text"
+                  name="fullName"
+                  placeholder="John Doe"
+                  value={input.fullName}
+                  onChange={changeEventHandler}
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  value={input.email}
+                  onChange={changeEventHandler}
+                />
+              </div>
+              <div>
+                <Label>Phone Number</Label>
+                <Input
+                  type="tel"
+                  name="phoneNumber"
+                  placeholder="+84 123456789"
+                  value={input.phoneNumber}
+                  onChange={changeEventHandler}
+                />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  value={input.password}
+                  onChange={changeEventHandler}
+                />
+              </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Email</Label>
-              <Input
-                type="email"
-                value={input.email}
-                onChange={changeEventHandler}
-                name="email"
-                placeholder="you@example.com"
-                className="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-              />
+            {/* Group: Personal Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label>Address</Label>
+                <Input
+                  type="text"
+                  name="address"
+                  placeholder="123 Main St, City"
+                  value={input.address}
+                  onChange={changeEventHandler}
+                />
+              </div>
+              <div>
+                <Label>Date of Birth</Label>
+                <Input
+                  type="date"
+                  name="dateOfBirth"
+                  value={input.dateOfBirth}
+                  onChange={changeEventHandler}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Gender</Label>
+                <RadioGroup
+                  value={input.gender}
+                  onValueChange={(value) =>
+                    setInput({ ...input, gender: value })
+                  }
+                  className="mt-2 flex gap-6 flex-wrap"
+                >
+                  {["male", "female", "other"].map((g) => (
+                    <div key={g} className="flex items-center space-x-2">
+                      <Input
+                        type="radio"
+                        id={g}
+                        name="gender"
+                        value={g}
+                        checked={input.gender === g}
+                        onChange={changeEventHandler}
+                      />
+                      <Label htmlFor={g} className="capitalize">
+                        {g}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
             </div>
 
-            {/* Phone Number */}
+            {/* Group: Role */}
             <div>
-              <Label className="text-sm font-medium text-gray-700">
-                Phone Number
-              </Label>
-              <Input
-                type="tel"
-                placeholder="+1 (123) 456-7890"
-                value={input.phoneNumber}
-                onChange={changeEventHandler}
-                name="phoneNumber"
-                className="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={input.password}
-                onChange={changeEventHandler}
-                name="password"
-                className="mt-1 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-              />
-            </div>
-
-            {/* Role Selection */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700">
-                I am a...
-              </Label>
+              <Label>I am a...</Label>
               <RadioGroup
                 value={input.role}
                 onValueChange={(value) => setInput({ ...input, role: value })}
-                className="mt-2 flex flex-col sm:flex-row gap-4"
+                className="mt-2 flex gap-6 flex-wrap"
               >
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="radio"
-                    id="student"
-                    name="role"
-                    value="student"
-                    checked={input.role === "student"}
-                    onChange={changeEventHandler}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <Label
-                    htmlFor="student"
-                    className="text-gray-600 cursor-pointer"
-                  >
-                    Student
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="radio"
-                    id="recruiter"
-                    name="role"
-                    value="recruiter"
-                    checked={input.role === "recruiter"}
-                    onChange={changeEventHandler}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <Label
-                    htmlFor="recruiter"
-                    className="text-gray-600 cursor-pointer"
-                  >
-                    Recruiter
-                  </Label>
-                </div>
+                {["student", "recruiter"].map((r) => (
+                  <div key={r} className="flex items-center space-x-2">
+                    <Input
+                      type="radio"
+                      id={r}
+                      name="role"
+                      value={r}
+                      checked={input.role === r}
+                      onChange={changeEventHandler}
+                    />
+                    <Label htmlFor={r} className="capitalize">
+                      {r}
+                    </Label>
+                  </div>
+                ))}
               </RadioGroup>
             </div>
 
-            {/* Profile Picture */}
+            {/* Group: Upload */}
             <div>
-              <Label className="text-sm font-medium text-gray-700">
-                Profile Picture
-              </Label>
+              <Label>Profile Picture</Label>
               <Input
-                accept="image/*"
                 type="file"
+                accept="image/*"
                 onChange={changeFileHandler}
-                className="mt-1 w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                className="file-input mt-1 w-full"
               />
             </div>
 
-            {loading ? (
-              <Button className="w-full my-4">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Please wait
+            {/* Submit Button */}
+            <div>
+              <Button type="submit" className="w-full">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
+                    wait
+                  </>
+                ) : (
+                  "Sign Up"
+                )}
               </Button>
-            ) : (
-              <Button type="submit" className="w-full my-4">
-                Sign Up
-              </Button>
-            )}
+            </div>
           </form>
 
-          {/* Footer Link */}
-          <span className="mt-6 text-center text-sm text-gray-500 block">
+          {/* Footer */}
+          <div className="text-center text-sm text-gray-500">
             Already have an account?{" "}
             <Link
               to="/login"
@@ -224,7 +242,7 @@ const Signup = () => {
             >
               Log in
             </Link>
-          </span>
+          </div>
         </div>
       </main>
     </div>
