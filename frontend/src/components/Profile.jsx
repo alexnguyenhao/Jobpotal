@@ -124,16 +124,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <NavBar />
       <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col lg:flex-row gap-8">
-        <aside
-          className="
-    hidden lg:flex lg:flex-col
-    w-64 bg-white rounded-2xl shadow-md border border-gray-100
-    p-4 gap-2
-    sticky top-24
-    h-[calc(100vh-7rem)]
-    overflow-y-auto
-  "
-        >
+        <aside className="w-full lg:w-64 space-y-4 flex-shrink-0">
           {sidebarItems.map((item) => (
             <button
               key={item.id}

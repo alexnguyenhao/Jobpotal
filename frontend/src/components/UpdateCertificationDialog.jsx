@@ -53,7 +53,7 @@ export default function UpdateCertificationDialog({
         { certifications },
         { withCredentials: true }
       );
-
+      //check empty field
       if (res.data.success) {
         // Cập nhật redux nếu cần
         onUpdate && onUpdate(res.data.user.profile.certifications);
