@@ -155,10 +155,7 @@ const NavBar = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <Avatar className="cursor-pointer w-10 h-10 ring-2 ring-gray-200 hover:ring-[#F83002] transition-all">
-                  <AvatarImage
-                    src={user?.profile?.profilePhoto}
-                    alt={user?.fullName}
-                  />
+                  <AvatarImage src={user.profilePhoto} alt={user?.fullName} />
                   <AvatarFallback className="bg-gray-100 text-gray-600">
                     {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
@@ -168,7 +165,7 @@ const NavBar = () => {
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10 ring-2 ring-gray-200">
                     <AvatarImage
-                      src={user?.profile?.profilePhoto}
+                      src={user?.profilePhoto}
                       alt={user?.fullName}
                     />
                     <AvatarFallback className="bg-gray-100 text-gray-600">
@@ -247,7 +244,7 @@ const NavBar = () => {
                 <div className="flex items-center gap-3 border-b pb-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage
-                      src={user?.profile?.profilePhoto}
+                      src={user?.profilePhoto}
                       alt={user?.fullName}
                     />
                     <AvatarFallback>

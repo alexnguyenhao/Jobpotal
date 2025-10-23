@@ -26,9 +26,10 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     email: user?.email || "",
     phoneNumber: user?.phoneNumber || "",
     address: user?.address || "",
-    bio: user?.profile?.bio || "",
+    bio: user?.bio || "",
     skills: user?.profile?.skills?.join(", ") || "",
     file: user?.profile?.resume || null,
+    careerObjective: user?.profile?.careerObjective || "",
   });
 
   const dispatch = useDispatch();
@@ -144,7 +145,19 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                 onChange={changeEventHandler}
               />
             </div>
-
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="careerObjective">Career Objective</Label>
+              <Input
+                id="careerObjective"
+                name="careerObjective"
+                placeholder="Your career objective"
+                value={input.careerObjective}
+                onChange={changeEventHandler}
+              />
+              <p className="text-xs text-gray-500">
+                A brief statement about your professional goals
+              </p>
+            </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="skills">Skills</Label>
               <Input

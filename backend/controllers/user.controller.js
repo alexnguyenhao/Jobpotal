@@ -1,4 +1,6 @@
+// controllers/user.controller.js
 import { User } from "../models/user.model.js";
+import { Profile } from "../models/profile.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataURI from "../utils/datauri.js";
@@ -8,9 +10,12 @@ import Verification from "../models/verification.js";
 import { verifyEmailTemplate } from "../templates/verifyEmailTemplate.js";
 import { aj } from "../libs/arcjet.js";
 
+/* ==============================
+   🧩 REGISTER USER
+============================== */
 export const register = async (req, res) => {
   try {
-    // ✅ ARCJET rate limit
+    // ✅ ARCJET check
     const decision = await aj.protect(req, {
       requested: 5,
       email: req.body.email,
@@ -19,7 +24,6 @@ export const register = async (req, res) => {
       return res.status(403).json({ message: "Invalid email", success: false });
     }
 
-    // ✅ Lấy dữ liệu
     const {
       fullName,
       email,
@@ -31,7 +35,7 @@ export const register = async (req, res) => {
       role,
     } = req.body;
 
-    // ✅ Kiểm tra dữ liệu bắt buộc tùy theo role
+    // ✅ Validate input by role
     if (role === "student") {
       if (
         !fullName ||
@@ -55,25 +59,23 @@ export const register = async (req, res) => {
         });
       }
     } else {
-      return res.status(400).json({
-        message: "Invalid role type",
-        success: false,
-      });
+      return res
+        .status(400)
+        .json({ message: "Invalid role type", success: false });
     }
 
-    // ✅ Kiểm tra email trùng
+    // ✅ Check duplicate email
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({
         message: "User already exists with this email",
         success: false,
       });
-    }
 
     // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Upload ảnh nếu là student (recruiter thì không bắt buộc)
+    // ✅ Upload avatar if provided
     let profilePhotoUrl = "";
     if (req.file && role === "student") {
       const fileUri = getDataURI(req.file);
@@ -81,30 +83,7 @@ export const register = async (req, res) => {
       profilePhotoUrl = cloudResponse.secure_url;
     }
 
-    // ✅ Tạo profile phù hợp role
-    const profileData =
-      role === "student"
-        ? {
-            profilePhoto: profilePhotoUrl || "",
-            bio: "",
-            skills: [],
-            resume: "",
-            careerObjective: "",
-            workExperience: [],
-            education: [],
-            certifications: [],
-            languages: [],
-            achievements: [],
-            projects: [],
-          }
-        : {
-            profilePhoto: "",
-            companyName: "",
-            companyWebsite: "",
-            position: "",
-          };
-
-    // ✅ Tạo user
+    // ✅ Create User
     const newUser = await User.create({
       fullName,
       email,
@@ -114,10 +93,29 @@ export const register = async (req, res) => {
       dateOfBirth: dateOfBirth || "",
       gender: gender || "",
       role,
-      profile: profileData,
+      profilePhoto: profilePhotoUrl || "",
     });
 
-    // ✅ Gửi email xác thực
+    // ✅ Create Profile linked to user
+    const profileData = {
+      user: newUser._id,
+      skills: [],
+      resume: "",
+      resumeOriginalName: "",
+      careerObjective: "",
+      workExperience: [],
+      education: [],
+      certifications: [],
+      languages: [],
+      projects: [],
+      achievements: [],
+    };
+
+    const newProfile = await Profile.create(profileData);
+    newUser.profile = newProfile._id;
+    await newUser.save();
+
+    // ✅ Send verification email
     const verificationToken = jwt.sign(
       { userId: newUser._id, purpose: "email-verification" },
       process.env.SECRET_KEY,
@@ -131,19 +129,17 @@ export const register = async (req, res) => {
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
     const emailSubject = "Verify Your Email";
-    const emailBody = verifyEmailTemplate({
-      fullName,
-      verificationLink,
-    });
+    const emailBody = verifyEmailTemplate({ fullName, verificationLink });
 
-    sendEmail(email, emailSubject, emailBody)
-      .then(() => console.log("✅ Verification email sent:", email))
-      .catch((err) => console.error("❌ Failed to send email:", err));
+    await sendEmail(email, emailSubject, emailBody);
 
+    const userWithProfile = await User.findById(newUser._id)
+      .populate("profile")
+      .select("-password");
     return res.status(201).json({
       message: "User registered successfully. Please verify your email.",
       success: true,
-      user: newUser,
+      user: userWithProfile,
     });
   } catch (err) {
     console.error("❌ Register error:", err);
@@ -153,134 +149,96 @@ export const register = async (req, res) => {
   }
 };
 
+/* ==============================
+   🧩 VERIFY EMAIL
+============================== */
 export const verifyEmail = async (req, res) => {
   try {
-    const token = req.query.token; // ✅ GET param
+    const token = req.query.token;
+    if (!token)
+      return res
+        .status(400)
+        .json({ message: "Verification token is missing", success: false });
 
-    if (!token) {
-      return res.status(400).json({
-        message: "Verification token is missing",
-        success: false,
-      });
-    }
-
-    // Tìm record trong DB
     const verificationRecord = await Verification.findOne({ token });
-    if (!verificationRecord) {
+    if (!verificationRecord)
       return res.status(400).json({
         message: "Invalid or expired verification token",
         success: false,
       });
-    }
 
-    // ✅ Xác minh token
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.SECRET_KEY);
-    } catch (err) {
-      console.error("JWT verify failed:", err);
+    } catch {
       return res.status(400).json({
         message: "Invalid or expired verification link",
         success: false,
       });
     }
 
-    // ✅ Tìm user
     const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
-    }
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
 
-    // ✅ Đánh dấu đã xác thực email
     user.isEmailVerified = true;
     await user.save();
     await Verification.deleteOne({ _id: verificationRecord._id });
 
-    return res.status(200).json({
-      message: "Email verified successfully",
-      success: true,
-    });
+    return res
+      .status(200)
+      .json({ message: "Email verified successfully", success: true });
   } catch (err) {
     console.error("❌ Email verification error:", err);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
+/* ==============================
+   🧩 LOGIN
+============================== */
 export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
-
-    // 🧩 1️⃣ Kiểm tra dữ liệu đầu vào
-    if (!email || !password || !role) {
+    if (!email || !password || !role)
       return res.status(400).json({
         message: "Please fill in all required fields",
         success: false,
       });
-    }
 
-    // 🧩 2️⃣ Kiểm tra user có tồn tại không
-    let user = await User.findOne({ email });
-    if (!user) {
+    const user = await User.findOne({ email }).populate("profile");
+    if (!user)
       return res.status(400).json({
         message: "Incorrect email or account does not exist",
         success: false,
       });
-    }
 
-    // 🧩 3️⃣ Kiểm tra password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(400).json({
-        message: "Incorrect password",
-        success: false,
-      });
-    }
+    if (!isPasswordMatch)
+      return res
+        .status(400)
+        .json({ message: "Incorrect password", success: false });
 
-    // 🧩 4️⃣ Kiểm tra role
-    if (role !== user.role) {
+    if (role !== user.role)
       return res.status(400).json({
         message: "Account does not exist with current role",
         success: false,
       });
-    }
 
-    // 🧩 5️⃣ Kiểm tra xác thực email
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified)
       return res.status(403).json({
         message: "Please verify your email before logging in",
         success: false,
       });
-    }
 
-    // 🧩 6️⃣ Tạo token
-    const tokenData = {
-      userId: user._id,
-    };
-
-    const token = jwt.sign(tokenData, process.env.SECRET_KEY, {
+    const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
       expiresIn: "1d",
     });
 
-    // 🧩 7️⃣ Chuẩn bị dữ liệu trả về (ẩn password)
-    const sanitizedUser = {
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      address: user.address,
-      dateOfBirth: user.dateOfBirth,
-      gender: user.gender,
-      role: user.role,
-      profile: user.profile,
-    };
-
-    // 🧩 8️⃣ Gửi cookie + phản hồi thành công
     return res
       .status(200)
       .cookie("token", token, {
@@ -290,27 +248,31 @@ export const login = async (req, res) => {
       })
       .json({
         message: `Welcome back, ${user.fullName}!`,
-        user: sanitizedUser,
+        user,
         success: true,
       });
   } catch (err) {
     console.error("❌ Login error:", err);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
+
+/* ==============================
+   🧩 GET PROFILE (with populate)
+============================== */
 export const getMyProfile = async (req, res) => {
   try {
     const userId = req.id;
-    const user = await User.findById(userId).select("-password");
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
-    }
+    const user = await User.findById(userId)
+      .select("-password")
+      .populate("profile");
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
     return res.status(200).json({
       message: "User profile fetched successfully",
       user,
@@ -318,13 +280,15 @@ export const getMyProfile = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
+/* ==============================
+   🧩 UPDATE PROFILE
+============================== */
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.id;
@@ -348,103 +312,135 @@ export const updateProfile = async (req, res) => {
     } = req.body;
 
     const file = req.file;
-    let user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
-    }
+    const user = await User.findById(userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
 
-    // Nếu có file thì update CV
+    const profile = await Profile.findOne({ user: userId });
+    if (!profile)
+      return res
+        .status(404)
+        .json({ message: "Profile not found", success: false });
+
+    // ✅ Upload resume if provided
     if (file) {
       const fileUri = getDataURI(file);
       const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
         access_mode: "public",
       });
-
-      user.profile.resume = cloudResponse.secure_url;
-      user.profile.resumeOriginalName = file.originalname;
+      profile.resume = cloudResponse.secure_url;
+      profile.resumeOriginalName = file.originalname;
     }
 
-    // Cập nhật thông tin cơ bản
+    // ✅ Update User basic info
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (phoneNumber) user.phoneNumber = phoneNumber;
     if (address) user.address = address;
     if (dateOfBirth) user.dateOfBirth = dateOfBirth;
     if (gender) user.gender = gender;
-    if (projects !== undefined) {
-      user.profile.projects = Array.isArray(projects)
-        ? projects
-        : JSON.parse(projects); // nếu gửi JSON string từ client
-    }
-
-    // Cập nhật profile
-    if (bio !== undefined) user.profile.bio = bio;
-    if (skills !== undefined) {
-      user.profile.skills = Array.isArray(skills)
+    if (bio !== undefined) user.bio = bio;
+    if (skills !== undefined)
+      profile.skills = Array.isArray(skills)
         ? skills
         : skills.split(",").map((s) => s.trim());
-    }
+
+    // ✅ Update Profile fields
     if (careerObjective !== undefined)
-      user.profile.careerObjective = careerObjective;
-    if (workExperience !== undefined) {
-      user.profile.workExperience = Array.isArray(workExperience)
+      profile.careerObjective = careerObjective;
+    if (workExperience !== undefined)
+      profile.workExperience = Array.isArray(workExperience)
         ? workExperience
-        : JSON.parse(workExperience); // nếu gửi JSON string từ client
-    }
-    if (education !== undefined) {
-      user.profile.education = Array.isArray(education)
+        : JSON.parse(workExperience);
+    if (education !== undefined)
+      profile.education = Array.isArray(education)
         ? education
         : JSON.parse(education);
-    }
-    if (certifications !== undefined) {
-      user.profile.certifications = Array.isArray(certifications)
+    if (certifications !== undefined)
+      profile.certifications = Array.isArray(certifications)
         ? certifications
         : JSON.parse(certifications);
-    }
-    if (languages !== undefined) {
-      user.profile.languages = Array.isArray(languages)
+    if (languages !== undefined)
+      profile.languages = Array.isArray(languages)
         ? languages
         : JSON.parse(languages);
-    }
-    if (achievements !== undefined) {
-      user.profile.achievements = Array.isArray(achievements)
+    if (achievements !== undefined)
+      profile.achievements = Array.isArray(achievements)
         ? achievements
         : achievements.split(",").map((a) => a.trim());
-    }
+    if (projects !== undefined)
+      profile.projects = Array.isArray(projects)
+        ? projects
+        : JSON.parse(projects);
 
-    // recruiter có thể cập nhật công ty
-    if (company !== undefined && user.role === "recruiter") {
-      user.profile.company = company;
-    }
+    if (company !== undefined && user.role === "recruiter")
+      user.company = company;
 
     await user.save();
+    await profile.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate("profile")
+      .select("-password");
 
     return res.status(200).json({
       message: "Profile updated successfully",
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        dateOfBirth: user.dateOfBirth,
-        gender: user.gender,
-        role: user.role,
-        profile: user.profile,
-      },
+      user: updatedUser,
       success: true,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
+
+/* ==============================
+   🧩 UPDATE AVATAR
+============================== */
+export const updateAvatar = async (req, res) => {
+  try {
+    const userId = req.id;
+    const file = req.file;
+    if (!file)
+      return res
+        .status(400)
+        .json({ message: "No file uploaded", success: false });
+
+    const fileUri = getDataURI(file);
+    const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
+      access_mode: "public",
+    });
+
+    const user = await User.findById(userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
+    user.profilePhoto = cloudResponse.secure_url;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Avatar updated successfully",
+      profilePhoto: user.profilePhoto,
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+};
+
+/* ==============================
+   🧩 CHANGE PASSWORD, FORGOT/RESET, LOGOUT
+============================== */
+// Các hàm này bạn có thể giữ nguyên 100%, không cần chỉnh vì không ảnh hưởng Profile.
 
 //change password
 export const changePassword = async (req, res) => {
@@ -665,44 +661,7 @@ export const resetPassword = async (req, res) => {
 };
 
 //update avatar
-export const updateAvatar = async (req, res) => {
-  try {
-    const userId = req.id;
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({
-        message: "No file uploaded",
-        success: false,
-      });
-    }
-    const fileUri = getDataURI(file);
-    const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-      access_mode: "public",
-    });
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
-    }
-    user.profile.profilePhoto = cloudResponse.secure_url;
-    await user.save();
-
-    return res.status(200).json({
-      message: "Avatar updated successfully",
-      profilePhoto: user.profile.profilePhoto,
-      success: true,
-    });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({
-      message: "Internal server error",
-      success: false,
-    });
-  }
-};
 export const logout = async (req, res) => {
   try {
     res.status(200).cookie("token", "", { maxAge: 0 }).json({

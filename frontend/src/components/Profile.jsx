@@ -11,6 +11,13 @@ import {
   Settings,
   Upload,
   Save,
+  GraduationCap,
+  Award,
+  Languages,
+  FolderGit2,
+  Target,
+  Star,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge.js";
 import AppliedJobTable from "@/components/AppliedJobTable.jsx";
@@ -36,7 +43,6 @@ const Profile = () => {
   const fileInputRef = useRef();
 
   const [tab, setTab] = useState("personal");
-
   const [openProfile, setOpenProfile] = useState(false);
   const [openWorkExp, setOpenWorkExp] = useState(false);
   const [openEducation, setOpenEducation] = useState(false);
@@ -45,6 +51,7 @@ const Profile = () => {
   const [openAchievements, setOpenAchievements] = useState(false);
   const [openProjects, setOpenProjects] = useState(false);
 
+  // Upload avatar
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -60,12 +67,7 @@ const Profile = () => {
         }
       );
       toast.success("Profile picture updated successfully!");
-      dispatch(
-        setUser({
-          ...user,
-          profile: { ...user.profile, profilePhoto: res.data.profilePhoto },
-        })
-      );
+      dispatch(setUser({ ...user, profilePhoto: res.data.profilePhoto }));
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to update picture");
     }
@@ -74,252 +76,287 @@ const Profile = () => {
   const handleClickAvatar = () =>
     fileInputRef.current && fileInputRef.current.click();
 
+  // Sidebar menu (with My Jobs submenu)
+  const [openJobsMenu, setOpenJobsMenu] = useState(false);
   const sidebarItems = [
     { id: "personal", icon: User, label: "Profile Overview" },
-    { id: "applied", icon: Briefcase, label: "Applied Jobs" },
+    {
+      id: "jobs",
+      icon: Briefcase,
+      label: "My Jobs",
+      subItems: [
+        { id: "applied", icon: Briefcase, label: "Applied Jobs" },
+        { id: "saved", icon: Save, label: "Saved Jobs" },
+      ],
+    },
     { id: "settings", icon: Settings, label: "Settings" },
-    { id: "saved", icon: Save, label: "Saved Jobs" },
   ];
 
   const profileSections = [
     {
       title: "Work Experience",
+      icon: Briefcase,
       data: user?.profile?.workExperience,
       openSetter: setOpenWorkExp,
-      keyName: "workExperience",
     },
     {
       title: "Education",
+      icon: GraduationCap,
       data: user?.profile?.education,
       openSetter: setOpenEducation,
-      keyName: "education",
     },
     {
       title: "Certifications",
+      icon: Award,
       data: user?.profile?.certifications,
       openSetter: setOpenCertifications,
-      keyName: "certifications",
     },
     {
       title: "Languages",
+      icon: Languages,
       data: user?.profile?.languages,
       openSetter: setOpenLanguages,
-      keyName: "languages",
     },
     {
       title: "Achievements",
+      icon: Star,
       data: user?.profile?.achievements,
       openSetter: setOpenAchievements,
-      keyName: "achievements",
     },
     {
       title: "Projects",
+      icon: FolderGit2,
       data: user?.profile?.projects,
       openSetter: setOpenProjects,
-      keyName: "projects",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
       <NavBar />
-      <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col lg:flex-row gap-8">
-        <aside className="w-full lg:w-64 space-y-4 flex-shrink-0">
+
+      {/* MAIN WRAPPER */}
+      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-10">
+        {/* Sidebar */}
+        <aside className="w-full lg:w-72 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-2">
           {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl w-full font-medium transition-all duration-200 ${
-                tab === item.id
-                  ? "bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/30"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => setTab(item.id)}
-            >
-              {/* Hiệu ứng thanh tím bên trái khi active */}
-              {tab === item.id && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-[#6A38C2]" />
+            <div key={item.id}>
+              {/* Main item */}
+              <button
+                onClick={() =>
+                  item.subItems
+                    ? setOpenJobsMenu(!openJobsMenu)
+                    : setTab(item.id)
+                }
+                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl font-semibold transition-all ${
+                  tab === item.id ||
+                  (item.id === "jobs" && ["applied", "saved"].includes(tab))
+                    ? "bg-[#6A38C2]/10 text-[#6A38C2]"
+                    : "hover:bg-gray-50 text-gray-700"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon size={18} />
+                  {item.label}
+                </div>
+                {item.subItems && (
+                  <ChevronRight
+                    size={18}
+                    className={`transition-transform ${
+                      openJobsMenu
+                        ? "rotate-90 text-[#6A38C2]"
+                        : "text-gray-400"
+                    }`}
+                  />
+                )}
+              </button>
+
+              {/* Submenu */}
+              {item.subItems && openJobsMenu && (
+                <div className="ml-8 mt-2 border-l border-gray-200 pl-3 space-y-1">
+                  {item.subItems.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setTab(sub.id)}
+                      className={`flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                        tab === sub.id
+                          ? "bg-[#6A38C2]/10 text-[#6A38C2]"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      <sub.icon size={16} />
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
               )}
-              <item.icon size={20} />
-              {item.label}
-            </button>
+            </div>
           ))}
         </aside>
 
         {/* Main content */}
         <main className="flex-1 space-y-8">
           {tab === "personal" && (
-            <div className="space-y-8">
-              {/* Header */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 flex flex-col md:flex-row items-center gap-8">
-                <div className="relative">
-                  <Avatar
-                    className="h-32 w-32 border-4 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
-                    onClick={handleClickAvatar}
-                  >
-                    <AvatarImage
-                      src={user?.profile?.profilePhoto}
-                      alt="Profile"
+            <>
+              {/* Profile Header */}
+              <GlassCard>
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  {/* Avatar */}
+                  <div className="relative group">
+                    <Avatar className="h-36 w-36 border-4 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform">
+                      <AvatarImage
+                        src={user?.profilePhoto}
+                        alt={user?.fullName}
+                      />
+                    </Avatar>
+                    <button
+                      onClick={handleClickAvatar}
+                      className="absolute bottom-2 right-2 bg-[#6A38C2] text-white p-2 rounded-full shadow-md hover:scale-110 transition-all"
+                    >
+                      <Upload size={16} />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      onChange={handleAvatarChange}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
                     />
-                  </Avatar>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleAvatarChange}
-                  />
-                  <button className="absolute bottom-2 right-2 bg-[#6A38C2] text-white p-2 rounded-full shadow hover:bg-[#592ba3] transition">
-                    <Upload size={16} />
-                  </button>
-                </div>
-
-                <div className="flex-1 text-center md:text-left space-y-3">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {user?.fullName}
-                  </h1>
-                  <p className="text-gray-600 text-sm">
-                    {user?.profile?.bio || "No bio yet"}
-                  </p>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-700">
-                    <span className="flex items-center gap-1">
-                      <Mail className="text-[#6A38C2]" size={16} />{" "}
-                      {user?.email}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Contact className="text-[#6A38C2]" size={16} />{" "}
-                      {user?.phoneNumber || "—"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="text-[#6A38C2]" size={16} />{" "}
-                      {user?.address || "—"}
-                    </span>
                   </div>
-                  <Button
-                    onClick={() => setOpenProfile(true)}
-                    className="bg-[#6A38C2] hover:bg-[#592ba3] text-white mt-2"
-                  >
-                    Update Profile
-                  </Button>
-                </div>
-              </div>
 
-              {/* Skills & Resume */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card title="Skills">
-                  <div className="flex flex-wrap gap-2">
-                    {user?.profile?.skills?.length ? (
-                      user.profile.skills.map((skill, idx) => (
+                  {/* Info */}
+                  <div className="flex-1 text-center md:text-left">
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {user?.fullName}
+                    </h1>
+                    <p className="text-gray-600 mt-1">
+                      {user?.bio || "No bio yet"}
+                    </p>
+                    <p className="text-gray-500 italic mt-1">
+                      {user?.profile?.careerObjective ||
+                        "No career objective yet"}
+                    </p>
+
+                    <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm text-gray-700">
+                      <InfoIcon icon={Mail} text={user?.email} />
+                      <InfoIcon
+                        icon={Contact}
+                        text={user?.phoneNumber || "—"}
+                      />
+                      <InfoIcon icon={MapPin} text={user?.address || "—"} />
+                      <InfoIcon
+                        icon={Target}
+                        text={user?.role?.toUpperCase()}
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => setOpenProfile(true)}
+                      className="mt-5 bg-[#6A38C2] hover:bg-[#592ba3] text-white rounded-lg px-6 py-2 shadow-md transition-all"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                </div>
+              </GlassCard>
+
+              {/* Skills + Resume */}
+              <div className="grid md:grid-cols-2 gap-8">
+                <GlassCard title="Skills" icon={Star}>
+                  {user?.profile?.skills?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {user.profile.skills.map((skill, i) => (
                         <Badge
-                          key={idx}
-                          className="bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/30"
+                          key={i}
+                          className="bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/20"
                         >
                           {skill}
                         </Badge>
-                      ))
-                    ) : (
-                      <p className="text-gray-500">No skills added</p>
-                    )}
-                  </div>
-                </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic">No skills added yet</p>
+                  )}
+                </GlassCard>
 
-                <Card title="Resume">
+                <GlassCard title="Resume" icon={Save}>
                   {user?.profile?.resume ? (
                     <a
                       href={user.profile.resume}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#6A38C2] hover:underline font-medium"
+                      className="flex items-center gap-2 text-[#6A38C2] font-medium hover:underline"
                     >
-                      {user.profile.resumeOriginalName}
+                      <Save size={18} /> {user.profile.resumeOriginalName}
                     </a>
                   ) : (
-                    <p className="text-gray-500">No resume uploaded</p>
+                    <p className="text-gray-500 italic">No resume uploaded</p>
                   )}
-                </Card>
+                </GlassCard>
               </div>
 
               {/* Dynamic Sections */}
-              {profileSections.map((section) => (
-                <Card key={section.title} title={section.title}>
+              {profileSections.map((section, idx) => (
+                <GlassCard key={idx} title={section.title} icon={section.icon}>
                   <div className="flex justify-between items-center mb-4">
                     <Button
                       onClick={() => section.openSetter(true)}
                       size="sm"
-                      className="bg-[#6A38C2] hover:bg-[#592ba3]"
+                      className="bg-[#6A38C2] hover:bg-[#592ba3] text-white"
                     >
                       + Add / Update
                     </Button>
                   </div>
                   {section.data?.length ? (
                     <div className="space-y-4">
-                      {section.data.map((item, idx) => (
+                      {section.data.map((item, i) => (
                         <div
-                          key={idx}
-                          className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition"
+                          key={i}
+                          className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all"
                         >
-                          {section.keyName === "workExperience" && (
-                            <>
-                              <p className="font-semibold text-gray-800">
-                                {item.position} - {item.company}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {item.startDate?.split("T")[0]} →{" "}
-                                {item.endDate?.split("T")[0] || "Present"}
-                              </p>
-                              <p className="mt-1 text-gray-700">
-                                {item.description}
-                              </p>
-                            </>
+                          <p className="font-semibold text-gray-800">
+                            {item.name || item.position || "—"}
+                          </p>
+                          {item.company && (
+                            <p className="text-sm text-gray-600">
+                              {item.company}
+                            </p>
                           )}
-                          {section.keyName === "education" && (
-                            <>
-                              <p className="font-semibold text-gray-800">
-                                {item.degree} - {item.major}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {item.school} ({item.startYear} →{" "}
-                                {item.endYear || "Present"})
-                              </p>
-                            </>
-                          )}
-                          {section.keyName === "certifications" && (
-                            <>
-                              <p className="font-semibold text-gray-800">
-                                {item.name}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {item.organization} ({item.dateIssued})
-                              </p>
-                            </>
-                          )}
-                          {section.keyName === "languages" && (
-                            <Badge>
-                              {item.language} ({item.proficiency})
-                            </Badge>
-                          )}
-                          {section.keyName === "achievements" && (
-                            <li>{item}</li>
+                          {item.description && (
+                            <p className="text-gray-700 mt-1">
+                              {item.description}
+                            </p>
                           )}
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-gray-500 italic">
-                      No {section.title.toLowerCase()} added yet
+                      No {section.title.toLowerCase()} yet
                     </p>
                   )}
-                </Card>
+                </GlassCard>
               ))}
-            </div>
+            </>
           )}
 
           {tab === "applied" && (
-            <Card title="Applied Jobs">
+            <GlassCard title="Applied Jobs" icon={Briefcase}>
               <AppliedJobTable />
-            </Card>
+            </GlassCard>
           )}
 
-          {tab === "settings" && <SettingAccount />}
+          {tab === "saved" && (
+            <GlassCard title="Saved Jobs" icon={Save}>
+              <p className="text-gray-500 italic">No saved jobs yet</p>
+            </GlassCard>
+          )}
+
+          {tab === "settings" && (
+            <GlassCard title="Account Settings" icon={Settings}>
+              <SettingAccount />
+            </GlassCard>
+          )}
         </main>
       </div>
 
@@ -359,16 +396,22 @@ const Profile = () => {
   );
 };
 
-// 🧩 Card wrapper component
-const Card = ({ title, children }) => (
-  <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+// Reusable UI Components
+const GlassCard = ({ title, icon: Icon, children }) => (
+  <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-all">
     {title && (
-      <h2 className="text-lg font-semibold text-gray-800 mb-4 border-l-4 border-[#6A38C2] pl-3">
-        {title}
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4 border-l-4 border-[#6A38C2] pl-3">
+        {Icon && <Icon size={20} className="text-[#6A38C2]" />} {title}
       </h2>
     )}
     {children}
   </div>
+);
+
+const InfoIcon = ({ icon: Icon, text }) => (
+  <span className="flex items-center gap-2 text-sm text-gray-700">
+    <Icon size={16} className="text-[#6A38C2]" /> {text}
+  </span>
 );
 
 export default Profile;
