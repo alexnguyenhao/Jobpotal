@@ -15,29 +15,30 @@ const profileSchema = new mongoose.Schema(
 
     workExperience: [
       {
-        company: { type: String },
-        position: { type: String },
-        startDate: { type: Date },
-        endDate: { type: Date },
-        description: { type: String },
+        company: { type: String, required: true },
+        position: { type: String, required: true },
+        startDate: { type: String, required: true },
+        endDate: { type: String, required: true },
+
+        description: { type: String, required: true },
       },
     ],
 
     education: [
       {
-        school: { type: String },
-        degree: { type: String },
-        major: { type: String },
-        startYear: { type: Number },
-        endYear: { type: Number },
+        school: { type: String, required: true },
+        degree: { type: String, required: true },
+        major: { type: String, required: true },
+        startDate: { type: String },
+        endDate: { type: String },
       },
     ],
 
     certifications: [
       {
-        name: { type: String },
-        organization: { type: String },
-        dateIssued: { type: Date },
+        name: { type: String, required: true },
+        organization: { type: String, required: true },
+        dateIssued: { type: Date, required: true },
       },
     ],
 
@@ -53,10 +54,10 @@ const profileSchema = new mongoose.Schema(
 
     projects: [
       {
-        title: { type: String },
-        description: { type: String },
-        link: { type: String },
-        technologies: [{ type: String }],
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        link: { type: String, required: true },
+        technologies: [{ type: String, default: [] }],
       },
     ],
 

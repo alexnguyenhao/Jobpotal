@@ -11,6 +11,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { COMPANY_API_END_POINT } from "@/utils/constant";
 import { useSelector } from "react-redux";
 import usegetCompanyById from "@/hooks/usegetCompanyById";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { companySchema } from "@/lib/companySchema";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 
 const CompanySetup = () => {
   const params = useParams();
@@ -18,81 +29,61 @@ const CompanySetup = () => {
   const { singleCompany } = useSelector((store) => store.company);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [input, setInput] = useState({
-    name: "",
-    description: "",
-    website: "",
-    location: "",
-    industry: "",
-    foundedYear: "",
-    employeeCount: "",
-    phone: "",
-    email: "",
-    socials: { facebook: "" },
-    tags: "",
-    status: "active",
-    isVerified: false,
-    file: null,
-  });
-
-  // Gọi API để lấy dữ liệu công ty
+  // ✅ Lấy dữ liệu công ty
   usegetCompanyById(params.id);
 
-  // Gán dữ liệu vào form khi API trả về
+  // ✅ Setup react-hook-form
+  const form = useForm({
+    resolver: zodResolver(companySchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      website: "",
+      location: "",
+      industry: "",
+      foundedYear: "",
+      employeeCount: "",
+      phone: "",
+      email: "",
+      facebook: "",
+      tags: "",
+      status: "active",
+      isVerified: false,
+      file: null,
+    },
+  });
+
+  // ✅ Load dữ liệu từ store vào form
   useEffect(() => {
     if (singleCompany) {
-      setInput({
+      form.reset({
         name: singleCompany.name || "",
         description: singleCompany.description || "",
         website: singleCompany.website || "",
         location: singleCompany.location || "",
         industry: singleCompany.industry || "",
-        foundedYear: singleCompany.foundedYear || "",
-        employeeCount: singleCompany.employeeCount || "",
+        foundedYear: singleCompany.foundedYear?.toString() || "",
+        employeeCount: singleCompany.employeeCount?.toString() || "",
         phone: singleCompany.phone || "",
         email: singleCompany.email || "",
-        socials: { facebook: singleCompany.socials?.facebook || "" },
+        facebook: singleCompany.socials?.facebook || "",
         tags: singleCompany.tags?.join(", ") || "",
         status: singleCompany.status || "active",
         isVerified: singleCompany.isVerified || false,
         file: null,
       });
     }
-  }, [singleCompany]);
+  }, [singleCompany, form]);
 
-  // Xử lý thay đổi input
-  const onChangeHandler = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (name === "facebook") {
-      setInput((prev) => ({
-        ...prev,
-        socials: { ...prev.socials, facebook: value },
-      }));
-    } else {
-      setInput((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }));
-    }
-  };
-
-  // Xử lý chọn file
-  const onFileChangeHandler = (e) => {
-    const file = e.target.files?.[0];
-    if (file) setInput((prev) => ({ ...prev, file }));
-  };
-
-  // Xử lý submit form
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
+  // ✅ Submit form
+  const onSubmit = async (data) => {
     try {
       setIsLoading(true);
       const formData = new FormData();
-
-      Object.entries(input).forEach(([key, value]) => {
+      Object.entries(data).forEach(([key, value]) => {
         if (key === "file" && value) formData.append("file", value);
-        else if (key === "socials")
-          formData.append("socials", JSON.stringify(value));
+        else if (key === "facebook")
+          formData.append("socials", JSON.stringify({ facebook: value }));
         else if (key === "tags")
           formData.append(
             "tags",
@@ -113,7 +104,6 @@ const CompanySetup = () => {
       toast.success(res.data.message || "Company updated successfully");
       navigate("/admin/companies");
     } catch (error) {
-      console.error(error);
       toast.error(error.response?.data?.message || "Update failed");
     } finally {
       setIsLoading(false);
@@ -139,206 +129,296 @@ const CompanySetup = () => {
             </h1>
           </div>
 
-          {/* Form */}
-          <form onSubmit={onSubmitHandler} className="space-y-8">
-            {/* Basic Info */}
-            <Section title="🏢 Basic Information">
-              <InputGroup
-                label="Company Name"
-                name="name"
-                value={input.name}
-                onChange={onChangeHandler}
-                required
-              />
-              <TextareaGroup
-                label="Description"
-                name="description"
-                value={input.description}
-                onChange={onChangeHandler}
-                placeholder="Describe your company..."
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup
-                  label="Industry"
-                  name="industry"
-                  value={input.industry}
-                  onChange={onChangeHandler}
+          {/* ✅ Form ShadCN */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <Section title="🏢 Basic Information">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Company Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <InputGroup
-                  label="Founded Year"
-                  name="foundedYear"
-                  type="number"
-                  value={input.foundedYear}
-                  onChange={onChangeHandler}
-                />
-              </div>
-            </Section>
 
-            {/* Contact Info */}
-            <Section title="📞 Contact Information">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup
-                  label="Phone"
-                  name="phone"
-                  value={input.phone}
-                  onChange={onChangeHandler}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe your company..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <InputGroup
-                  label="Email"
-                  name="email"
-                  value={input.email}
-                  onChange={onChangeHandler}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup
-                  label="Website"
-                  name="website"
-                  value={input.website}
-                  onChange={onChangeHandler}
-                />
-                <InputGroup
-                  label="Location"
-                  name="location"
-                  value={input.location}
-                  onChange={onChangeHandler}
-                />
-              </div>
-              <InputGroup
-                label="Facebook"
-                name="facebook"
-                value={input.socials.facebook}
-                onChange={onChangeHandler}
-              />
-            </Section>
 
-            {/* Company Meta */}
-            <Section title="📊 Additional Details">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup
-                  label="Employee Count"
-                  name="employeeCount"
-                  type="number"
-                  value={input.employeeCount}
-                  onChange={onChangeHandler}
-                />
-                <InputGroup
-                  label="Tags (comma separated)"
-                  name="tags"
-                  value={input.tags}
-                  onChange={onChangeHandler}
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. IT, Education" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Status</Label>
-                  <select
+                  <FormField
+                    control={form.control}
+                    name="foundedYear"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Founded Year</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="2020" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </Section>
+
+              <Section title="📞 Contact Information">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+84 123456789" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="email@domain.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ho Chi Minh City" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="facebook"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Facebook Page</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://facebook.com/yourpage"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Section>
+
+              <Section title="📊 Additional Details">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="employeeCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employee Count</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="50" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tags</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="startup, innovation, tech"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
                     name="status"
-                    value={input.status}
-                    onChange={onChangeHandler}
-                    className="w-full mt-1 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="banned">Banned</option>
-                  </select>
-                </div>
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="w-full mt-1 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="banned">Banned</option>
+                          </select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="flex items-center gap-2 mt-6">
-                  <input
-                    type="checkbox"
-                    id="isVerified"
+                  <FormField
+                    control={form.control}
                     name="isVerified"
-                    checked={input.isVerified}
-                    onChange={onChangeHandler}
-                    className="h-4 w-4 border-gray-300 rounded"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 mt-6">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            className="h-4 w-4 border-gray-300 rounded"
+                          />
+                        </FormControl>
+                        <FormLabel>Verified Company</FormLabel>
+                      </FormItem>
+                    )}
                   />
-                  <Label htmlFor="isVerified">Verified Company</Label>
                 </div>
-              </div>
-            </Section>
+              </Section>
 
-            {/* Logo */}
-            <Section title="🖼 Company Logo">
-              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center hover:border-blue-400 transition">
-                <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                <label
-                  htmlFor="file"
-                  className="cursor-pointer text-sm text-gray-600 hover:text-blue-600"
-                >
-                  {input.file
-                    ? input.file.name
-                    : "Click to upload or drag & drop"}
-                </label>
-                <Input
-                  type="file"
-                  id="file"
-                  accept="image/*"
-                  onChange={onFileChangeHandler}
-                  className="hidden"
+              <Section title="🖼 Company Logo">
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={() => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center hover:border-blue-400 transition">
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <label
+                            htmlFor="file"
+                            className="cursor-pointer text-sm text-gray-600 hover:text-blue-600"
+                          >
+                            Click to upload or drag & drop
+                          </label>
+                          <Input
+                            type="file"
+                            id="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              form.setValue("file", e.target.files?.[0])
+                            }
+                            className="hidden"
+                          />
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              {singleCompany?.logo && (
-                <div className="mt-4 flex justify-center">
-                  <img
-                    src={singleCompany.logo}
-                    alt="Company Logo"
-                    className="h-24 object-contain rounded-md border shadow-sm"
-                  />
-                </div>
-              )}
-            </Section>
-
-            {/* Submit */}
-            <div className="mt-10">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full text-white text-md py-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                    Updating...
-                  </>
-                ) : (
-                  "💾 Save Changes"
+                {singleCompany?.logo && (
+                  <div className="mt-4 flex justify-center">
+                    <img
+                      src={singleCompany.logo}
+                      alt="Company Logo"
+                      className="h-24 object-contain rounded-md border shadow-sm"
+                    />
+                  </div>
                 )}
-              </Button>
-            </div>
-          </form>
+              </Section>
+
+              <div className="mt-10">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full text-white text-md py-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Updating...
+                    </>
+                  ) : (
+                    "💾 Save Changes"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </div>
       </div>
     </div>
   );
 };
 
-// 🔹 Component nhỏ gọn, tái sử dụng
-const InputGroup = ({ label, ...props }) => (
-  <div>
-    <Label htmlFor={props.name}>{label}</Label>
-    <Input
-      id={props.name}
-      {...props}
-      className="mt-1 border-gray-300 focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md"
-    />
-  </div>
-);
-
-const TextareaGroup = ({ label, ...props }) => (
-  <div>
-    <Label htmlFor={props.name}>{label}</Label>
-    <Textarea
-      id={props.name}
-      {...props}
-      className="mt-1 border-gray-300 focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md"
-      rows={props.rows || 3}
-    />
-  </div>
-);
-
+/* ✅ Reusable Section */
 const Section = ({ title, children }) => (
   <div className="border-b pb-6 mb-6">
     <h2 className="text-lg font-semibold text-gray-700 mb-4">{title}</h2>

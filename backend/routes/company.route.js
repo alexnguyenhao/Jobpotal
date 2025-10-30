@@ -1,17 +1,25 @@
 import express from "express";
 import {
-  getCompany,
-  getCompanyById,
-  registerCompany,
-  updateCompany,
+  getCompany, // Lấy danh sách công ty của user đang đăng nhập
+  getCompanyById, // Lấy chi tiết 1 công ty
+  registerCompany, // Tạo mới công ty
+  updateCompany, // Cập nhật thông tin công ty
 } from "../controllers/company.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { singleUpload } from "../middlewares/mutler.js";
+
 const router = express.Router();
-router.route("/register").post(isAuthenticated, registerCompany);
-router.route("/get").get(isAuthenticated, getCompany);
-router.route("/get/:id").get(isAuthenticated, getCompanyById);
-// ✅ Lấy chi tiết công ty theo ID
+
+// 🏢 Đăng ký công ty
+router.post("/register", isAuthenticated, registerCompany);
+
+// 📋 Lấy danh sách công ty của user đăng nhập (my companies)
+router.get("/get", isAuthenticated, getCompany);
+
+// 🔍 Lấy chi tiết công ty theo ID (có kiểm tra quyền trong controller)
 router.get("/:id", isAuthenticated, getCompanyById);
-router.route("/update/:id").put(isAuthenticated, singleUpload, updateCompany);
+
+// ✏️ Cập nhật công ty
+router.put("/update/:id", isAuthenticated, singleUpload, updateCompany);
+
 export default router;

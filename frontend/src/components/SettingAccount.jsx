@@ -10,7 +10,6 @@ import { setUser } from "@/redux/authSlice.js";
 const SettingAccount = () => {
   const { user } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
-  const [emailInput, setEmailInput] = useState(user?.email || "");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,13 +28,13 @@ const SettingAccount = () => {
           },
           { withCredentials: true }
         );
-        toast.success(res.data.message || "Đổi mật khẩu thành công");
+        toast.success(res.data.message || "Password updated successfully!");
       }
       setOldPassword("");
       setNewPassword("");
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!"
+        err?.response?.data?.message || "An error occurred, please try again!"
       );
     } finally {
       setLoading(false);
@@ -44,10 +43,10 @@ const SettingAccount = () => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-lg">
-      <h2 className="font-bold text-lg mb-4">Cài đặt tài khoản</h2>
+      <h2 className="font-bold text-lg mb-4">Account Settings</h2>
       <form onSubmit={handleAccountSetting} className="flex flex-col gap-4">
         <div>
-          <Label>Mật khẩu cũ</Label>
+          <Label>Old Password</Label>
           <input
             type={showPassword ? "text" : "password"}
             className="w-full border rounded px-3 py-2 mt-1"
@@ -56,7 +55,7 @@ const SettingAccount = () => {
           />
         </div>
         <div>
-          <Label>Mật khẩu mới</Label>
+          <Label>New Password</Label>
           <input
             type={showPassword ? "text" : "password"}
             className="w-full border rounded px-3 py-2 mt-1"
@@ -70,10 +69,10 @@ const SettingAccount = () => {
             checked={showPassword}
             onChange={() => setShowPassword((v) => !v)}
           />
-          <span>Hiện mật khẩu</span>
+          <span>Password Visibility</span>
         </div>
         <Button type="submit" disabled={loading}>
-          {loading ? "Đang cập nhật..." : "Lưu thay đổi"}
+          {loading ? "Updating..." : "Save Changes"}
         </Button>
       </form>
     </div>

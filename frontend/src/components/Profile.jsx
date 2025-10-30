@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge.js";
 import AppliedJobTable from "@/components/AppliedJobTable.jsx";
-import UpdateProfileDialog from "@/components/UpdateProfileDialog.jsx";
-import UpdateWorkExperienceDialog from "@/components/UpdateWorkExperienceDialog.jsx";
-import UpdateEducationDialog from "@/components/UpdateEducationDialog.jsx";
-import UpdateCertificationDialog from "@/components/UpdateCertificationDialog.jsx";
-import UpdateLanguagesDialog from "@/components/UpdateLanguagesDialog.jsx";
-import UpdateAchievementsDialog from "@/components/UpdateAchievementsDialog.jsx";
-import UpdateProjectsDialog from "@/components/UpdateProjectsDialog.jsx";
+import UpdateProfileDialog from "@/components/profile/UpdateProfileDialog.jsx";
+import UpdateWorkExperienceDialog from "@/components/profile/UpdateWorkExperienceDialog.jsx";
+import UpdateEducationDialog from "@/components/profile/UpdateEducationDialog.jsx";
+import UpdateCertificationDialog from "@/components/profile/UpdateCertificationDialog.jsx";
+import UpdateLanguagesDialog from "@/components/profile/UpdateLanguagesDialog.jsx";
+import UpdateAchievementsDialog from "@/components/profile/UpdateAchievementsDialog.jsx";
+import UpdateProjectsDialog from "@/components/profile/UpdateProjectsDialog.jsx";
 import SettingAccount from "@/components/SettingAccount.jsx";
 import { useSelector, useDispatch } from "react-redux";
 import useGetAppliedJobs from "@/hooks/useGetAppliedJobs.jsx";
@@ -35,6 +35,7 @@ import axios from "axios";
 import { USER_API_END_POINT } from "@/utils/constant.js";
 import { toast } from "sonner";
 import { setUser } from "@/redux/authSlice.js";
+import ProfileSectionItem from "@/components/profile/ProfileSectionItem.jsx";
 
 const Profile = () => {
   useGetAppliedJobs();
@@ -248,6 +249,34 @@ const Profile = () => {
                         icon={Target}
                         text={user?.role?.toUpperCase()}
                       />
+                      //skill and resume
+                      <InfoIcon
+                        icon={Star}
+                        text={
+                          user?.profile?.skills?.length
+                            ? user.profile.skills.join(", ")
+                            : "No skills listed"
+                        }
+                      />
+                      <InfoIcon
+                        icon={FolderGit2}
+                        text={
+                          user?.profile?.resume ? (
+                            <a
+                              href={user.profile.resume}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2 text-[#6A38C2] font-medium hover:underline"
+                            >
+                              <Save size={18} /> My Resume
+                            </a>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No resume uploaded
+                            </p>
+                          )
+                        }
+                      />
                     </div>
 
                     <Button
@@ -259,42 +288,6 @@ const Profile = () => {
                   </div>
                 </div>
               </GlassCard>
-
-              {/* Skills + Resume */}
-              <div className="grid md:grid-cols-2 gap-8">
-                <GlassCard title="Skills" icon={Star}>
-                  {user?.profile?.skills?.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {user.profile.skills.map((skill, i) => (
-                        <Badge
-                          key={i}
-                          className="bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/20"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic">No skills added yet</p>
-                  )}
-                </GlassCard>
-
-                <GlassCard title="Resume" icon={Save}>
-                  {user?.profile?.resume ? (
-                    <a
-                      href={user.profile.resume}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 text-[#6A38C2] font-medium hover:underline"
-                    >
-                      <Save size={18} /> {user.profile.resumeOriginalName}
-                    </a>
-                  ) : (
-                    <p className="text-gray-500 italic">No resume uploaded</p>
-                  )}
-                </GlassCard>
-              </div>
-
               {/* Dynamic Sections */}
               {profileSections.map((section, idx) => (
                 <GlassCard key={idx} title={section.title} icon={section.icon}>
@@ -307,27 +300,11 @@ const Profile = () => {
                       + Add / Update
                     </Button>
                   </div>
+
                   {section.data?.length ? (
-                    <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
                       {section.data.map((item, i) => (
-                        <div
-                          key={i}
-                          className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all"
-                        >
-                          <p className="font-semibold text-gray-800">
-                            {item.name || item.position || "—"}
-                          </p>
-                          {item.company && (
-                            <p className="text-sm text-gray-600">
-                              {item.company}
-                            </p>
-                          )}
-                          {item.description && (
-                            <p className="text-gray-700 mt-1">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
+                        <ProfileSectionItem key={i} item={item} />
                       ))}
                     </div>
                   ) : (
@@ -366,31 +343,80 @@ const Profile = () => {
         open={openWorkExp}
         setOpen={setOpenWorkExp}
         initialData={user?.profile?.workExperience || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, workExperience: updated },
+            })
+          );
+        }}
       />
       <UpdateEducationDialog
         open={openEducation}
         setOpen={setOpenEducation}
         initialData={user?.profile?.education || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, education: updated },
+            })
+          );
+        }}
       />
       <UpdateCertificationDialog
         open={openCertifications}
         setOpen={setOpenCertifications}
         initialData={user?.profile?.certifications || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, certifications: updated },
+            })
+          );
+        }}
       />
       <UpdateLanguagesDialog
         open={openLanguages}
         setOpen={setOpenLanguages}
         initialData={user?.profile?.languages || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, languages: updated },
+            })
+          );
+        }}
       />
       <UpdateAchievementsDialog
         open={openAchievements}
         setOpen={setOpenAchievements}
         initialData={user?.profile?.achievements || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, achievements: updated },
+            })
+          );
+        }}
       />
+
       <UpdateProjectsDialog
         open={openProjects}
         setOpen={setOpenProjects}
         initialData={user?.profile?.projects || []}
+        onUpdate={(updated) => {
+          dispatch(
+            setUser({
+              ...user,
+              profile: { ...user.profile, projects: updated },
+            })
+          );
+        }}
       />
     </div>
   );
