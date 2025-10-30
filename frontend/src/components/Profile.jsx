@@ -28,7 +28,7 @@ import UpdateCertificationDialog from "@/components/profile/UpdateCertificationD
 import UpdateLanguagesDialog from "@/components/profile/UpdateLanguagesDialog.jsx";
 import UpdateAchievementsDialog from "@/components/profile/UpdateAchievementsDialog.jsx";
 import UpdateProjectsDialog from "@/components/profile/UpdateProjectsDialog.jsx";
-import SettingAccount from "@/components/SettingAccount.jsx";
+import SettingAccount from "./profile/SettingAccount";
 import { useSelector, useDispatch } from "react-redux";
 import useGetAppliedJobs from "@/hooks/useGetAppliedJobs.jsx";
 import axios from "axios";
@@ -36,6 +36,7 @@ import { USER_API_END_POINT } from "@/utils/constant.js";
 import { toast } from "sonner";
 import { setUser } from "@/redux/authSlice.js";
 import ProfileSectionItem from "@/components/profile/ProfileSectionItem.jsx";
+import Footer from "./shared/Footer";
 
 const Profile = () => {
   useGetAppliedJobs();
@@ -134,8 +135,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
-      <NavBar />
-
       {/* MAIN WRAPPER */}
       <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-10">
         {/* Sidebar */}

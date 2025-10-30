@@ -3,13 +3,13 @@ import NavBar from "@/components/shared/NavBar.jsx";
 import FilterCard from "@/components/FilterCard.jsx";
 import Job from "@/components/Job.jsx";
 import { useSelector } from "react-redux";
+import Footer from "./shared/Footer";
 
 const Jobs = () => {
   const { allJobs } = useSelector((store) => store.job);
   return (
     <div>
-      <NavBar />
-      <div className="max-w-7xl mx-auto my-10">
+      <div className="max-w-7xl mx-auto">
         <div className="flex gap-5">
           <div className="w-20%">
             <FilterCard />

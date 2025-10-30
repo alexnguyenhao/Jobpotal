@@ -1,9 +1,12 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import NavBar from "./components/shared/NavBar";
+import Layout from "@/Layout.jsx";
 
-// Auth
+// Auth pages
 import Login from "@/components/auth/Login.jsx";
 import Signup from "@/components/auth/Signup.jsx";
+import Verification from "@/components/auth/verification.jsx";
+import ResetPassword from "@/components/auth/resetPassword.jsx";
+import ForgotPassword from "@/components/auth/ForgotPassword.jsx";
 
 // Public pages
 import Home from "@/components/Home.jsx";
@@ -11,9 +14,6 @@ import Jobs from "@/components/Jobs.jsx";
 import Browse from "@/components/Browse.jsx";
 import Profile from "@/components/Profile.jsx";
 import JobDescription from "@/components/JobDescription.jsx";
-import Verification from "@/components/auth/verification.jsx";
-import ResetPassword from "@/components/auth/resetPassword.jsx";
-import ForgotPassword from "@/components/auth/ForgotPassword.jsx";
 
 // Admin pages
 import Companies from "@/components/admin/Companies.jsx";
@@ -22,36 +22,34 @@ import CompanySetup from "@/components/admin/CompanySetup.jsx";
 import AdminJobs from "@/components/admin/AdminJobs.jsx";
 import PostJob from "@/components/admin/PostJob.jsx";
 import Applicants from "@/components/admin/Applicants.jsx";
-
-// ✅ Import component hiển thị hồ sơ công ty
 import ProfileCompany from "@/components/admin/ProfileCompany.jsx";
 
 const appRouter = createBrowserRouter([
-  // Public routes
-  { path: "/", element: <Home /> },
+  // ✅ Routes có layout chung (NavBar + Footer)
+  {
+    element: <Layout />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/jobs", element: <Jobs /> },
+      { path: "/browse", element: <Browse /> },
+      { path: "/description/:id", element: <JobDescription /> },
+      { path: "/profile", element: <Profile /> },
+      { path: "/admin/companies", element: <Companies /> },
+      { path: "/admin/companies/create", element: <CompanyCreate /> },
+      { path: "/admin/companies/:id", element: <CompanySetup /> },
+      { path: "/admin/jobs", element: <AdminJobs /> },
+      { path: "/admin/jobs/create", element: <PostJob /> },
+      { path: "/admin/jobs/:id/applicants", element: <Applicants /> },
+      { path: "/company/:id", element: <ProfileCompany /> },
+    ],
+  },
+
+  // ✅ Routes KHÔNG dùng layout (Auth pages)
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <Signup /> },
   { path: "/verify-email", element: <Verification /> },
-  { path: "/jobs", element: <Jobs /> },
-  { path: "/browse", element: <Browse /> },
-  { path: "/description/:id", element: <JobDescription /> },
-  { path: "/profile", element: <Profile /> },
   { path: "/reset-password", element: <ResetPassword /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
-
-  // Admin routes
-  { path: "/admin/companies", element: <Companies /> },
-  { path: "/admin/companies/create", element: <CompanyCreate /> },
-  { path: "/admin/companies/:id", element: <CompanySetup /> },
-  { path: "/admin/jobs", element: <AdminJobs /> },
-  { path: "/admin/jobs/create", element: <PostJob /> },
-  { path: "/admin/jobs/:id/applicants", element: <Applicants /> },
-
-  // ✅ Route mới: trang hồ sơ công ty (dùng trực tiếp ProfileCompany)
-  {
-    path: "/company/:id",
-    element: <ProfileCompany />,
-  },
 ]);
 
 function App() {
