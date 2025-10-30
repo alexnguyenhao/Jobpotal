@@ -27,7 +27,7 @@ const ProfileCompany = () => {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const res = await axios.get(`${COMPANY_API_END_POINT}/${id}`, {
+        const res = await axios.get(`${COMPANY_API_END_POINT}/get/${id}`, {
           withCredentials: true,
         });
         if (res.data.success) {
@@ -55,8 +55,6 @@ const ProfileCompany = () => {
         Loading company profile...
       </div>
     );
-
-  // 🔴 Nếu không có dữ liệu
   if (!company)
     return (
       <div className="flex justify-center items-center h-screen text-gray-500 text-lg">

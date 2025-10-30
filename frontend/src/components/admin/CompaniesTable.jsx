@@ -14,16 +14,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Edit2, MoreHorizontal, Eye } from "lucide-react";
-import { useSelector } from "react-redux";
+import { Edit2, MoreHorizontal, Eye, Trash2 } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { deleteCompany, fetchCompanies } from "@/redux/companySlice.js";
 
 const CompaniesTable = () => {
-  const { companies, searchCompanyByText } = useSelector(
+  const { companies, searchCompanyByText, loading } = useSelector(
     (store) => store.company
   );
   const [filterCompany, setFilterCompany] = useState([]);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // 🟢 Lấy danh sách công ty khi component mount
+  useEffect(() => {
+    dispatch(fetchCompanies());
+  }, [dispatch]);
 
   // 🔍 Lọc công ty theo từ khóa tìm kiếm
   useEffect(() => {
@@ -37,6 +44,25 @@ const CompaniesTable = () => {
       ) || [];
     setFilterCompany(filtered);
   }, [companies, searchCompanyByText]);
+
+  // 🗑️ Xử lý xóa công ty
+  const handleDeleteCompany = (companyId, companyName) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${companyName}"?`
+    );
+    if (!confirmed) return;
+
+    dispatch(deleteCompany(companyId)).then(() => dispatch(fetchCompanies()));
+  };
+
+  // ⏳ Loading state
+  if (loading) {
+    return (
+      <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-xl shadow-sm border border-gray-100">
+        Loading companies...
+      </div>
+    );
+  }
 
   // 🚫 Không có dữ liệu
   if (!filterCompany.length) {
@@ -130,6 +156,7 @@ const CompaniesTable = () => {
                     align="end"
                     className="w-44 bg-white shadow-lg rounded-md border border-gray-200 p-2"
                   >
+                    {/* View */}
                     <div
                       onClick={() =>
                         company?._id && navigate(`/company/${company._id}`)
@@ -140,6 +167,7 @@ const CompaniesTable = () => {
                       <span>View Profile</span>
                     </div>
 
+                    {/* Edit */}
                     <div
                       onClick={() =>
                         company?._id &&
@@ -149,6 +177,17 @@ const CompaniesTable = () => {
                     >
                       <Edit2 className="w-4 h-4 text-gray-600" />
                       <span>Edit</span>
+                    </div>
+
+                    {/* Delete */}
+                    <div
+                      onClick={() =>
+                        handleDeleteCompany(company._id, company.name)
+                      }
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition mt-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
                     </div>
                   </PopoverContent>
                 </Popover>

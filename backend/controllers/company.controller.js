@@ -41,24 +41,25 @@ export const registerCompany = async (req, res) => {
 };
 
 // 📋 Lấy danh sách công ty theo user
+// 📋 Lấy danh sách công ty theo recruiter đang đăng nhập
 export const getCompany = async (req, res) => {
   try {
-    const userId = req.id;
+    const userId = req.id; // recruiter hiện tại
     const companies = await Company.find({ userId });
 
-    if (!companies || companies.length === 0) {
-      return res.status(404).json({
-        message: "No companies found for this user",
-        success: false,
-      });
-    }
-
-    res.status(200).json({ companies, success: true });
+    return res.status(200).json({
+      success: true,
+      companies, // có thể rỗng []
+      message:
+        companies.length > 0
+          ? "Fetched your companies successfully"
+          : "You don’t have any company yet",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message: "Internal server error",
       success: false,
+      message: "Internal server error",
     });
   }
 };
@@ -159,6 +160,57 @@ export const updateCompany = async (req, res) => {
     res.status(500).json({
       message: "Internal server error",
       success: false,
+    });
+  }
+};
+//delete company controller.js
+export const deleteCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ✅ Validate ID
+    if (!id) {
+      return res.status(400).json({
+        message: "Company ID is required",
+        success: false,
+      });
+    }
+
+    // ✅ Tìm và xóa
+    const company = await Company.findByIdAndDelete(id);
+
+    if (!company) {
+      return res.status(404).json({
+        message: "Company not found",
+        success: false,
+      });
+    }
+
+    // ✅ (Tùy chọn) kiểm tra quyền của user
+    // if (req.user.role !== "admin") {
+    //   return res.status(403).json({
+    //     message: "You are not authorized to delete companies",
+    //     success: false,
+    //   });
+    // }
+
+    console.log(`✅ Company deleted: ${company.name} (${company._id})`);
+
+    return res.status(200).json({
+      message: "Company deleted successfully",
+      success: true,
+      deletedCompany: {
+        id: company._id,
+        name: company.name,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error deleting company:", error.message);
+
+    return res.status(500).json({
+      message: "Internal server error while deleting company",
+      success: false,
+      error: error.message,
     });
   }
 };

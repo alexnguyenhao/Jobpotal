@@ -85,7 +85,6 @@ const PostJob = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar />
       <div className="container mx-auto px-4 py-10 pt-[80px] max-w-4xl">
         <div className="mb-8">
           <Button

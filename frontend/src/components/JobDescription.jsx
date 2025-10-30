@@ -80,7 +80,6 @@ const JobDescription = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <NavBar />
       <div className="max-w-6xl mx-auto py-10 px-4 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2 space-y-6">

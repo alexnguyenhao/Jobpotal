@@ -112,7 +112,6 @@ const CompanySetup = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <NavBar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-[80px]">
         <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-200">
           {/* Header */}
