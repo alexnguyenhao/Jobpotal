@@ -4,10 +4,8 @@ import { COMPANY_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
 
 // ============================================================
-// 🔹 Async Thunks
+// 🟢 CREATE company
 // ============================================================
-
-// 🟢 Create company
 export const createCompany = createAsyncThunk(
   "company/createCompany",
   async (formData, { rejectWithValue }) => {
@@ -27,7 +25,9 @@ export const createCompany = createAsyncThunk(
   }
 );
 
-// 🟡 Update company
+// ============================================================
+// 🟡 UPDATE company
+// ============================================================
 export const updateCompany = createAsyncThunk(
   "company/updateCompany",
   async ({ id, data }, { rejectWithValue }) => {
@@ -47,7 +47,9 @@ export const updateCompany = createAsyncThunk(
   }
 );
 
-// 🔵 Get all companies (for recruiter)
+// ============================================================
+// 🔵 GET all companies (recruiter’s list)
+// ============================================================
 export const fetchCompanies = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
@@ -65,13 +67,15 @@ export const fetchCompanies = createAsyncThunk(
   }
 );
 
-// 🟣 Get single company by ID (public)
+// ============================================================
+// 🟣 GET one company (public)
+// ============================================================
 export const getCompanyById = createAsyncThunk(
   "company/getCompanyById",
   async (companyId, { rejectWithValue }) => {
     try {
-      // ⚠️ Nếu bạn muốn public: bỏ withCredentials
-      const res = await axios.get(`${COMPANY_API_END_POINT}/get/${companyId}`);
+      // ✅ public route (không cần auth)
+      const res = await axios.get(`${COMPANY_API_END_POINT}/${companyId}`);
       return res.data?.company || null;
     } catch (error) {
       const msg =
@@ -82,27 +86,49 @@ export const getCompanyById = createAsyncThunk(
   }
 );
 
-// 🔴 Delete company
-export const deleteCompany = createAsyncThunk(
-  "company/deleteCompany",
+// ============================================================
+// 🟣 GET one company (for recruiter — private details)
+// ============================================================
+export const getCompanyByIdAdmin = createAsyncThunk(
+  "company/getCompanyByIdAdmin",
   async (companyId, { rejectWithValue }) => {
     try {
-      const res = await axios.delete(
-        `${COMPANY_API_END_POINT}/delete/${companyId}`,
+      // ✅ recruiter route (có auth)
+      const res = await axios.get(
+        `${COMPANY_API_END_POINT}/admin/${companyId}`,
         { withCredentials: true }
       );
-      toast.success("✅ Company deleted successfully!");
-      return companyId;
+      return res.data?.company || null;
     } catch (error) {
-      const msg = error.response?.data?.message || "Failed to delete company";
-      toast.error(msg);
+      const msg =
+        error.response?.data?.message ||
+        "Failed to fetch admin company details";
+      console.error("❌ Error fetching admin company:", msg);
       return rejectWithValue(msg);
     }
   }
 );
 
 // ============================================================
-// 🔹 Slice
+// 🔴 DELETE company
+// ============================================================
+export const deleteCompany = createAsyncThunk(
+  "company/deleteCompany",
+  async (companyId, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${COMPANY_API_END_POINT}/delete/${companyId}`, {
+        withCredentials: true,
+      });
+      return companyId;
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to delete company";
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+// ============================================================
+// 🧩 Slice setup
 // ============================================================
 const companySlice = createSlice({
   name: "company",
@@ -123,9 +149,15 @@ const companySlice = createSlice({
     setSearchCompanyByText: (state, action) => {
       state.searchCompanyByText = action.payload;
     },
+    resetCompanyState: (state) => {
+      state.singleCompany = null;
+      state.loading = false;
+      state.error = null;
+    },
   },
+
   extraReducers: (builder) => {
-    // =================== GET ALL ===================
+    // =================== FETCH ALL ===================
     builder
       .addCase(fetchCompanies.pending, (state) => {
         state.loading = true;
@@ -153,7 +185,7 @@ const companySlice = createSlice({
       if (index !== -1) state.companies[index] = action.payload;
     });
 
-    // =================== GET ONE ===================
+    // =================== GET ONE (public) ===================
     builder
       .addCase(getCompanyById.pending, (state) => {
         state.loading = true;
@@ -168,6 +200,11 @@ const companySlice = createSlice({
         state.error = action.payload;
       });
 
+    // =================== GET ONE (admin) ===================
+    builder.addCase(getCompanyByIdAdmin.fulfilled, (state, action) => {
+      state.singleCompany = action.payload;
+    });
+
     // =================== DELETE ===================
     builder.addCase(deleteCompany.fulfilled, (state, action) => {
       state.companies = state.companies.filter((c) => c._id !== action.payload);
@@ -175,6 +212,11 @@ const companySlice = createSlice({
   },
 });
 
-export const { setSingleCompany, setCompanies, setSearchCompanyByText } =
-  companySlice.actions;
+export const {
+  setSingleCompany,
+  setCompanies,
+  setSearchCompanyByText,
+  resetCompanyState,
+} = companySlice.actions;
+
 export default companySlice.reducer;

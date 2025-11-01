@@ -20,7 +20,7 @@ const LatestJobCards = ({ job }) => {
         <h2 className="font-semibold text-base text-gray-800 truncate">
           {job?.company?.name}
         </h2>
-        <p className="text-sm text-gray-500">{job?.location}</p>
+        <p className="text-sm text-gray-500">{job?.location.province}</p>
       </div>
 
       {/* Job Title & Description */}
@@ -38,7 +38,7 @@ const LatestJobCards = ({ job }) => {
           variant="outline"
         >
           <DollarSign className="w-4 h-4" />
-          {job?.salary}M
+          {formatSalary(job?.salary)}
         </Badge>
 
         <Badge
@@ -56,3 +56,16 @@ const LatestJobCards = ({ job }) => {
 };
 
 export default LatestJobCards;
+const formatSalary = (salary) => {
+  if (!salary) return "Not specified";
+  if (typeof salary === "string") return salary;
+  const { min, max, currency, isNegotiable } = salary;
+  if (isNegotiable) return "Negotiable";
+  if (min && max)
+    return `${min.toLocaleString()} - ${max.toLocaleString()} ${
+      currency || "VND"
+    }`;
+  if (min) return `From ${min.toLocaleString()} ${currency || "VND"}`;
+  if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
+  return "Not specified";
+};

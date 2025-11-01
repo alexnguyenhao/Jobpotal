@@ -10,6 +10,10 @@ import {
   Link2,
 } from "lucide-react";
 
+/**
+ * 🔹 ProfileSectionItem v2
+ * Giao diện nâng cấp chuyên nghiệp, card mềm, icon rõ ràng.
+ */
 const ProfileSectionItem = ({ item }) => {
   if (!item) return null;
 
@@ -24,128 +28,164 @@ const ProfileSectionItem = ({ item }) => {
     description,
     startDate,
     endDate,
-    link,
     technologies,
     language,
     proficiency,
+    title,
+    link,
   } = item;
 
-  // Work Experience
+  // Helper render date
+  const renderDates = (start, end) =>
+    (start || end) && (
+      <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+        <Calendar size={12} className="text-[#6A38C2]" />
+        {start?.slice(0, 10)} — {end?.slice(0, 10) || "Present"}
+      </p>
+    );
+
+  // 🔹 Work Experience
   if (company && position) {
     return (
-      <div className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm">
-        <div className="flex items-center gap-2 font-semibold text-gray-800">
-          <Building2 size={16} className="text-[#6A38C2]" />
-          {position}
-        </div>
-        <p className="text-sm text-gray-600">{company}</p>
-        {(startDate || endDate) && (
-          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-            <Calendar size={12} /> {startDate?.slice(0, 10)} →{" "}
-            {endDate?.slice(0, 10) || "Present"}
-          </p>
-        )}
+      <SectionCard>
+        <Header
+          icon={<Building2 size={18} />}
+          title={position}
+          subtitle={company}
+          date={renderDates(startDate, endDate)}
+        />
         {description && (
-          <p className="text-gray-700 mt-2 text-sm">{description}</p>
+          <p className="mt-2 text-sm text-gray-700">{description}</p>
         )}
-      </div>
+      </SectionCard>
     );
   }
 
-  // Education
+  // 🔹 Education
   if (school && degree) {
     return (
-      <div className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm">
-        <div className="flex items-center gap-2 font-semibold text-gray-800">
-          <BookOpen size={16} className="text-[#6A38C2]" />
-          {degree} - {major}
-        </div>
-        <p className="text-sm text-gray-600">{school}</p>
+      <SectionCard>
+        <Header
+          icon={<BookOpen size={18} />}
+          title={`${degree} – ${major}`}
+          subtitle={school}
+          date={renderDates(startDate, endDate)}
+        />
         {description && (
-          <p className="text-gray-700 mt-2 text-sm">{description}</p>
+          <p className="mt-2 text-sm text-gray-700">{description}</p>
         )}
-      </div>
+      </SectionCard>
     );
   }
 
-  // Certifications
+  // 🔹 Certifications
   if (name && organization) {
     return (
-      <div className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm">
-        <div className="flex items-center gap-2 font-semibold text-gray-800">
-          <Award size={16} className="text-[#6A38C2]" />
-          {name}
-        </div>
-        <p className="text-sm text-gray-600">{organization}</p>
-        {description && (
-          <p className="text-gray-700 mt-2 text-sm">{description}</p>
-        )}
-      </div>
-    );
-  }
-
-  // Projects
-  if (item.title) {
-    return (
-      <div className="p-4 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm">
-        <div className="flex items-center gap-2 font-semibold text-gray-800">
-          <Code size={16} className="text-[#6A38C2]" />
-          {item.title}
-        </div>
-        {item.link && (
+      <SectionCard>
+        <Header
+          icon={<Award size={18} />}
+          title={name}
+          subtitle={organization}
+          date={renderDates(startDate, endDate)}
+        />
+        {link && (
           <a
-            href={item.link}
+            href={link}
             target="_blank"
             rel="noreferrer"
-            className="text-sm text-[#6A38C2] flex items-center gap-1 hover:underline"
+            className="inline-flex items-center gap-1 text-[#6A38C2] text-sm mt-1 hover:underline"
           >
-            <Link2 size={14} />{" "}
-            {item.link.length > 40 ? item.link.slice(0, 40) + "..." : item.link}
+            <Link2 size={14} /> View credential
           </a>
         )}
         {description && (
-          <p className="text-gray-700 mt-2 text-sm">{description}</p>
+          <p className="mt-2 text-sm text-gray-700">{description}</p>
+        )}
+      </SectionCard>
+    );
+  }
+
+  // 🔹 Projects
+  if (title) {
+    return (
+      <SectionCard>
+        <Header icon={<Code size={18} />} title={title} />
+        {link && (
+          <a
+            href={link}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[#6A38C2] text-sm hover:underline"
+          >
+            <Link2 size={14} />{" "}
+            {link.length > 35 ? link.slice(0, 35) + "..." : link}
+          </a>
+        )}
+        {description && (
+          <p className="mt-2 text-sm text-gray-700">{description}</p>
         )}
         {technologies?.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {technologies.map((t, i) => (
               <span
                 key={i}
-                className="bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/20 text-xs px-2 py-1 rounded-md"
+                className="bg-[#6A38C2]/10 text-[#6A38C2] border border-[#6A38C2]/20 text-xs px-2 py-1 rounded-full"
               >
                 {t}
               </span>
             ))}
           </div>
         )}
-      </div>
+      </SectionCard>
     );
   }
 
-  // Languages
+  // 🔹 Languages
   if (language) {
     return (
-      <div className="p-3 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm">
-        <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-          <Languages size={16} className="text-[#6A38C2]" />
-          {language}
-        </p>
-        <p className="text-sm text-gray-600">{proficiency}</p>
-      </div>
+      <SectionCard compact>
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-2 text-gray-800 font-semibold">
+            <Languages size={16} className="text-[#6A38C2]" /> {language}
+          </p>
+          <span className="text-sm text-gray-600">{proficiency}</span>
+        </div>
+      </SectionCard>
     );
   }
 
-  // Achievements
+  // 🔹 Achievements
   if (typeof item === "string" || item.title) {
     return (
-      <div className="p-3 border rounded-xl bg-gray-50 hover:bg-gray-100 transition-all shadow-sm flex items-center gap-2">
-        <Star size={16} className="text-[#6A38C2]" /> {item.title || item}
-      </div>
+      <SectionCard compact>
+        <p className="flex items-center gap-2 text-gray-800 font-medium">
+          <Star size={16} className="text-[#6A38C2]" /> {item.title || item}
+        </p>
+      </SectionCard>
     );
   }
 
-  // Fallback
   return null;
 };
+const SectionCard = ({ children, compact }) => (
+  <div
+    className={`p-4 border rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 ${
+      compact ? "py-3" : ""
+    }`}
+  >
+    {children}
+  </div>
+);
+
+const Header = ({ icon, title, subtitle, date }) => (
+  <div>
+    <div className="flex items-center gap-2 text-gray-900 font-semibold">
+      <span className="text-[#6A38C2]">{icon}</span>
+      <span>{title}</span>
+    </div>
+    {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
+    {date && <p className="text-sm text-gray-600">{date}</p>}
+  </div>
+);
 
 export default ProfileSectionItem;

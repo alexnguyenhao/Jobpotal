@@ -40,8 +40,6 @@ export const registerCompany = async (req, res) => {
   }
 };
 
-// 📋 Lấy danh sách công ty theo user
-// 📋 Lấy danh sách công ty theo recruiter đang đăng nhập
 export const getCompany = async (req, res) => {
   try {
     const userId = req.id; // recruiter hiện tại
@@ -67,23 +65,74 @@ export const getCompany = async (req, res) => {
 // 🔍 Lấy chi tiết 1 công ty
 export const getCompanyById = async (req, res) => {
   try {
-    const company = await Company.findById(req.params.id);
+    const { id } = req.params;
+    const company = await Company.findById(id);
+
     if (!company) {
       return res.status(404).json({
-        message: "Company not found",
         success: false,
+        message: "Company not found",
       });
     }
 
-    res.status(200).json({ company, success: true });
+    // 🔹 Nếu không đăng nhập → public view
+    if (!req.id) {
+      return res.status(200).json({
+        success: true,
+        view: "public",
+        company: {
+          _id: company._id,
+          name: company.name,
+          logo: company.logo,
+          industry: company.industry,
+          location: company.location,
+          website: company.website,
+          foundedYear: company.foundedYear,
+          description: company.description,
+          tags: company.tags,
+          employeeCount: company.employeeCount,
+          phone: company.phone,
+          email: company.email,
+        },
+      });
+    }
+
+    // 🔹 Nếu là recruiter → kiểm tra quyền
+    const isOwner = company.userId.toString() === req.id.toString();
+
+    if (!isOwner) {
+      // Recruiter khác chỉ được xem bản công khai
+      return res.status(200).json({
+        success: true,
+        view: "limited",
+        company: {
+          _id: company._id,
+          name: company.name,
+          logo: company.logo,
+          industry: company.industry,
+          description: company.description,
+          location: company.location,
+          website: company.website,
+        },
+      });
+    }
+
+    // ✅ Chính recruiter đó → full info
+    return res.status(200).json({
+      success: true,
+      view: "private",
+      company,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error fetching company:", error);
     res.status(500).json({
-      message: "Internal server error",
       success: false,
+      message: "Internal server error while fetching company",
     });
   }
 };
+
+// get company for user not login
 
 // ✏️ Cập nhật thông tin công ty (phiên bản mới nhất)
 export const updateCompany = async (req, res) => {
@@ -163,20 +212,15 @@ export const updateCompany = async (req, res) => {
     });
   }
 };
-//delete company controller.js
 export const deleteCompany = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // ✅ Validate ID
     if (!id) {
       return res.status(400).json({
         message: "Company ID is required",
         success: false,
       });
     }
-
-    // ✅ Tìm và xóa
     const company = await Company.findByIdAndDelete(id);
 
     if (!company) {
@@ -185,15 +229,6 @@ export const deleteCompany = async (req, res) => {
         success: false,
       });
     }
-
-    // ✅ (Tùy chọn) kiểm tra quyền của user
-    // if (req.user.role !== "admin") {
-    //   return res.status(403).json({
-    //     message: "You are not authorized to delete companies",
-    //     success: false,
-    //   });
-    // }
-
     console.log(`✅ Company deleted: ${company.name} (${company._id})`);
 
     return res.status(200).json({

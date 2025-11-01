@@ -8,11 +8,9 @@ const profileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    title: { type: String },
     skills: [{ type: String }],
-    resume: { type: String },
-    resumeOriginalName: { type: String },
     careerObjective: { type: String },
-
     workExperience: [
       {
         company: { type: String, required: true },

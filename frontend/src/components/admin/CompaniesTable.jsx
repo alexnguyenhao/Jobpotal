@@ -14,7 +14,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Edit2, MoreHorizontal, Eye, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import ConfirmDeleteDialog from "@/components/shared/ConfirmDeleteDialog"; // ✅ component xác nhận xóa
+import { Edit2, MoreHorizontal, Eye } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { deleteCompany, fetchCompanies } from "@/redux/companySlice.js";
@@ -45,14 +47,16 @@ const CompaniesTable = () => {
     setFilterCompany(filtered);
   }, [companies, searchCompanyByText]);
 
-  // 🗑️ Xử lý xóa công ty
+  // 🗑️ Hàm thực thi xoá công ty
   const handleDeleteCompany = (companyId, companyName) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${companyName}"?`
-    );
-    if (!confirmed) return;
-
-    dispatch(deleteCompany(companyId)).then(() => dispatch(fetchCompanies()));
+    dispatch(deleteCompany(companyId))
+      .then(() => {
+        dispatch(fetchCompanies());
+        toast.success(`Deleted "${companyName}" successfully!`);
+      })
+      .catch(() => {
+        toast.error("Failed to delete company");
+      });
   };
 
   // ⏳ Loading state
@@ -171,7 +175,7 @@ const CompaniesTable = () => {
                     <div
                       onClick={() =>
                         company?._id &&
-                        navigate(`/admin/companies/${company._id}`)
+                        navigate(`/company/update/${company._id}`)
                       }
                       className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer transition"
                     >
@@ -179,15 +183,15 @@ const CompaniesTable = () => {
                       <span>Edit</span>
                     </div>
 
-                    {/* Delete */}
-                    <div
-                      onClick={() =>
-                        handleDeleteCompany(company._id, company.name)
-                      }
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition mt-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
+                    {/* ✅ Delete với Confirm Dialog */}
+                    <div className="px-3 py-2 mt-1">
+                      <ConfirmDeleteDialog
+                        title="Delete Company"
+                        description={`Are you sure you want to delete "${company.name}"? This action cannot be undone.`}
+                        onConfirm={() =>
+                          handleDeleteCompany(company._id, company.name)
+                        }
+                      />
                     </div>
                   </PopoverContent>
                 </Popover>

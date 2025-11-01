@@ -12,8 +12,13 @@ import { singleUpload } from "../middlewares/mutler.js";
 const router = express.Router();
 router.post("/register", isAuthenticated, registerCompany);
 router.get("/get", isAuthenticated, getCompany);
-router.get("/get/:id", isAuthenticated, getCompanyById);
+
+// ⚠️ Đặt các route có prefix (admin, update, delete) TRƯỚC route "/:id"
+router.get("/admin/:id", isAuthenticated, getCompanyById);
 router.put("/update/:id", isAuthenticated, singleUpload, updateCompany);
 router.delete("/delete/:id", isAuthenticated, deleteCompany);
+
+// ✅ Cuối cùng mới để route public "/:id"
+router.get("/:id", getCompanyById);
 
 export default router;

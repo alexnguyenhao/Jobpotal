@@ -1,9 +1,6 @@
-import React from "react";
-import NavBar from "@/components/shared/NavBar.jsx";
 import FilterCard from "@/components/FilterCard.jsx";
 import Job from "@/components/Job.jsx";
 import { useSelector } from "react-redux";
-import Footer from "./shared/Footer";
 
 const Jobs = () => {
   const { allJobs } = useSelector((store) => store.job);

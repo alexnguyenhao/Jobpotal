@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   MapPin,
   Globe,
@@ -9,52 +9,57 @@ import {
   Calendar,
   Facebook,
   ArrowLeft,
-  Edit2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import { COMPANY_API_END_POINT } from "@/utils/constant";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getCompanyById,
+  getCompanyByIdAdmin,
+  resetCompanyState,
+} from "@/redux/companySlice";
 import { toast } from "sonner";
 
 const ProfileCompany = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Lấy id công ty từ URL
-  const [company, setCompany] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+  const dispatch = useDispatch();
 
-  // 🟢 Gọi API lấy dữ liệu công ty theo ID
+  // ✅ Lấy user từ Redux
+  const { user } = useSelector((state) => state.auth);
+
+  // ✅ Lấy dữ liệu công ty từ Redux
+  const {
+    singleCompany: company,
+    loading,
+    error,
+  } = useSelector((state) => state.company);
+
+  // 🟢 Fetch data khi component mount
   useEffect(() => {
-    const fetchCompany = async () => {
-      try {
-        const res = await axios.get(`${COMPANY_API_END_POINT}/get/${id}`, {
-          withCredentials: true,
-        });
-        if (res.data.success) {
-          setCompany(res.data.company);
-        } else {
-          toast.error(res.data.message || "Failed to load company");
-        }
-      } catch (error) {
-        console.error("Error fetching company:", error);
-        toast.error(
-          error.response?.data?.message || "Failed to fetch company data"
-        );
-      } finally {
-        setLoading(false);
+    if (id) {
+      if (user?.role === "recruiter") {
+        dispatch(getCompanyByIdAdmin(id));
+      } else {
+        dispatch(getCompanyById(id));
       }
-    };
+    }
+    return () => dispatch(resetCompanyState());
+  }, [dispatch, id, user?.role]);
 
-    if (id) fetchCompany();
-  }, [id]);
+  // 🔴 Hiển thị lỗi
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
-  // 🟡 Hiển thị khi đang tải
+  // 🟡 Loading
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen text-gray-500 text-lg">
         Loading company profile...
       </div>
     );
+
   if (!company)
     return (
       <div className="flex justify-center items-center h-screen text-gray-500 text-lg">
@@ -62,11 +67,13 @@ const ProfileCompany = () => {
       </div>
     );
 
-  // 🟢 Hiển thị thông tin công ty
+  // 🟢 Kiểm tra quyền hiển thị thông tin nội bộ
+  const canViewPrivateInfo = user?.role === "recruiter";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
-        {/* Top Bar (Back + Edit) */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
           <div className="flex items-center gap-3 mb-4 sm:mb-0">
             <Button
@@ -82,7 +89,7 @@ const ProfileCompany = () => {
           </div>
         </div>
 
-        {/* Header Section */}
+        {/* Logo + Name */}
         <div className="flex flex-col md:flex-row items-center gap-8 border-b pb-8">
           <img
             src={company.logo || "/placeholder-company.png"}
@@ -95,24 +102,26 @@ const ProfileCompany = () => {
               {company.industry || "No industry info"}
             </p>
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-              {company.isVerified && (
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                  ✅ Verified
+            {canViewPrivateInfo && (
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+                {company.isVerified && (
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                    ✅ Verified
+                  </span>
+                )}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    company.status === "active"
+                      ? "bg-blue-100 text-blue-700"
+                      : company.status === "inactive"
+                      ? "bg-gray-100 text-gray-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {company.status}
                 </span>
-              )}
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  company.status === "active"
-                    ? "bg-blue-100 text-blue-700"
-                    : company.status === "inactive"
-                    ? "bg-gray-100 text-gray-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {company.status}
-              </span>
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -136,16 +145,26 @@ const ProfileCompany = () => {
               icon={<Globe />}
               label="Website"
               value={company.website}
-              link
+              link="url"
             />
             <InfoRow
               icon={<Facebook />}
               label="Facebook"
               value={company.socials?.facebook}
-              link
+              link="url"
             />
-            <InfoRow icon={<Phone />} label="Phone" value={company.phone} />
-            <InfoRow icon={<Mail />} label="Email" value={company.email} />
+            <InfoRow
+              icon={<Phone />}
+              label="Phone"
+              value={company.phone}
+              link="whatsapp"
+            />
+            <InfoRow
+              icon={<Mail />}
+              label="Email"
+              value={company.email}
+              link="email"
+            />
           </div>
 
           <div className="space-y-4">
@@ -171,9 +190,23 @@ const ProfileCompany = () => {
   );
 };
 
-// 🔹 Component tái sử dụng cho từng dòng thông tin
-const InfoRow = ({ icon, label, value, link = false }) => {
+/* 🔹 InfoRow có thể điều hướng theo loại link:
+   - link="url" → mở trong tab mới
+   - link="whatsapp" → mở chat WhatsApp
+   - link="email" → mở trình soạn email */
+const InfoRow = ({ icon, label, value, link }) => {
   if (!value) return null;
+
+  let href = "#";
+  if (link === "url") {
+    href = value.startsWith("http") ? value : `https://${value}`;
+  } else if (link === "whatsapp") {
+    const phoneNumber = value.replace(/\D/g, ""); // chỉ giữ số
+    href = `https://wa.me/${phoneNumber}`;
+  } else if (link === "email") {
+    href = `mailto:${value}`;
+  }
+
   return (
     <div className="flex items-center gap-3">
       <div className="text-gray-400">{icon}</div>
@@ -181,7 +214,7 @@ const InfoRow = ({ icon, label, value, link = false }) => {
         <span className="font-medium text-gray-900">{label}: </span>
         {link ? (
           <a
-            href={value.startsWith("http") ? value : `https://${value}`}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"

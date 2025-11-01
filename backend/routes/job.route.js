@@ -5,6 +5,7 @@ import {
   getAllJobs, // public: tất cả job
   getJobById, // public: chi tiết 1 job
   postJob, // recruiter: đăng job mới
+  updateJob, // recruiter: cập nhật job
 } from "../controllers/job.controller.js";
 
 const router = express.Router();
@@ -16,5 +17,7 @@ router.get("/get/:id", getJobById);
 // 🔒 Private routes — yêu cầu đăng nhập (recruiter)
 router.post("/post", isAuthenticated, postJob);
 router.get("/getadminjobs", isAuthenticated, getAdminJobs);
+//update job
+router.put("/update/:id", isAuthenticated, updateJob);
 
 export default router;

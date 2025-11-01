@@ -99,9 +99,8 @@ export const register = async (req, res) => {
     // ✅ Create Profile linked to user
     const profileData = {
       user: newUser._id,
+      title: "",
       skills: [],
-      resume: "",
-      resumeOriginalName: "",
       careerObjective: "",
       workExperience: [],
       education: [],
@@ -286,9 +285,6 @@ export const getMyProfile = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 UPDATE PROFILE
-============================== */
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.id;
@@ -300,6 +296,7 @@ export const updateProfile = async (req, res) => {
       dateOfBirth,
       gender,
       bio,
+      title,
       skills,
       careerObjective,
       workExperience,
@@ -330,8 +327,8 @@ export const updateProfile = async (req, res) => {
       const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
         access_mode: "public",
       });
-      profile.resume = cloudResponse.secure_url;
-      profile.resumeOriginalName = file.originalname;
+      user.resume = cloudResponse.secure_url;
+      user.resumeOriginalName = file.originalname;
     }
 
     // ✅ Update User basic info
@@ -342,12 +339,14 @@ export const updateProfile = async (req, res) => {
     if (dateOfBirth) user.dateOfBirth = dateOfBirth;
     if (gender) user.gender = gender;
     if (bio !== undefined) user.bio = bio;
+    if (title !== undefined) profile.title = title;
     if (skills !== undefined)
       profile.skills = Array.isArray(skills)
         ? skills
         : skills.split(",").map((s) => s.trim());
 
     // ✅ Update Profile fields
+
     if (careerObjective !== undefined)
       profile.careerObjective = careerObjective;
     if (workExperience !== undefined)
@@ -398,9 +397,6 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 UPDATE AVATAR
-============================== */
 export const updateAvatar = async (req, res) => {
   try {
     const userId = req.id;
@@ -436,11 +432,6 @@ export const updateAvatar = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
-
-/* ==============================
-   🧩 CHANGE PASSWORD, FORGOT/RESET, LOGOUT
-============================== */
-// Các hàm này bạn có thể giữ nguyên 100%, không cần chỉnh vì không ảnh hưởng Profile.
 
 //change password
 export const changePassword = async (req, res) => {
@@ -659,8 +650,6 @@ export const resetPassword = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
-
-//update avatar
 
 export const logout = async (req, res) => {
   try {

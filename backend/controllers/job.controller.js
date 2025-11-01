@@ -1,6 +1,8 @@
 import { Job } from "../models/job.model.js";
 
-// ADMIN - Post a new job
+// ===============================
+// 🟢 ADMIN - Post a new job
+// ===============================
 export const postJob = async (req, res) => {
   try {
     const {
@@ -8,29 +10,32 @@ export const postJob = async (req, res) => {
       description,
       requirements,
       benefits,
-      salary,
-      location,
+      salaryMin,
+      salaryMax,
+      currency,
+      isNegotiable,
+      province,
+      district,
+      address,
       jobType,
       experience,
       position,
       company,
       category,
       seniorityLevel,
-      applicationDeadline, // 🆕 deadline từ FE gửi lên
+      applicationDeadline,
     } = req.body;
 
     const userId = req.id;
 
-    // Validate required fields
+    // ====== Validation ======
     if (
       !title ||
       !description ||
-      !requirements ||
-      !benefits ||
-      !salary ||
-      !location ||
-      !Array.isArray(jobType) ||
-      jobType.length === 0 ||
+      !salaryMin ||
+      !salaryMax ||
+      !province ||
+      !jobType?.length ||
       !experience ||
       !position ||
       !company ||
@@ -44,31 +49,42 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // Format requirements nếu là chuỗi
+    // ====== Normalize requirements & benefits ======
     const formattedRequirements =
       typeof requirements === "string"
         ? requirements
-            .split(".")
-            .map((item) => item.trim())
-            .filter((i) => i)
+            .split(/[•\-–\.]/)
+            .map((i) => i.trim())
+            .filter(Boolean)
         : requirements;
-    const formatBenefits = (benefits) =>
+
+    const formattedBenefits =
       typeof benefits === "string"
         ? benefits
-            .split(/\n|^-\s*/gm) // tách theo dòng mới hoặc dấu gạch đầu dòng đầu dòng
-            .map((item) => item.trim())
-            .filter((i) => i.length > 0)
+            .split(/\n|^-\s*/gm)
+            .map((i) => i.trim())
+            .filter(Boolean)
         : benefits;
 
+    // ====== Create new job ======
     const job = await Job.create({
       title,
       description,
       requirements: formattedRequirements,
-      benefits: formatBenefits(benefits), // ✅ gọi hàm đúng cách
-      salary,
+      benefits: formattedBenefits,
+      salary: {
+        min: Number(salaryMin),
+        max: Number(salaryMax),
+        currency: currency || "VND",
+        isNegotiable: isNegotiable || false,
+      },
+      location: {
+        province,
+        district: district || "",
+        address: address || "",
+      },
       experienceLevel: experience,
       seniorityLevel,
-      location,
       jobType,
       numberOfPositions: position,
       company,
@@ -78,11 +94,12 @@ export const postJob = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "New job created successfully",
+      message: "✅ New job created successfully",
       success: true,
+      job,
     });
   } catch (err) {
-    console.log("Post Job Error:", err);
+    console.error("❌ Post Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -90,29 +107,36 @@ export const postJob = async (req, res) => {
   }
 };
 
-// STUDENT - Get all jobs (with optional keyword)
+// ===============================
+// 🔵 STUDENT - Get all jobs (with filter)
+// ===============================
 export const getAllJobs = async (req, res) => {
   try {
-    const keyword = req.query.keyword || "";
+    const { keyword, province, minSalary, maxSalary } = req.query;
 
-    const query = {
-      $or: [
+    const query = {};
+
+    if (keyword) {
+      query.$or = [
         { title: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
-      ],
-    };
+      ];
+    }
+
+    if (province) query["location.province"] = province;
+    if (minSalary) query["salary.min"] = { $gte: Number(minSalary) };
+    if (maxSalary) query["salary.max"] = { $lte: Number(maxSalary) };
 
     const jobs = await Job.find(query)
-      .populate("company")
-      .populate("category")
+      .populate("company category")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
-      jobs,
       success: true,
+      jobs,
     });
   } catch (err) {
-    console.log("Get All Jobs Error:", err);
+    console.error("❌ Get All Jobs Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -120,29 +144,22 @@ export const getAllJobs = async (req, res) => {
   }
 };
 
-// STUDENT - Get job by ID
+// ===============================
+// 🔵 STUDENT - Get job by ID
+// ===============================
 export const getJobById = async (req, res) => {
   try {
-    const jobId = req.params.id;
-
-    const job = await Job.findById(jobId)
+    const job = await Job.findById(req.params.id)
       .populate("applications")
       .populate("company")
       .populate("category");
 
-    if (!job) {
-      return res.status(404).json({
-        message: "Job not found",
-        success: false,
-      });
-    }
+    if (!job)
+      return res.status(404).json({ message: "Job not found", success: false });
 
-    return res.status(200).json({
-      job,
-      success: true,
-    });
+    return res.status(200).json({ job, success: true });
   } catch (err) {
-    console.log("Get Job By ID Error:", err);
+    console.error("❌ Get Job By ID Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -150,22 +167,66 @@ export const getJobById = async (req, res) => {
   }
 };
 
-// ADMIN - Get jobs created by admin
+// ===============================
+// 🟡 ADMIN - Get jobs by admin
+// ===============================
 export const getAdminJobs = async (req, res) => {
   try {
     const adminId = req.id;
-
     const jobs = await Job.find({ created_by: adminId })
-      .populate("company")
-      .populate("category")
+      .populate("company category")
       .sort({ createdAt: -1 });
 
+    return res.status(200).json({ jobs, success: true });
+  } catch (err) {
+    console.error("❌ Get Admin Jobs Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// ===============================
+// 🟠 ADMIN - Update job
+// ===============================
+export const updateJob = async (req, res) => {
+  try {
+    const job = await Job.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!job)
+      return res.status(404).json({ message: "Job not found", success: false });
+
     return res.status(200).json({
-      jobs,
+      message: "Job updated successfully",
+      success: true,
+      job,
+    });
+  } catch (err) {
+    console.error("❌ Update Job Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// ===============================
+// 🔴 ADMIN - Delete job
+// ===============================
+export const deleteJob = async (req, res) => {
+  try {
+    const job = await Job.findByIdAndDelete(req.params.id);
+    if (!job)
+      return res.status(404).json({ message: "Job not found", success: false });
+
+    return res.status(200).json({
+      message: "Job deleted successfully",
       success: true,
     });
   } catch (err) {
-    console.log("Get Admin Jobs Error:", err);
+    console.error("❌ Delete Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,

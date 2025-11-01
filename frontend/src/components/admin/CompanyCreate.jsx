@@ -20,7 +20,6 @@ const CompanyCreate = () => {
     }
 
     try {
-      // ✅ Gọi Redux thunk thay cho axios
       const resultAction = await dispatch(
         createCompany({ companyName }) // gửi formData vào thunk
       );
@@ -29,7 +28,6 @@ const CompanyCreate = () => {
       if (createCompany.fulfilled.match(resultAction)) {
         const newCompany = resultAction.payload;
         dispatch(setSingleCompany(newCompany)); // lưu vào store
-        toast.success("Company created successfully!");
         navigate(`/admin/companies/${newCompany._id}`);
       } else {
         toast.error(resultAction.payload || "Failed to create company");

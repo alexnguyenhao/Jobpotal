@@ -93,14 +93,14 @@ const ApplicantsTable = () => {
                 {item?.applicant?.phoneNumber || "N/A"}
               </TableCell>
               <TableCell className="py-3">
-                {item?.applicant?.profile?.resume ? (
+                {item?.applicant?.resume ? (
                   <a
-                    href={item.applicant.profile.resume}
+                    href={item.applicant.resume}
                     className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {item.applicant.profile.resumeOriginalName || "View Resume"}
+                    {item.applicant.resumeOriginalName || "View Resume"}
                   </a>
                 ) : (
                   <span className="text-gray-400">No Resume</span>

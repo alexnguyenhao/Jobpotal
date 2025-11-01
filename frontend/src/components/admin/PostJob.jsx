@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import NavBar from "@/components/shared/NavBar.jsx";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
@@ -25,10 +25,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jobSchema } from "@/lib/jobSchema.js";
 import axios from "axios";
-import { JOB_API_END_POINT } from "@/utils/constant.js";
+import { JOB_API_END_POINT, provinces } from "@/utils/constant.js";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useGetAllCategories from "@/hooks/useGetAllCategoris.jsx";
+
+const PROVINCES = provinces;
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -44,8 +46,13 @@ const PostJob = () => {
       title: "",
       description: "",
       requirements: "",
-      salary: "",
-      location: "",
+      salaryMin: "",
+      salaryMax: "",
+      currency: "VND",
+      isNegotiable: false,
+      province: "",
+      district: "",
+      address: "",
       jobType: [],
       experience: "",
       position: 1,
@@ -57,14 +64,14 @@ const PostJob = () => {
     },
   });
 
-  // ✅ Submit handler
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
+
       const payload = {
         ...data,
-        category: data.categoryId,
         company: data.companyId,
+        category: data.categoryId,
       };
 
       const res = await axios.post(`${JOB_API_END_POINT}/post`, payload, {
@@ -73,7 +80,7 @@ const PostJob = () => {
       });
 
       if (res.data.success) {
-        toast.success("Job posted successfully!");
+        toast.success("✅ Job posted successfully!");
         navigate("/admin/jobs");
       }
     } catch (error) {
@@ -85,28 +92,24 @@ const PostJob = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-10 pt-[80px] max-w-4xl">
-        <div className="mb-8">
-          <Button
-            onClick={() => navigate("/admin/jobs")}
-            variant="outline"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border-gray-300 hover:border-gray-400"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold text-center text-gray-900 mb-4">
-            Post a New Job
-          </h1>
-        </div>
+      <div className="container mx-auto px-4 max-w-4xl">
+        <Button
+          onClick={() => navigate("/admin/jobs")}
+          variant="outline"
+          className="flex items-center gap-2 mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
 
-        {/* ✅ ShadCN Form */}
+        <h1 className="text-2xl font-bold text-center mb-6">Post a New Job</h1>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6"
           >
-            {/* Title */}
+            {/* ===== BASIC INFO ===== */}
             <FormField
               control={form.control}
               name="title"
@@ -121,7 +124,7 @@ const PostJob = () => {
               )}
             />
 
-            {/* Company & Category */}
+            {/* ===== COMPANY & CATEGORY ===== */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -136,13 +139,11 @@ const PostJob = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectGroup>
-                          {companies.map((c) => (
-                            <SelectItem key={c._id} value={c._id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        {companies.map((c) => (
+                          <SelectItem key={c._id} value={c._id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -163,13 +164,11 @@ const PostJob = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectGroup>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat._id} value={cat._id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -178,30 +177,53 @@ const PostJob = () => {
               />
             </div>
 
-            {/* Location & Salary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ===== LOCATION ===== */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="location"
+                name="province"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Province</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PROVINCES.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Hanoi" {...field} />
+                      <Input placeholder="District name..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="salary"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Salary</FormLabel>
+                    <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. $1000/month" {...field} />
+                      <Input placeholder="e.g. 123 Main St" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -209,7 +231,115 @@ const PostJob = () => {
               />
             </div>
 
-            {/* Job Type */}
+            {/* ===== SALARY ===== */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="salaryMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Min Salary</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 8000000"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="salaryMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Max Salary</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 15000000"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex items-end gap-3">
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem className="w-2/3">
+                      <FormLabel>Currency</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="VND">VND</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isNegotiable"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Negotiable</FormLabel>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="w-5 h-5"
+                      />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* ===== EXPERIENCE & POSITION ===== */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="experience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Experience</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. 2+ years" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="position"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Positions</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 3" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* ===== JOB TYPE ===== */}
             <FormField
               control={form.control}
               name="jobType"
@@ -250,38 +380,7 @@ const PostJob = () => {
               )}
             />
 
-            {/* Position & Experience */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Positions</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g. 3" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="experience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Experience</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 2+ years" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Seniority & Deadline */}
+            {/* ===== SENIORITY & DEADLINE ===== */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -296,20 +395,24 @@ const PostJob = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {["Intern", "Junior", "Mid", "Senior", "Lead"].map(
-                          (lvl) => (
-                            <SelectItem key={lvl} value={lvl}>
-                              {lvl}
-                            </SelectItem>
-                          )
-                        )}
+                        {[
+                          "Intern",
+                          "Junior",
+                          "Mid",
+                          "Senior",
+                          "Lead",
+                          "Manager",
+                        ].map((lvl) => (
+                          <SelectItem key={lvl} value={lvl}>
+                            {lvl}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="applicationDeadline"
@@ -325,7 +428,7 @@ const PostJob = () => {
               />
             </div>
 
-            {/* Description, Requirements, Benefits */}
+            {/* ===== DESCRIPTION, REQUIREMENTS, BENEFITS ===== */}
             {["description", "requirements", "benefits"].map((name) => (
               <FormField
                 key={name}
@@ -336,7 +439,7 @@ const PostJob = () => {
                     <FormLabel className="capitalize">{name}</FormLabel>
                     <FormControl>
                       <Textarea
-                        rows={5}
+                        rows={4}
                         placeholder={`Enter ${name} details...`}
                         {...field}
                       />
@@ -347,7 +450,7 @@ const PostJob = () => {
               />
             ))}
 
-            {/* Submit */}
+            {/* ===== SUBMIT ===== */}
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
