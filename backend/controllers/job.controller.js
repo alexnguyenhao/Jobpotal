@@ -107,32 +107,15 @@ export const postJob = async (req, res) => {
   }
 };
 
-// ===============================
-// 🔵 STUDENT - Get all jobs (with filter)
-// ===============================
 export const getAllJobs = async (req, res) => {
   try {
-    const { keyword, province, minSalary, maxSalary } = req.query;
-
-    const query = {};
-
-    if (keyword) {
-      query.$or = [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ];
-    }
-
-    if (province) query["location.province"] = province;
-    if (minSalary) query["salary.min"] = { $gte: Number(minSalary) };
-    if (maxSalary) query["salary.max"] = { $lte: Number(maxSalary) };
-
-    const jobs = await Job.find(query)
+    const jobs = await Job.find()
       .populate("company category")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
+      total: jobs.length,
       jobs,
     });
   } catch (err) {
@@ -145,8 +128,82 @@ export const getAllJobs = async (req, res) => {
 };
 
 // ===============================
-// 🔵 STUDENT - Get job by ID
+// 🔍 STUDENT - Search & Filter Jobs
 // ===============================
+export const searchJobs = async (req, res) => {
+  try {
+    const {
+      title,
+      company,
+      category,
+      location,
+      jobType,
+      experience,
+      seniorityLevel,
+      salaryMin,
+      salaryMax,
+    } = req.query;
+
+    const query = {};
+
+    // 🔎 Keyword / Title Search
+    if (title) {
+      query.$or = [
+        { title: { $regex: title, $options: "i" } },
+        { description: { $regex: title, $options: "i" } },
+      ];
+    }
+
+    // 🏢 Filter: Company
+    if (company) query.company = company;
+
+    // 📂 Filter: Category
+    if (category) query.category = category;
+
+    // 📍 Filter: Location
+    if (location) query["location.province"] = location;
+
+    // 💼 Filter: Job Type
+    if (jobType) query.jobType = jobType;
+
+    // 🧠 Filter: Experience (regex for flexible text)
+    if (experience)
+      query.experienceLevel = { $regex: experience, $options: "i" };
+
+    // 🏆 Filter: Seniority
+    if (seniorityLevel) query.seniorityLevel = seniorityLevel;
+
+    // 💰 Salary range
+    if (salaryMin && salaryMax) {
+      query.$and = [
+        { "salary.min": { $gte: Number(salaryMin) } },
+        { "salary.max": { $lte: Number(salaryMax) } },
+      ];
+    } else if (salaryMin) {
+      query["salary.min"] = { $gte: Number(salaryMin) };
+    } else if (salaryMax) {
+      query["salary.max"] = { $lte: Number(salaryMax) };
+    }
+
+    // 🧾 Execute Query
+    const jobs = await Job.find(query)
+      .populate("company category")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      total: jobs.length,
+      jobs,
+    });
+  } catch (err) {
+    console.error("❌ Search Jobs Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
 export const getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)

@@ -1,23 +1,26 @@
 import express from "express";
-import isAuthenticated from "../middlewares/isAuthenticated.js";
 import {
-  getAdminJobs, // recruiter: xem job của riêng họ
-  getAllJobs, // public: tất cả job
-  getJobById, // public: chi tiết 1 job
-  postJob, // recruiter: đăng job mới
-  updateJob, // recruiter: cập nhật job
+  postJob,
+  getAllJobs,
+  getJobById,
+  getAdminJobs,
+  updateJob,
+  deleteJob,
+  searchJobs,
 } from "../controllers/job.controller.js";
+import isAuthenticated from "../middlewares/isAuthenticated.js";
 
 const router = express.Router();
 
-// 🟢 Public routes — không yêu cầu đăng nhập
+// Public routes
 router.get("/get", getAllJobs);
-router.get("/get/:id", getJobById);
+router.get("/search", searchJobs); // ✅ route mới
 
-// 🔒 Private routes — yêu cầu đăng nhập (recruiter)
+// Authenticated routes
+router.get("/admin", isAuthenticated, getAdminJobs);
 router.post("/post", isAuthenticated, postJob);
-router.get("/getadminjobs", isAuthenticated, getAdminJobs);
-//update job
+router.get("/get/:id", getJobById);
 router.put("/update/:id", isAuthenticated, updateJob);
+router.delete("/delete/:id", isAuthenticated, deleteJob);
 
 export default router;
