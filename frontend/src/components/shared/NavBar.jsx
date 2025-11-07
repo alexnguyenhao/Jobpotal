@@ -79,7 +79,7 @@ const NavBar = () => {
         <Link to={homeRoute} onClick={() => setIsMenuOpen(false)}>
           <h1 className="text-2xl font-bold tracking-tight select-none">
             Job
-            <span className="text-[#F83002] hover:text-[#E82200] transition-colors">
+            <span className="text-[#6A38C2] hover:text-[#5B30A6] transition-colors">
               Portal
             </span>
           </h1>

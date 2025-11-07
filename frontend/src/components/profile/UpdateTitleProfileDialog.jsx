@@ -40,12 +40,12 @@ export default function UpdateTitleProfileDialog({
     defaultValues: { title: "" },
   });
 
-  // 🟣 Reset data when dialog opens
+  //i don't want to reset data when open dialog changes
   useEffect(() => {
-    if (open) {
-      reset({ title: initialData || "" });
+    if (initialData) {
+      reset({ title: initialData });
     }
-  }, [open, initialData, reset]);
+  }, [initialData, reset]);
 
   // 🟢 Submit handler
   const onSubmit = async (data) => {

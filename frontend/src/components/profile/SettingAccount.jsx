@@ -71,7 +71,11 @@ const SettingAccount = () => {
           />
           <span>Password Visibility</span>
         </div>
-        <Button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="bg-[#6A38C2] text-white"
+        >
           {loading ? "Updating..." : "Save Changes"}
         </Button>
       </form>
