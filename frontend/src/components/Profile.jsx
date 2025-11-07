@@ -141,6 +141,55 @@ const Profile = () => {
                 onAvatarChange={handleAvatarChange}
                 onEdit={() => setOpen({ ...open, profile: true })}
               />
+              <div className="mt-14 flex flex-col items-center text-center gap-4 bg-gradient-to-r from-[#f8f6ff] via-white to-[#f8f6ff] rounded-2xl py-10 px-6 border border-gray-200 shadow-sm">
+                <h3 className="text-2xl font-bold text-gray-800 tracking-tight">
+                  🎯 Your Professional Resume
+                </h3>
+                <p className="text-gray-600 max-w-xl text-sm md:text-base">
+                  Showcase your skills, experiences, and achievements in a
+                  clean, professional format. Perfect for recruiters and
+                  employers to review your qualifications.
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-4 mt-4">
+                  {/* 🔹 View Resume */}
+                  <button
+                    onClick={() =>
+                      window.open(`/resume/${user?._id}`, "_blank")
+                    }
+                    className="flex items-center gap-2 bg-[#6A38C2] text-white px-6 py-3 rounded-full font-semibold text-sm shadow-md hover:bg-[#5b29a0] transition-all"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 16h8m-8-4h8m-8-4h8M5 8h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2z"
+                      />
+                    </svg>
+                    View Resume
+                  </button>
+                </div>
+
+                {/* 🌐 Public Link */}
+                <div className="mt-5 text-xs md:text-sm text-gray-500">
+                  or share your public resume link:{" "}
+                  <a
+                    href={`/resume/${user?._id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6A38C2] font-medium hover:underline"
+                  >
+                    https://jobportal.com/resume/{user?._id}
+                  </a>
+                </div>
+              </div>
               <ProfileSections sections={profileSections} />
             </>
           )}
@@ -162,54 +211,6 @@ const Profile = () => {
               <SettingAccount />
             </GlassCard>
           )}
-          {/* 🌟 Resume Section */}
-          <div className="mt-14 flex flex-col items-center text-center gap-4 bg-gradient-to-r from-[#f8f6ff] via-white to-[#f8f6ff] rounded-2xl py-10 px-6 border border-gray-200 shadow-sm">
-            <h3 className="text-2xl font-bold text-gray-800 tracking-tight">
-              🎯 Your Professional Resume
-            </h3>
-            <p className="text-gray-600 max-w-xl text-sm md:text-base">
-              Showcase your skills, experiences, and achievements in a clean,
-              professional format. Perfect for recruiters and employers to
-              review your qualifications.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4 mt-4">
-              {/* 🔹 View Resume */}
-              <button
-                onClick={() => window.open(`/resume/${user?._id}`, "_blank")}
-                className="flex items-center gap-2 bg-[#6A38C2] text-white px-6 py-3 rounded-full font-semibold text-sm shadow-md hover:bg-[#5b29a0] transition-all"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 16h8m-8-4h8m-8-4h8M5 8h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2z"
-                  />
-                </svg>
-                View Resume
-              </button>
-            </div>
-
-            {/* 🌐 Public Link */}
-            <div className="mt-5 text-xs md:text-sm text-gray-500">
-              or share your public resume link:{" "}
-              <a
-                href={`/resume/${user?._id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#6A38C2] font-medium hover:underline"
-              >
-                https://jobportal.com/resume/{user?._id}
-              </a>
-            </div>
-          </div>
         </main>
       </div>
 
