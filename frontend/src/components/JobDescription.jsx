@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "@/components/shared/NavBar.jsx";
 import { Button } from "@/components/ui/button.js";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -9,6 +8,8 @@ import {
 } from "@/utils/constant.js";
 import { setSingleJob } from "@/redux/jobSlice.js";
 import { useDispatch, useSelector } from "react-redux";
+import useSavedJobs from "@/hooks/useSavedJobs.jsx";
+import { Heart, HeartOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   DollarSign,
@@ -35,6 +36,8 @@ const JobDescription = () => {
   const navigate = useNavigate();
 
   const [isApplied, setIsApplied] = useState(false);
+  const { savedJobs, saveJob, unsaveJob, fetchSavedJobs } = useSavedJobs(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const applyJobHandle = async () => {
     try {
@@ -68,6 +71,10 @@ const JobDescription = () => {
             res.data.job.applications?.some((a) => a.applicant === user?._id) ||
             false;
           setIsApplied(applied);
+          const saved = savedJobs?.some(
+            (j) => (j._id || j).toString() === jobId
+          );
+          setIsSaved(saved);
         }
       } catch (err) {
         console.error(err);
@@ -130,10 +137,34 @@ const JobDescription = () => {
                   </Button>
 
                   <Button
-                    variant="outline"
-                    className="flex items-center gap-2 text-[#7209B7] border-[#7209B7] hover:bg-[#f7edff]"
+                    onClick={() => {
+                      if (isSaved) {
+                        unsaveJob(jobId);
+                        setIsSaved(false);
+                        toast.info("Removed from saved jobs");
+                      } else {
+                        saveJob(jobId);
+                        setIsSaved(true);
+                        toast.success("Job saved successfully!");
+                      }
+                    }}
+                    className={`flex items-center gap-2 border transition-all ${
+                      isSaved
+                        ? "bg-[#6A38C2] text-white hover:bg-[#5e0994]"
+                        : "text-[#7209B7] border-[#7209B7] hover:bg-[#f7edff]"
+                    }`}
                   >
-                    <BookmarkCheck className="w-4 h-4" /> Save Job
+                    {isSaved ? (
+                      <>
+                        <Heart className="w-4 h-4 fill-white text-white" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <HeartOff className="w-4 h-4" />
+                        Save Job
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

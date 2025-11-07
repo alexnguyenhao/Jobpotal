@@ -1,13 +1,37 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button.js";
-import { Bookmark } from "lucide-react";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar.js";
 import { Badge } from "@/components/ui/badge.js";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, DollarSign } from "lucide-react";
+import useSavedJobs from "@/hooks/useSavedJobs.jsx";
+import { toast } from "sonner";
 
 const Jobs = ({ job }) => {
   const navigate = useNavigate();
+  const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    // Kiểm tra xem job này đã được lưu chưa
+    const saved = savedJobs?.some((j) => (j._id || j).toString() === job?._id);
+    setIsSaved(saved);
+  }, [savedJobs, job?._id]);
+
+  const handleCardClick = () => navigate(`/description/${job._id}`);
+
+  const handleSaveClick = async () => {
+    if (isSaved) {
+      await unsaveJob(job._id);
+      setIsSaved(false);
+      toast.info("Removed from saved jobs");
+    } else {
+      await saveJob(job._id);
+      setIsSaved(true);
+      toast.success("Job saved successfully!");
+    }
+  };
 
   const daysAgoFunction = (mongodbTime) => {
     const createdAt = new Date(mongodbTime);
@@ -15,9 +39,6 @@ const Jobs = ({ job }) => {
     const timeDifference = currentAt - createdAt;
     const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
     return days === 0 ? "Today" : `${days} day${days > 1 ? "s" : ""} ago`;
-  };
-  const handleCardClick = () => {
-    navigate(`/description/${job._id}`);
   };
 
   return (
@@ -28,9 +49,12 @@ const Jobs = ({ job }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-gray-400 hover:text-blue-600"
+          className={`hover:text-[#7209B7] transition-all ${
+            isSaved ? "text-[#7209B7]" : "text-gray-400"
+          }`}
+          onClick={handleSaveClick}
         >
-          <Bookmark size={16} />
+          {isSaved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
         </Button>
       </div>
 
@@ -40,11 +64,14 @@ const Jobs = ({ job }) => {
           <AvatarImage src={job?.company?.logo} />
         </Avatar>
         <div>
-          <h2 className="font-semibold text-gray-800 text-base truncate hover:underline cursor-pointer">
+          <h2
+            onClick={() => navigate(`/company/${job.company?._id}`)}
+            className="font-semibold text-gray-800 text-base truncate hover:underline cursor-pointer"
+          >
             {job?.company?.name}
           </h2>
           <p className="text-sm text-gray-500 hover:underline cursor-pointer">
-            {job?.location.province}
+            {job?.location?.province || "N/A"}
           </p>
         </div>
       </div>
@@ -53,14 +80,14 @@ const Jobs = ({ job }) => {
       <div className="mb-3">
         <h1
           onClick={handleCardClick}
-          className="font-bold text-lg text-blue-800 line-clamp-1 hover:underline cursor-pointer"
+          className="font-bold text-lg text-[#7209B7] line-clamp-1 hover:underline cursor-pointer"
         >
           {job?.title}
         </h1>
         <p className="text-sm text-gray-600 line-clamp-2">{job?.description}</p>
       </div>
 
-      {/* Only Salary & Deadline */}
+      {/* Salary & Deadline */}
       <div className="flex flex-wrap items-center gap-3 mt-2 mb-5">
         <Badge
           className="text-[#7209B7] font-medium flex items-center gap-1"
@@ -70,14 +97,16 @@ const Jobs = ({ job }) => {
           {formatSalary(job?.salary)}
         </Badge>
 
-        <Badge
-          className="text-green-700 font-medium flex items-center gap-1"
-          variant="outline"
-        >
-          <CalendarDays className="w-4 h-4" />
-          Deadline:{" "}
-          {new Date(job?.applicationDeadline).toLocaleDateString("en-GB")}
-        </Badge>
+        {job?.applicationDeadline && (
+          <Badge
+            className="text-green-700 font-medium flex items-center gap-1"
+            variant="outline"
+          >
+            <CalendarDays className="w-4 h-4" />
+            Deadline:{" "}
+            {new Date(job?.applicationDeadline).toLocaleDateString("en-GB")}
+          </Badge>
+        )}
       </div>
 
       {/* Buttons */}
@@ -85,17 +114,27 @@ const Jobs = ({ job }) => {
         <Button
           variant="outline"
           className="w-1/2 text-sm"
-          onClick={() => navigate(`/description/${job?._id}`)}
+          onClick={handleCardClick}
         >
           View
         </Button>
-        <Button className="bg-[#7209B7] text-white w-1/2 text-sm hover:bg-[#5e0e9e]">
-          Save
+
+        <Button
+          onClick={handleSaveClick}
+          className={`w-1/2 text-sm transition-all ${
+            isSaved
+              ? "bg-[#6A38C2] text-white hover:bg-[#5e0994]"
+              : "bg-gray-100 text-[#7209B7] border border-[#7209B7] hover:bg-[#f7edff]"
+          }`}
+        >
+          {isSaved ? "Saved" : "Save Job"}
         </Button>
       </div>
     </div>
   );
 };
+
+// ✅ Helper: Format Salary
 const formatSalary = (salary) => {
   if (!salary) return "Not specified";
   if (typeof salary === "string") return salary;

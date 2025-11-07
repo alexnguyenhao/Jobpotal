@@ -46,6 +46,8 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       fullName: user?.fullName || "",
+      dateOfBirth: user?.dateOfBirth || "",
+      gender: user?.gender || "male,female,other",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       address: user?.address || "",
@@ -120,6 +122,44 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700">
+                        <User2 size={16} className="text-[#6A38C2]" /> Date of
+                        Birth
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700">
+                        <User2 size={16} className="text-[#6A38C2]" /> Gender
+                      </FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6A38C2]"
+                        >
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

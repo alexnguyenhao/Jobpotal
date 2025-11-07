@@ -1,7 +1,16 @@
 import React from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Mail, Contact, MapPin, Upload, Star, Folder } from "lucide-react";
+import {
+  Mail,
+  Contact,
+  MapPin,
+  Upload,
+  Star,
+  Folder,
+  Calendar,
+  User2,
+} from "lucide-react";
 import GlassCard from "@/components/common/GlassCard";
 import ProfileCompletion from "./ProfileCompletion";
 
@@ -48,6 +57,12 @@ const ProfileHeader = ({
         </p>
 
         <div className="flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-2 bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-inner">
+          <InfoItem
+            icon={Calendar}
+            label="Date of Birth"
+            value={user?.dateOfBirth.split("T")[0]}
+          />
+          <InfoItem icon={User2} label="Gender" value={user?.gender} />
           <InfoItem icon={Mail} label="Email" value={user?.email} />
           <InfoItem icon={Contact} label="Phone" value={user?.phoneNumber} />
           <InfoItem icon={MapPin} label="Location" value={user?.address} />

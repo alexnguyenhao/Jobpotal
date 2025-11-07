@@ -9,6 +9,7 @@ import { sendEmail } from "../libs/send-email.js";
 import Verification from "../models/verification.js";
 import { verifyEmailTemplate } from "../templates/verifyEmailTemplate.js";
 import { aj } from "../libs/arcjet.js";
+import { Job } from "../models/job.model.js";
 
 /* ==============================
    🧩 REGISTER USER
@@ -659,5 +660,96 @@ export const logout = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+  }
+};
+
+// ✅ Save job
+export const saveJob = async (req, res) => {
+  try {
+    const userId = req.id;
+    const { jobId } = req.params;
+
+    const job = await Job.findById(jobId);
+    if (!job)
+      return res.status(404).json({ message: "Job not found", success: false });
+
+    const user = await User.findById(userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
+    if (user.savedJobs.includes(jobId)) {
+      return res.status(400).json({
+        message: "Job already saved",
+        success: false,
+      });
+    }
+
+    user.savedJobs.push(jobId);
+    await user.save();
+
+    return res.status(200).json({
+      message: "✅ Job saved successfully",
+      success: true,
+    });
+  } catch (err) {
+    console.error("❌ Save Job Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// ❌ Remove saved job
+export const unsaveJob = async (req, res) => {
+  try {
+    const userId = req.id;
+    const { jobId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+
+    user.savedJobs = user.savedJobs.filter(
+      (id) => id.toString() !== jobId.toString()
+    );
+
+    await user.save();
+    return res.status(200).json({
+      message: "🗑️ Job removed from saved list",
+      success: true,
+    });
+  } catch (err) {
+    console.error("❌ Unsave Job Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// 📋 Get all saved jobs
+export const getSavedJobs = async (req, res) => {
+  try {
+    const userId = req.id;
+    const user = await User.findById(userId).populate({
+      path: "savedJobs",
+      populate: { path: "company category" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      savedJobs: user.savedJobs || [],
+    });
+  } catch (err) {
+    console.error("❌ Get Saved Jobs Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
   }
 };
