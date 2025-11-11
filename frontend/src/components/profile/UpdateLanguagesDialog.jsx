@@ -14,8 +14,12 @@ import { Label } from "@/components/ui/label";
 import { USER_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
 import { Plus, Trash2, Languages } from "lucide-react";
-import { Controller } from "react-hook-form";
-
+import { Controller, useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { languageSchema } from "@/lib/languageSchema";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "@/redux/authSlice";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -24,28 +28,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { languageSchema } from "@/lib/languageSchema";
+export default function UpdateLanguagesDialog({ open, setOpen }) {
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
 
-export default function UpdateLanguagesDialog({
-  open,
-  setOpen,
-  initialData = [],
-  onUpdate,
-}) {
   const {
     control,
     handleSubmit,
     reset,
     register,
-    setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(languageSchema),
-    defaultValues: {
-      languages: [],
-    },
+    defaultValues: { languages: [] },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -53,20 +49,25 @@ export default function UpdateLanguagesDialog({
     name: "languages",
   });
 
-  // Load data when open
   useEffect(() => {
     if (open) {
       reset({
         languages:
-          initialData.length > 0
-            ? initialData
-            : [{ language: "", proficiency: "Beginner" }],
+          user?.profile?.languages?.length > 0
+            ? user.profile.languages
+            : [
+                {
+                  language: "",
+                  proficiency: "",
+                },
+              ],
       });
     }
-  }, [open, initialData, reset]);
+  }, [open, user, reset]);
 
   const onSubmit = async (data) => {
     try {
+      setLoading(true);
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
         { languages: data.languages },
@@ -74,7 +75,7 @@ export default function UpdateLanguagesDialog({
       );
 
       if (res.data.success) {
-        onUpdate && onUpdate(res.data.user.profile.languages);
+        dispatch(setUser(res.data.user));
         toast.success("Languages updated successfully!");
         setOpen(false);
       }
@@ -82,6 +83,8 @@ export default function UpdateLanguagesDialog({
       toast.error(
         error.response?.data?.message || "Failed to update languages!"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,8 +97,7 @@ export default function UpdateLanguagesDialog({
             Update Languages
           </DialogTitle>
           <DialogDescription className="text-gray-500">
-            Add, edit, or remove the languages you speak and your proficiency
-            level.
+            Add the languages you speak and your level of proficiency.
           </DialogDescription>
         </DialogHeader>
 
@@ -106,24 +108,25 @@ export default function UpdateLanguagesDialog({
                 key={field.id}
                 className="border border-gray-200 bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 space-y-4 relative"
               >
-                {/* Remove button */}
+                {/* Remove Button */}
                 <button
                   type="button"
                   onClick={() => remove(index)}
                   className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
-                  title="Remove"
+                  title="Remove language"
+                  disabled={fields.length === 1}
                 >
                   <Trash2 size={18} />
                 </button>
 
-                {/* Language */}
+                {/* Language Name */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700">
                     Language
                   </Label>
                   <Input
                     {...register(`languages.${index}.language`)}
-                    placeholder="e.g. English, Vietnamese..."
+                    placeholder="e.g. English, Vietnamese"
                     className="border-gray-200 focus:ring-[#6A38C2]/50 focus:border-[#6A38C2]"
                   />
                   {errors.languages?.[index]?.language && (
@@ -134,11 +137,11 @@ export default function UpdateLanguagesDialog({
                 </div>
 
                 {/* Proficiency */}
-                {/* Proficiency */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700">
                     Proficiency
                   </Label>
+
                   <Controller
                     control={control}
                     name={`languages.${index}.proficiency`}
@@ -161,6 +164,7 @@ export default function UpdateLanguagesDialog({
                       </Select>
                     )}
                   />
+
                   {errors.languages?.[index]?.proficiency && (
                     <p className="text-xs text-red-500">
                       {errors.languages[index].proficiency.message}
@@ -183,10 +187,10 @@ export default function UpdateLanguagesDialog({
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="bg-[#6A38C2] hover:bg-[#592ba3] text-white px-6"
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

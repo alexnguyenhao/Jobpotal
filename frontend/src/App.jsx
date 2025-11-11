@@ -24,6 +24,7 @@ import PostJob from "@/components/admin/PostJob.jsx";
 import Applicants from "@/components/admin/Applicants.jsx";
 import ProfileCompany from "@/components/admin/ProfileCompany.jsx";
 import Resume from "@/components/profile/Resume.jsx";
+import RecruiterResume from "./components/admin/RecruiterResume";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -43,7 +44,8 @@ const appRouter = createBrowserRouter([
       { path: "/admin/jobs/:id/applicants", element: <Applicants /> },
       { path: "/company/:id", element: <ProfileCompany /> },
       { path: "/company/update/:id", element: <CompanySetup /> },
-      { path: "/resume/:userId", element: <Resume /> },
+      { path: "/resume", element: <Resume /> },
+      { path: "/resume/:userId", element: <RecruiterResume /> },
     ],
   },
 

@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setCategories } from "@/redux/categorySlice";
-import { CATEGORY_API_END_POINT } from "@/utils/constant.js";
+import { CATEGORY_API_END_POINT } from "@/utils/constant";
 
 const useGetAllCategories = () => {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
+  const { categories } = useSelector((state) => state.category);
+
+  const [loading, setLoading] = useState(!categories.length);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // ✅ Nếu categories đã có → không fetch lại
+    if (categories.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     const fetchCategories = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`${CATEGORY_API_END_POINT}/get`, {
           withCredentials: true,
         });
+
         if (res.data.success) {
           dispatch(setCategories(res.data.categories));
         } else {
@@ -30,9 +39,8 @@ const useGetAllCategories = () => {
     };
 
     fetchCategories();
-  }, [dispatch]);
+  }, [dispatch, categories.length]);
 
-  // ⚠️ QUAN TRỌNG: PHẢI RETURN DỮ LIỆU CHO COMPONENT DÙNG
   return { loading, error };
 };
 

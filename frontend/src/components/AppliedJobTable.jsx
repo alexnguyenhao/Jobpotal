@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table.js";
 import { Badge } from "@/components/ui/badge.js";
 import { useSelector } from "react-redux";
-import { Briefcase, Building2, CalendarDays } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const AppliedJobTable = () => {

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "@/components/shared/NavBar.jsx";
 import ApplicantsTable from "@/components/admin/ApplicantsTable.jsx";
 import { APPLICATION_API_END_POINT } from "@/utils/constant.js";
 import { useParams } from "react-router-dom";

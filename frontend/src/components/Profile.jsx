@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { toast } from "sonner";
-import useGetAppliedJobs from "@/hooks/useGetAppliedJobs";
+import { useGetAppliedJobs } from "@/hooks/useGetAppliedJobs";
 import { USER_API_END_POINT } from "@/utils/constant";
 import { setUser } from "@/redux/authSlice";
 
@@ -154,9 +154,7 @@ const Profile = () => {
                 <div className="flex flex-wrap justify-center gap-4 mt-4">
                   {/* 🔹 View Resume */}
                   <button
-                    onClick={() =>
-                      window.open(`/resume/${user?._id}`, "_blank")
-                    }
+                    onClick={() => window.open(`/resume`, "_blank")}
                     className="flex items-center gap-2 bg-[#6A38C2] text-white px-6 py-3 rounded-full font-semibold text-sm shadow-md hover:bg-[#5b29a0] transition-all"
                   >
                     <svg
@@ -229,19 +227,24 @@ const Profile = () => {
       />
       <UpdateEducationDialog
         open={open.edu}
-        setOpen={(v) => setOpen({ ...open, edu: v })}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, edu: v }))}
+        initialData={user?.profile?.education || []}
       />
+
       <UpdateCertificationDialog
         open={open.cert}
-        setOpen={(v) => setOpen({ ...open, cert: v })}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, cert: v }))}
+        initialData={user?.profile?.certifications || []}
       />
       <UpdateLanguagesDialog
         open={open.lang}
-        setOpen={(v) => setOpen({ ...open, lang: v })}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, lang: v }))}
+        initialData={user?.profile?.languages || []}
       />
       <UpdateAchievementsDialog
         open={open.achieve}
-        setOpen={(v) => setOpen({ ...open, achieve: v })}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, achieve: v }))}
+        initialData={user?.profile?.achievements || []}
       />
       <UpdateProjectsDialog
         open={open.proj}

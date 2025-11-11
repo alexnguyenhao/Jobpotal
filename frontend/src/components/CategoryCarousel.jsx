@@ -9,8 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import useGetAllCategories from "../hooks/useGetAllCategoris";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const CategoryCarousel = () => {
+  const navigate = useNavigate();
   const { loading, error } = useGetAllCategories();
   const { categories } = useSelector((store) => store.category);
 
@@ -55,6 +57,7 @@ const CategoryCarousel = () => {
                 <Button
                   variant="outline"
                   className="w-full rounded-full py-3 text-sm font-medium hover:bg-[#6A38C2] hover:text-white transition-colors duration-300"
+                  onClick={() => navigate(`/jobs?category=${cat._id}`)}
                 >
                   {cat.name}
                 </Button>

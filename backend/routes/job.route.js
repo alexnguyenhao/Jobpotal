@@ -7,6 +7,8 @@ import {
   updateJob,
   deleteJob,
   searchJobs,
+  getJobsByCompany,
+  getJobsByCategory,
 } from "../controllers/job.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 
@@ -22,5 +24,7 @@ router.post("/post", isAuthenticated, postJob);
 router.get("/get/:id", getJobById);
 router.put("/update/:id", isAuthenticated, updateJob);
 router.delete("/delete/:id", isAuthenticated, deleteJob);
+router.get("/company/:companyId", getJobsByCompany);
+router.get("/category/:categoryId", getJobsByCategory);
 
 export default router;

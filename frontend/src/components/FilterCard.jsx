@@ -13,15 +13,15 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { provinces } from "@/utils/constant";
 import useGetAllCategories from "@/hooks/useGetAllCategoris";
-import { Search, Filter, ChevronDown } from "lucide-react";
+import { Search, Filter, ChevronDown, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SelectSearch } from "./shared/SelectSearch";
 
 const JobFilterBar = () => {
   const navigate = useNavigate();
   const { categories } = useSelector((store) => store.category);
   const { companies } = useSelector((store) => store.company);
   useGetAllCategories();
-
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { register, handleSubmit, setValue, watch, reset } = useForm({
@@ -37,137 +37,100 @@ const JobFilterBar = () => {
       salaryMax: "",
     },
   });
-
+  const handleTitleChange = (e) => {
+    setValue("title", e.target.value);
+  };
   const onSubmit = (data) => {
     const params = new URLSearchParams();
+
     Object.entries(data).forEach(([key, val]) => {
-      if (val) {
-        if (key === "title") params.append("keyword", val);
-        else params.append(key, val);
+      if (val && val !== "") {
+        params.append(key === "title" ? "keyword" : key, val);
       }
     });
-
     navigate(`/jobs?${params.toString()}`);
   };
-
   const handleReset = () => {
     reset();
     setShowAdvanced(false);
+    navigate("/jobs");
   };
 
   return (
-    <div className="bg-white border border-gray-200 shadow-md rounded-xl p-5 w-full transition-all duration-300">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* 🔍 Quick Search Row */}
-        <div className="flex flex-col lg:flex-row items-center gap-3">
-          {/* Title Input */}
-          <div className="relative flex-1 w-full">
+    <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+        {/* TOP FILTER ROW */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Keyword */}
+          <div className="relative flex-1 min-w-[200px]">
             <Input
-              type="text"
-              placeholder="Search job title, skill, or company..."
+              placeholder="Search job title, skill..."
               {...register("title")}
-              className="h-11 rounded-md text-[14px] border-gray-300 pl-10 focus:ring-1 focus:ring-[#7209B7] focus:border-[#7209B7]"
+              onChange={handleTitleChange}
+              value={watch("title")}
+              className="h-9 pl-8 text-sm"
             />
-            <Search className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400" />
           </div>
 
-          {/* Category */}
-          <Select
-            onValueChange={(val) => setValue("category", val)}
-            value={watch("category")}
-          >
-            <SelectTrigger className="h-11 w-full lg:w-[180px] text-sm border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c._id} value={c._id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           {/* Location */}
-          <Select
-            onValueChange={(val) => setValue("location", val)}
+          <SelectSearch
+            items={provinces.map((p) => ({ _id: p, name: p }))}
             value={watch("location")}
-          >
-            <SelectTrigger className="h-11 w-full lg:w-[180px] text-sm border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]">
-              <SelectValue placeholder="Location" />
-            </SelectTrigger>
-            <SelectContent>
-              {provinces.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(v) => setValue("location", v)}
+            placeholder="Location"
+            labelKey="name"
+            valueKey="_id"
+          />
+
+          {/* Category */}
+          <SelectSearch
+            items={categories}
+            value={watch("category")}
+            onChange={(v) => setValue("category", v)}
+            placeholder="Category"
+            labelKey="name"
+            valueKey="_id"
+          />
 
           {/* Search Button */}
           <Button
             type="submit"
-            className="h-11 px-6 bg-[#7209B7] hover:bg-[#5c0f8e] text-white flex items-center gap-2 rounded-md text-sm font-medium shadow-sm"
+            className="h-9 px-4 bg-[#7209B7] hover:bg-[#5c0f8e] text-white text-sm"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 mr-1" />
             Search
           </Button>
 
-          {/* Advanced Toggle */}
+          {/* Toggle Advanced */}
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center text-[#7209B7] text-sm font-medium hover:underline"
           >
-            <Filter className="w-4 h-4 mr-1" />
             {showAdvanced ? "Hide Filters" : "More Filters"}
-            <ChevronDown
-              className={`ml-1 w-4 h-4 transform transition-transform ${
-                showAdvanced ? "rotate-180" : ""
-              }`}
-            />
           </button>
         </div>
 
-        {/* 🌈 Advanced Filters */}
+        {/* ADVANCED FILTER PANEL */}
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="overflow-hidden border-t border-gray-100 pt-4"
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-gray-100 pt-3 mt-1"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Company */}
-                <FilterField label="Company">
+              <div className="flex flex-wrap gap-2">
+                <div>
+                  <p className="font-medium text-gray-600 mb-1">Job type</p>
                   <Select
-                    onValueChange={(val) => setValue("company", val)}
-                    value={watch("company")}
-                  >
-                    <SelectTrigger className="h-10 border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]">
-                      <SelectValue placeholder="Select company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FilterField>
-
-                {/* Job Type */}
-                <FilterField label="Job Type">
-                  <Select
-                    onValueChange={(val) => setValue("jobType", val)}
+                    onValueChange={(v) => setValue("jobType", v)}
                     value={watch("jobType")}
                   >
-                    <SelectTrigger className="h-10 border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]">
-                      <SelectValue placeholder="Select job type" />
+                    <SelectTrigger className="h-8 w-[140px] text-xs font-medium bg-gray-50 border-gray-300 rounded-full px-3">
+                      <SelectValue placeholder="Job Type" />
                     </SelectTrigger>
                     <SelectContent>
                       {[
@@ -183,26 +146,17 @@ const JobFilterBar = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                </FilterField>
-
-                {/* Experience */}
-                <FilterField label="Experience">
-                  <Input
-                    type="text"
-                    placeholder="e.g. 2+ years"
-                    {...register("experience")}
-                    className="h-10 border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-[#7209B7]"
-                  />
-                </FilterField>
+                </div>
 
                 {/* Seniority */}
-                <FilterField label="Seniority Level">
+                <div>
+                  <p className="font-medium text-gray-600 mb-1">Seniority</p>
                   <Select
-                    onValueChange={(val) => setValue("seniorityLevel", val)}
+                    onValueChange={(v) => setValue("seniorityLevel", v)}
                     value={watch("seniorityLevel")}
                   >
-                    <SelectTrigger className="h-10 border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]">
-                      <SelectValue placeholder="Select level" />
+                    <SelectTrigger className="h-8 w-[150px] text-xs font-medium bg-gray-50 border-gray-300 rounded-full px-3">
+                      <SelectValue placeholder="Seniority" />
                     </SelectTrigger>
                     <SelectContent>
                       {[
@@ -212,50 +166,73 @@ const JobFilterBar = () => {
                         "Senior",
                         "Lead",
                         "Manager",
-                      ].map((lvl) => (
-                        <SelectItem key={lvl} value={lvl}>
-                          {lvl}
+                      ].map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </FilterField>
+                </div>
 
                 {/* Salary Range */}
-                <FilterField label="Salary Range (VND)">
-                  <div className="flex items-center gap-2">
+                <div>
+                  <p className="font-medium text-gray-600 mb-1">Salary:</p>
+                  <div className="flex items-center bg-gray-50 h-8 px-3 rounded-full border border-gray-300 text-xs gap-1">
                     <Input
-                      type="number"
-                      placeholder="Min"
                       {...register("salaryMin")}
-                      className="h-10 w-[100px] text-sm border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]"
+                      placeholder="Min"
+                      className="h-7 w-14 text-xs border-none bg-transparent"
                     />
-                    <span className="text-gray-500">-</span>
+                    <span>-</span>
                     <Input
-                      type="number"
-                      placeholder="Max"
                       {...register("salaryMax")}
-                      className="h-10 w-[100px] text-sm border-gray-300 rounded-md focus:ring-1 focus:ring-[#7209B7]"
+                      placeholder="Max"
+                      className="h-7 w-14 text-xs border-none bg-transparent"
                     />
                   </div>
-                </FilterField>
+                </div>
+
+                {/* Experience */}
+                <div>
+                  <p className="font-medium text-gray-600">Experience:</p>
+                  <Input
+                    {...register("experience")}
+                    placeholder="Experience"
+                    className="h-8 text-xs w-[150px] bg-gray-50 border-gray-300 rounded-full px-3"
+                  />
+                </div>
+
+                {/* Company */}
+                <div>
+                  <p className="font-medium text-gray-600">Company:</p>
+                  <SelectSearch
+                    items={companies}
+                    value={watch("company")}
+                    onChange={(v) => setValue("company", v)}
+                    placeholder="Company"
+                    labelKey="name"
+                    valueKey="_id"
+                  />
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 mt-4">
+              {/* Apply + Reset */}
+              <div className="flex justify-end gap-2 mt-3">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleReset}
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50 rounded-md text-sm"
+                  className="h-8 text-xs px-3 rounded-full"
                 >
                   Reset
                 </Button>
+
                 <Button
                   type="submit"
-                  className="bg-[#7209B7] hover:bg-[#5c0f8e] text-white text-sm px-6"
+                  className="h-8 text-xs px-4 rounded-full bg-[#7209B7] hover:bg-[#5c0f8e] text-white"
                 >
-                  Apply Filters
+                  Apply
                 </Button>
               </div>
             </motion.div>
@@ -266,7 +243,6 @@ const JobFilterBar = () => {
   );
 };
 
-/* 🧩 Reusable Label Wrapper */
 const FilterField = ({ label, children }) => (
   <div>
     <label className="text-xs font-semibold text-gray-600 mb-1 block">

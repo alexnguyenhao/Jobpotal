@@ -5,9 +5,9 @@ import { useDispatch } from "react-redux";
 import { setAllJobs } from "@/redux/jobSlice.js";
 import { useLocation } from "react-router-dom";
 
-const useGetJobs = () => {
+export const useGetJobs = () => {
   const dispatch = useDispatch();
-  const location = useLocation(); // để bắt query từ URL, ví dụ /jobs?title=developer
+  const location = useLocation();
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -34,5 +34,31 @@ const useGetJobs = () => {
     fetchJobs();
   }, [location.search, dispatch]);
 };
-
-export default useGetJobs;
+export const getJobByCompany = async (companyId) => {
+  try {
+    const res = await axios.get(`${JOB_API_END_POINT}/company/${companyId}`, {
+      withCredentials: true,
+    });
+    if (res.data.success) {
+      return res.data.jobs;
+    }
+    return [];
+  } catch (error) {
+    console.error("❌ Error fetching jobs by company:", error);
+    return [];
+  }
+};
+export const getJobByCategory = async (categoryId) => {
+  try {
+    const res = await axios.get(`${JOB_API_END_POINT}/category/${categoryId}`, {
+      withCredentials: true,
+    });
+    if (res.data.success) {
+      return res.data.jobs;
+    }
+    return [];
+  } catch (error) {
+    console.error("❌ Error fetching jobs by category:", error);
+    return [];
+  }
+};

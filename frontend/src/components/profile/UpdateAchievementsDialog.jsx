@@ -14,23 +14,24 @@ import { Label } from "@/components/ui/label";
 import { USER_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
 import { Star, Plus, Trash2 } from "lucide-react";
-
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "@/redux/authSlice";
+import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { achievementSchema } from "@/lib/achievementSchema";
 
-export default function UpdateAchievementsDialog({
-  open,
-  setOpen,
-  initialData = [],
-  onUpdate,
-}) {
+export default function UpdateAchievementsDialog({ open, setOpen }) {
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+
   const {
     control,
     handleSubmit,
     reset,
     register,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(achievementSchema),
     defaultValues: { achievements: [] },
@@ -41,17 +42,24 @@ export default function UpdateAchievementsDialog({
     name: "achievements",
   });
 
-  // Load lại dữ liệu mỗi khi mở dialog
   useEffect(() => {
     if (open) {
       reset({
-        achievements: initialData.length > 0 ? initialData : [""],
+        achievements:
+          user?.profile?.achievements?.length > 0
+            ? user.profile.achievements
+            : [
+                {
+                  achievement: "",
+                },
+              ],
       });
     }
-  }, [open, initialData, reset]);
+  }, [open, user, reset]);
 
   const onSubmit = async (data) => {
     try {
+      setLoading(true);
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
         { achievements: data.achievements },
@@ -59,7 +67,7 @@ export default function UpdateAchievementsDialog({
       );
 
       if (res.data.success) {
-        onUpdate && onUpdate(res.data.user.profile.achievements);
+        dispatch(setUser(res.data.user));
         toast.success("Achievements updated successfully!");
         setOpen(false);
       }
@@ -67,6 +75,8 @@ export default function UpdateAchievementsDialog({
       toast.error(
         error.response?.data?.message || "Failed to update achievements!"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,10 +143,10 @@ export default function UpdateAchievementsDialog({
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="bg-[#6A38C2] hover:bg-[#592ba3] text-white px-6"
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

@@ -14,7 +14,6 @@ const Jobs = ({ job }) => {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    // Kiểm tra xem job này đã được lưu chưa
     const saved = savedJobs?.some((j) => (j._id || j).toString() === job?._id);
     setIsSaved(saved);
   }, [savedJobs, job?._id]);

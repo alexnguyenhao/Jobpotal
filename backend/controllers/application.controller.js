@@ -81,6 +81,10 @@ export const getApplicants = async (req, res) => {
       options: { sort: { createdAt: -1 } },
       populate: {
         path: "applicant",
+        select: "-password -__v",
+        populate: {
+          path: "profile",
+        },
       },
     });
     if (!job) {

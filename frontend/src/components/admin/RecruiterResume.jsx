@@ -1,5 +1,7 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
+import { useParams, useLocation } from "react-router-dom";
+import axios from "axios";
+import { USER_API_END_POINT } from "@/utils/constant";
 import {
   Mail,
   Phone,
@@ -14,7 +16,6 @@ import {
   FolderGit2,
 } from "lucide-react";
 
-// ================= UI COMPONENTS =================
 const Section = ({ title, icon, children }) => (
   <div className="mb-8">
     <h2 className="text-2xl font-bold text-[#6A38C2] flex items-center gap-2 mb-3">
@@ -34,15 +35,47 @@ const formatDate = (str) => {
   return `${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
-// ================= MAIN COMPONENT =================
-const StudentResume = () => {
-  const { user } = useSelector((store) => store.auth);
+const RecruiterResume = () => {
+  const { userId } = useParams();
+  const { state } = useLocation();
+
+  const [user, setUser] = useState(state?.applicant || null);
+  const [loading, setLoading] = useState(!state?.applicant);
+
+  // 🔥 Nếu recruiter vào trực tiếp URL → fetch user
+  useEffect(() => {
+    if (state?.applicant) return;
+
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${USER_API_END_POINT}/user/${userId}`, {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          setUser(res.data.user);
+        }
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId, state]);
+
+  if (loading) {
+    return (
+      <div className="text-center p-10 text-gray-500">
+        Loading applicant resume...
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <div className="p-10 text-center text-gray-500">
-        No user profile found. Please login again.
-      </div>
+      <div className="text-center p-10 text-gray-500">Applicant not found.</div>
     );
   }
 
@@ -50,44 +83,14 @@ const StudentResume = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-10 my-10 border border-gray-200 font-sans text-gray-900 leading-relaxed">
-      {/* ----------- HEADER ------------- */}
       <header className="border-b pb-6 mb-8 text-center">
         <h1 className="text-4xl font-extrabold text-[#6A38C2]">
           {user.fullName}
         </h1>
 
-        <p className="text-lg text-gray-700 mt-1">
-          {p.title || "Your Professional Summary"}
-        </p>
+        <p className="text-lg text-gray-700 mt-1">{p.title}</p>
 
-        {user.bio && (
-          <p className="text-gray-600 text-sm max-w-2xl mx-auto mt-2">
-            {user.bio}
-          </p>
-        )}
-
-        {p.careerObjective && (
-          <p className="text-gray-500 italic text-sm max-w-xl mx-auto mt-2">
-            {p.careerObjective}
-          </p>
-        )}
-
-        {/* Contact + Personal Info */}
         <div className="flex flex-wrap justify-center gap-6 mt-5 text-sm text-gray-700">
-          {user.dateOfBirth && (
-            <span className="flex items-center gap-1">
-              <Calendar size={16} className="text-[#6A38C2]" />
-              {user.dateOfBirth.split("T")[0]}
-            </span>
-          )}
-
-          {user.gender && (
-            <span className="flex items-center gap-1">
-              <User2 size={16} className="text-[#6A38C2]" />
-              {user.gender}
-            </span>
-          )}
-
           {user.email && (
             <span className="flex items-center gap-1">
               <Mail size={16} className="text-[#6A38C2]" />
@@ -111,7 +114,6 @@ const StudentResume = () => {
         </div>
       </header>
 
-      {/* ----------- SKILLS ------------- */}
       <Section title="Skills" icon={<Star />}>
         {p.skills?.length ? (
           <div className="flex flex-wrap gap-2">
@@ -125,12 +127,11 @@ const StudentResume = () => {
             ))}
           </div>
         ) : (
-          <Empty text="Add your skills to stand out." />
+          <Empty text="No skills added." />
         )}
       </Section>
 
-      {/* ----------- EXPERIENCE ------------- */}
-      <Section title="Professional Experience" icon={<Briefcase />}>
+      <Section title="Experience" icon={<Briefcase />}>
         {p.workExperience?.length ? (
           p.workExperience.map((job, i) => (
             <div key={i} className="mb-6">
@@ -145,11 +146,10 @@ const StudentResume = () => {
             </div>
           ))
         ) : (
-          <Empty text="No work experience yet." />
+          <Empty text="No work experience." />
         )}
       </Section>
 
-      {/* ----------- EDUCATION ------------- */}
       <Section title="Education" icon={<GraduationCap />}>
         {p.education?.length ? (
           p.education.map((edu, i) => (
@@ -165,11 +165,10 @@ const StudentResume = () => {
             </div>
           ))
         ) : (
-          <Empty text="Add your education details." />
+          <Empty text="No education added." />
         )}
       </Section>
 
-      {/* ----------- LANGUAGES ------------- */}
       <Section title="Languages" icon={<Languages />}>
         {p.languages?.length ? (
           p.languages.map((lang, i) => (
@@ -178,56 +177,35 @@ const StudentResume = () => {
             </p>
           ))
         ) : (
-          <Empty text="No languages added yet." />
+          <Empty text="No languages added." />
         )}
       </Section>
 
-      {/* ----------- CERTIFICATIONS ------------- */}
-      <Section title="Certifications" icon={<Award />}>
-        {p.certifications?.length ? (
-          p.certifications.map((cert, i) => (
-            <div key={i} className="mb-3">
-              <h3 className="font-semibold">{cert.name}</h3>
-              <p className="text-sm text-gray-500">
-                {cert.organization}{" "}
-                {cert.dateIssued && `• Issued: ${formatDate(cert.dateIssued)}`}
-              </p>
-            </div>
-          ))
-        ) : (
-          <Empty text="No certifications added yet." />
-        )}
-      </Section>
-
-      {/* ----------- PROJECTS ------------- */}
       <Section title="Projects" icon={<FolderGit2 />}>
         {p.projects?.length ? (
           p.projects.map((proj, i) => (
             <div key={i} className="mb-4">
               <h3 className="text-lg font-semibold">{proj.name}</h3>
-
-              {proj.link && (
-                <a
-                  href={proj.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#6A38C2] underline text-sm"
-                >
-                  {proj.link}
-                </a>
-              )}
-
-              <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">
-                {proj.description}
-              </p>
+              <p className="text-sm">{proj.description}</p>
             </div>
           ))
         ) : (
-          <Empty text="Add your personal or school projects." />
+          <Empty text="No projects added." />
         )}
       </Section>
 
-      {/* ----------- ACHIEVEMENTS ------------- */}
+      <Section title="Certifications" icon={<Award />}>
+        {p.certifications?.length ? (
+          p.certifications.map((cert, i) => (
+            <p key={i} className="text-sm mb-2">
+              • {cert.name} — {cert.organization}
+            </p>
+          ))
+        ) : (
+          <Empty text="No certifications added." />
+        )}
+      </Section>
+
       <Section title="Achievements" icon={<Star />}>
         {p.achievements?.length ? (
           p.achievements.map((ach, i) => <p key={i}>• {ach}</p>)
@@ -239,4 +217,4 @@ const StudentResume = () => {
   );
 };
 
-export default StudentResume;
+export default RecruiterResume;

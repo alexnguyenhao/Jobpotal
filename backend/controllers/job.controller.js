@@ -1,5 +1,6 @@
 import { Job } from "../models/job.model.js";
-
+import { User } from "../models/user.model.js";
+import { sendEmail } from "../libs/send-email.js";
 // ===============================
 // 🟢 ADMIN - Post a new job
 // ===============================
@@ -28,7 +29,6 @@ export const postJob = async (req, res) => {
 
     const userId = req.id;
 
-    // ====== Validation ======
     if (
       !title ||
       !description ||
@@ -49,7 +49,6 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // ====== Normalize requirements & benefits ======
     const formattedRequirements =
       typeof requirements === "string"
         ? requirements
@@ -66,7 +65,6 @@ export const postJob = async (req, res) => {
             .filter(Boolean)
         : benefits;
 
-    // ====== Create new job ======
     const job = await Job.create({
       title,
       description,
@@ -92,9 +90,43 @@ export const postJob = async (req, res) => {
       applicationDeadline: new Date(applicationDeadline),
       created_by: userId,
     });
+    const studentUsers = await User.find({
+      role: "student",
+    }).select("email fullName");
+    console.log("studentUsers:", studentUsers);
+    for (const u of studentUsers) {
+      await sendEmail(
+        u.email,
+        `New Job Posted: ${job.title}`,
+        `
+    <div style="font-family: Arial; padding: 10px;">
+      <h2 style="color:#6A38C2;">New Job Posted</h2>
+      <p>Hello ${u.fullName},</p>
+      <p>A new job has been posted that may match your interest:</p>
+
+      <h3>${job.title}</h3>
+      <p><strong>Location:</strong> ${job.location.province}</p>
+
+      <br/>
+      <a 
+        href="http://localhost:5173/description/${job._id}"
+        style="
+          display:inline-block; 
+          padding:10px 15px; 
+          background:#6A38C2; 
+          color:white; 
+          text-decoration:none; 
+          border-radius:6px;"
+      >
+        View Job →
+      </a>
+    </div>
+    `
+      );
+    }
 
     return res.status(201).json({
-      message: "✅ New job created successfully",
+      message: "✅ New job posted & notifications sent!",
       success: true,
       job,
     });
@@ -126,14 +158,10 @@ export const getAllJobs = async (req, res) => {
     });
   }
 };
-
-// ===============================
-// 🔍 STUDENT - Search & Filter Jobs
-// ===============================
 export const searchJobs = async (req, res) => {
   try {
     const {
-      title,
+      keyword,
       company,
       category,
       location,
@@ -146,46 +174,31 @@ export const searchJobs = async (req, res) => {
 
     const query = {};
 
-    // 🔎 Keyword / Title Search
-    if (title) {
+    // 🔍 Keyword Search (title + description)
+    if (keyword) {
       query.$or = [
-        { title: { $regex: title, $options: "i" } },
-        { description: { $regex: title, $options: "i" } },
+        { title: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
       ];
     }
 
-    // 🏢 Filter: Company
     if (company) query.company = company;
-
-    // 📂 Filter: Category
     if (category) query.category = category;
-
-    // 📍 Filter: Location
     if (location) query["location.province"] = location;
-
-    // 💼 Filter: Job Type
     if (jobType) query.jobType = jobType;
-
-    // 🧠 Filter: Experience (regex for flexible text)
     if (experience)
       query.experienceLevel = { $regex: experience, $options: "i" };
-
-    // 🏆 Filter: Seniority
     if (seniorityLevel) query.seniorityLevel = seniorityLevel;
 
     // 💰 Salary range
-    if (salaryMin && salaryMax) {
-      query.$and = [
-        { "salary.min": { $gte: Number(salaryMin) } },
-        { "salary.max": { $lte: Number(salaryMax) } },
-      ];
-    } else if (salaryMin) {
-      query["salary.min"] = { $gte: Number(salaryMin) };
-    } else if (salaryMax) {
-      query["salary.max"] = { $lte: Number(salaryMax) };
+    if (salaryMin || salaryMax) {
+      query.$and = [];
+      if (salaryMin)
+        query.$and.push({ "salary.min": { $gte: Number(salaryMin) } });
+      if (salaryMax)
+        query.$and.push({ "salary.max": { $lte: Number(salaryMax) } });
     }
 
-    // 🧾 Execute Query
     const jobs = await Job.find(query)
       .populate("company category")
       .sort({ createdAt: -1 });
@@ -284,6 +297,44 @@ export const deleteJob = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Delete Job Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+export const getJobsByCompany = async (req, res) => {
+  try {
+    const companyId = req.params.companyId;
+    const jobs = await Job.find({ company: companyId })
+      .populate("company category")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({
+      success: true,
+      total: jobs.length,
+      jobs,
+    });
+  } catch (err) {
+    console.error("❌ Get Jobs By Company Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+export const getJobsByCategory = async (req, res) => {
+  try {
+    const categoryId = req.params.categoryId;
+    const jobs = await Job.find({ category: categoryId })
+      .populate("company category")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({
+      success: true,
+      total: jobs.length,
+      jobs,
+    });
+  } catch (err) {
+    console.error("❌ Get Jobs By Category Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,

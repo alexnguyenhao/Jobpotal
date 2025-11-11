@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { APPLICATION_API_END_POINT } from "@/utils/constant.js";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const shortListingStatus = ["Accepted", "Rejected"];
 
@@ -84,7 +84,12 @@ const ApplicantsTable = () => {
               className="hover:bg-gray-50 transition-colors duration-200"
             >
               <TableCell className="text-gray-800 py-3">
-                {item?.applicant?.fullName || "N/A"}
+                <Link
+                  to={`/resume/${item?.applicant?._id}`}
+                  state={{ applicant: item.applicant }}
+                >
+                  {item?.applicant?.fullName || "N/A"}
+                </Link>
               </TableCell>
               <TableCell className="text-gray-800 py-3">
                 {item?.applicant?.email || "N/A"}
