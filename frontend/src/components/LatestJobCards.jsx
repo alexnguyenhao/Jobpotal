@@ -9,7 +9,6 @@ const LatestJobCards = ({ job }) => {
   const handleCardClick = () => {
     navigate(`/description/${job._id}`);
   };
-
   return (
     <div
       className="p-5 rounded-xl shadow-md bg-white border border-gray-100 cursor-pointer hover:shadow-lg transition duration-300"

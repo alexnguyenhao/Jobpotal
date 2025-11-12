@@ -256,10 +256,6 @@ export const getAdminJobs = async (req, res) => {
     });
   }
 };
-
-// ===============================
-// 🟠 ADMIN - Update job
-// ===============================
 export const updateJob = async (req, res) => {
   try {
     const job = await Job.findByIdAndUpdate(req.params.id, req.body, {
@@ -282,9 +278,6 @@ export const updateJob = async (req, res) => {
   }
 };
 
-// ===============================
-// 🔴 ADMIN - Delete job
-// ===============================
 export const deleteJob = async (req, res) => {
   try {
     const job = await Job.findByIdAndDelete(req.params.id);

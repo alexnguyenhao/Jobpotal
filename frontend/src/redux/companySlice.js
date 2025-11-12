@@ -2,10 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { COMPANY_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
-
-// ============================================================
-// 🟢 CREATE company
-// ============================================================
 export const createCompany = createAsyncThunk(
   "company/createCompany",
   async (formData, { rejectWithValue }) => {
@@ -24,10 +20,6 @@ export const createCompany = createAsyncThunk(
     }
   }
 );
-
-// ============================================================
-// 🟡 UPDATE company
-// ============================================================
 export const updateCompany = createAsyncThunk(
   "company/updateCompany",
   async ({ id, data }, { rejectWithValue }) => {
@@ -47,9 +39,6 @@ export const updateCompany = createAsyncThunk(
   }
 );
 
-// ============================================================
-// 🔵 GET all companies (recruiter’s list)
-// ============================================================
 export const fetchCompanies = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
@@ -66,15 +55,10 @@ export const fetchCompanies = createAsyncThunk(
     }
   }
 );
-
-// ============================================================
-// 🟣 GET one company (public)
-// ============================================================
 export const getCompanyById = createAsyncThunk(
   "company/getCompanyById",
   async (companyId, { rejectWithValue }) => {
     try {
-      // ✅ public route (không cần auth)
       const res = await axios.get(`${COMPANY_API_END_POINT}/${companyId}`);
       return res.data?.company || null;
     } catch (error) {
@@ -85,10 +69,6 @@ export const getCompanyById = createAsyncThunk(
     }
   }
 );
-
-// ============================================================
-// 🟣 GET one company (for recruiter — private details)
-// ============================================================
 export const getCompanyByIdAdmin = createAsyncThunk(
   "company/getCompanyByIdAdmin",
   async (companyId, { rejectWithValue }) => {
@@ -108,10 +88,6 @@ export const getCompanyByIdAdmin = createAsyncThunk(
     }
   }
 );
-
-// ============================================================
-// 🔴 DELETE company
-// ============================================================
 export const deleteCompany = createAsyncThunk(
   "company/deleteCompany",
   async (companyId, { rejectWithValue }) => {
@@ -126,10 +102,6 @@ export const deleteCompany = createAsyncThunk(
     }
   }
 );
-
-// ============================================================
-// 🧩 Slice setup
-// ============================================================
 const companySlice = createSlice({
   name: "company",
   initialState: {
@@ -157,7 +129,6 @@ const companySlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // =================== FETCH ALL ===================
     builder
       .addCase(fetchCompanies.pending, (state) => {
         state.loading = true;
@@ -171,21 +142,15 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-
-    // =================== CREATE ===================
     builder.addCase(createCompany.fulfilled, (state, action) => {
       state.companies.push(action.payload);
     });
-
-    // =================== UPDATE ===================
     builder.addCase(updateCompany.fulfilled, (state, action) => {
       const index = state.companies.findIndex(
         (c) => c._id === action.payload._id
       );
       if (index !== -1) state.companies[index] = action.payload;
     });
-
-    // =================== GET ONE (public) ===================
     builder
       .addCase(getCompanyById.pending, (state) => {
         state.loading = true;
@@ -199,13 +164,9 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-
-    // =================== GET ONE (admin) ===================
     builder.addCase(getCompanyByIdAdmin.fulfilled, (state, action) => {
       state.singleCompany = action.payload;
     });
-
-    // =================== DELETE ===================
     builder.addCase(deleteCompany.fulfilled, (state, action) => {
       state.companies = state.companies.filter((c) => c._id !== action.payload);
     });

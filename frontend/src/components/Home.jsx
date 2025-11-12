@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   useGetAllJobs();
   const { user } = useSelector((store) => store.auth);
+  const { jobs } = useSelector((store) => store.job);
   const navigate = useNavigate();
   useEffect(() => {
     if (user?.role === "recruiter") {

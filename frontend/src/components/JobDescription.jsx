@@ -9,16 +9,13 @@ import {
 import { setSingleJob } from "@/redux/jobSlice.js";
 import { useDispatch, useSelector } from "react-redux";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
-import { Heart, HeartOff } from "lucide-react";
+import { Heart, HeartOff, Send, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   DollarSign,
   MapPin,
   Hourglass,
   Clock,
-  Send,
-  BookmarkCheck,
-  CheckCircle,
   Briefcase,
   CalendarDays,
   Users,
@@ -36,9 +33,11 @@ const JobDescription = () => {
   const navigate = useNavigate();
 
   const [isApplied, setIsApplied] = useState(false);
-  const { savedJobs, saveJob, unsaveJob, fetchSavedJobs } = useSavedJobs(false);
+  const [isExpired, setIsExpired] = useState(false); // ✅ Check deadline
+  const { savedJobs, saveJob, unsaveJob } = useSavedJobs(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  // ✅ Apply job handler
   const applyJobHandle = async () => {
     try {
       const res = await axios(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {
@@ -52,13 +51,14 @@ const JobDescription = () => {
             applications: [...singleJob.applications, { applicant: user?._id }],
           })
         );
-        toast.success("Applied successfully!");
+        toast.success("🎉 Applied successfully!");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to apply");
+      toast.error(error?.response?.data?.message || "❌ Failed to apply");
     }
   };
 
+  // ✅ Fetch Job Data
   useEffect(() => {
     const fetchJob = async () => {
       try {
@@ -66,18 +66,30 @@ const JobDescription = () => {
           withCredentials: true,
         });
         if (res.data.success) {
-          dispatch(setSingleJob(res.data.job));
-          const applied =
-            res.data.job.applications?.some((a) => a.applicant === user?._id) ||
-            false;
-          setIsApplied(applied);
+          const job = res.data.job;
+          dispatch(setSingleJob(job));
+
+          // ✅ Check deadline (auto disable apply)
+          if (new Date(job.applicationDeadline) < new Date()) {
+            setIsExpired(true);
+          } else {
+            setIsExpired(false);
+          }
+
+          // ✅ Check if already applied
+          const applied = job.applications?.some(
+            (a) => a.applicant === user?._id
+          );
+          setIsApplied(applied || false);
+
+          // ✅ Check if saved
           const saved = savedJobs?.some(
             (j) => (j._id || j).toString() === jobId
           );
           setIsSaved(saved);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Fetch Job Error:", err);
       }
     };
     fetchJob();
@@ -122,18 +134,34 @@ const JobDescription = () => {
                   </span>
                 </div>
 
+                {/* ✅ Hiển thị cảnh báo khi hết hạn */}
+                {isExpired && (
+                  <div className="mt-3 text-red-600 font-medium flex items-center gap-2">
+                    ⚠️ This job has expired and no longer accepts applications.
+                  </div>
+                )}
+
+                {/* ✅ Nút Apply & Save */}
                 <div className="mt-4 flex gap-3">
                   <Button
-                    disabled={isApplied}
-                    onClick={!isApplied ? applyJobHandle : undefined}
+                    disabled={isApplied || isExpired}
+                    onClick={
+                      !isApplied && !isExpired ? applyJobHandle : undefined
+                    }
                     className={`flex items-center gap-2 ${
-                      isApplied
+                      isExpired
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : isApplied
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-[#7209B7] hover:bg-[#5e0994]"
                     }`}
                   >
                     <Send className="w-4 h-4" />
-                    {isApplied ? "Applied" : "Apply Now"}
+                    {isExpired
+                      ? "Expired"
+                      : isApplied
+                      ? "Applied"
+                      : "Apply Now"}
                   </Button>
 
                   <Button
@@ -346,8 +374,6 @@ const InfoLine = ({ icon, text, link }) => (
   </div>
 );
 
-export default JobDescription;
-
 // ✅ Helpers
 const formatLocation = (loc) => {
   if (!loc) return "No location info";
@@ -372,3 +398,5 @@ const formatSalary = (salary) => {
   if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
   return "Not specified";
 };
+
+export default JobDescription;
