@@ -18,6 +18,9 @@ import { Award, Plus, Trash2 } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { certificationSchema } from "@/lib/certificationSchema";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "@/redux/authSlice";
+import { useState } from "react";
 
 // DatePicker
 import DatePicker from "react-datepicker";
@@ -25,18 +28,17 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
 
-export default function UpdateCertificationDialog({
-  open,
-  setOpen,
-  initialData = [],
-  onUpdate,
-}) {
+export default function UpdateCertificationDialog({ open, setOpen }) {
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+
   const {
     control,
     handleSubmit,
     reset,
     register,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(certificationSchema),
     defaultValues: {
@@ -48,22 +50,26 @@ export default function UpdateCertificationDialog({
     control,
     name: "certifications",
   });
-
-  // Load dữ liệu khi mở dialog
   useEffect(() => {
     if (open) {
       reset({
         certifications:
-          initialData.length > 0
-            ? initialData
-            : [{ name: "", organization: "", dateIssued: "" }],
+          user?.profile?.certifications?.length > 0
+            ? user.profile.certifications
+            : [
+                {
+                  name: "",
+                  organization: "",
+                  dateIssued: "",
+                },
+              ],
       });
     }
-  }, [open, initialData, reset]);
-
-  // Submit form
+  }, [open, user, reset]);
   const onSubmit = async (data) => {
     try {
+      setLoading(true);
+
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
         { certifications: data.certifications },
@@ -71,7 +77,7 @@ export default function UpdateCertificationDialog({
       );
 
       if (res.data.success) {
-        onUpdate && onUpdate(res.data.user.profile.certifications);
+        dispatch(setUser(res.data.user));
         toast.success("Certifications updated successfully!");
         setOpen(false);
       }
@@ -79,6 +85,8 @@ export default function UpdateCertificationDialog({
       toast.error(
         error.response?.data?.message || "Failed to update certifications!"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,10 +196,10 @@ export default function UpdateCertificationDialog({
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="bg-[#6A38C2] hover:bg-[#592ba3] text-white px-6"
             >
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

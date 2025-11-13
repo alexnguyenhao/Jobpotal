@@ -94,7 +94,7 @@ const NavBar = () => {
                   <li>
                     <Link
                       to="/admin/companies"
-                      className="hover:text-[#F83002] transition-colors"
+                      className="hover:text-[#5B30A6] transition-colors"
                     >
                       Companies
                     </Link>
@@ -102,7 +102,7 @@ const NavBar = () => {
                   <li>
                     <Link
                       to="/admin/jobs"
-                      className="hover:text-[#F83002] transition-colors"
+                      className="hover:text-[#5B30A6] transition-colors"
                     >
                       Jobs
                     </Link>
@@ -113,7 +113,7 @@ const NavBar = () => {
                   <li>
                     <Link
                       to="/"
-                      className="hover:text-[#F83002] transition-colors"
+                      className="hover:text-[#5B30A6] transition-colors"
                     >
                       Home
                     </Link>
@@ -121,7 +121,7 @@ const NavBar = () => {
                   <li>
                     <Link
                       to="/jobs"
-                      className="hover:text-[#F83002] transition-colors"
+                      className="hover:text-[#5B30A6] transition-colors"
                     >
                       Jobs
                     </Link>
@@ -129,9 +129,17 @@ const NavBar = () => {
                   <li>
                     <Link
                       to="/browse"
-                      className="hover:text-[#F83002] transition-colors"
+                      className="hover:text-[#5B30A6] transition-colors"
                     >
                       Browse
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/cv/home"
+                      className="hover:text-[#5B30A6] transition-colors"
+                    >
+                      CV Builder
                     </Link>
                   </li>
                 </>
@@ -159,7 +167,7 @@ const NavBar = () => {
           ) : (
             <Popover>
               <PopoverTrigger asChild>
-                <Avatar className="cursor-pointer w-10 h-10 ring-2 ring-gray-200 hover:ring-[#F83002] transition-all">
+                <Avatar className="cursor-pointer w-10 h-10 ring-2 ring-gray-200 hover:ring-[#5B30A6] transition-all">
                   <AvatarImage src={user?.profilePhoto} alt={user?.fullName} />
                   <AvatarFallback className="bg-gray-100 text-gray-600">
                     {user?.fullName?.charAt(0)?.toUpperCase() || "U"}

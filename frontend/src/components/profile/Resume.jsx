@@ -230,7 +230,13 @@ const StudentResume = () => {
       {/* ----------- ACHIEVEMENTS ------------- */}
       <Section title="Achievements" icon={<Star />}>
         {p.achievements?.length ? (
-          p.achievements.map((ach, i) => <p key={i}>• {ach}</p>)
+          p.achievements.map((ach, i) => (
+            <div key={i} className="mb-3">
+              <h3 className="font-semibold">{ach.title}</h3>
+              <p className="text-sm text-gray-700">{ach.description}</p>
+              <p className="text-sm text-gray-500">{ach.year}</p>
+            </div>
+          ))
         ) : (
           <Empty text="No achievements added." />
         )}

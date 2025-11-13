@@ -25,6 +25,10 @@ import Applicants from "@/components/admin/Applicants.jsx";
 import ProfileCompany from "@/components/admin/ProfileCompany.jsx";
 import Resume from "@/components/profile/Resume.jsx";
 import RecruiterResume from "./components/admin/RecruiterResume";
+import CVHome from "@/components/cv/CVHome.jsx";
+import CVBuilder from "@/components/cv/CVBuilder.jsx";
+import CVList from "@/components/cv/CVList.jsx";
+import CVView from "@/components/cv/CVView.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -46,6 +50,10 @@ const appRouter = createBrowserRouter([
       { path: "/company/update/:id", element: <CompanySetup /> },
       { path: "/resume", element: <Resume /> },
       { path: "/resume/:userId", element: <RecruiterResume /> },
+      { path: "/cv/home", element: <CVHome /> },
+      { path: "/cv/builder", element: <CVBuilder /> },
+      { path: "/cv/list", element: <CVList /> },
+      { path: "/cv/view/:id", element: <CVView /> },
     ],
   },
 

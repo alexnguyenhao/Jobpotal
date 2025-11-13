@@ -4,7 +4,7 @@ export const APPLICATION_API_END_POINT =
   "http://localhost:8000/api/v1/application";
 export const COMPANY_API_END_POINT = "http://localhost:8000/api/v1/company";
 export const CATEGORY_API_END_POINT = "http://localhost:8000/api/v1/category";
-
+export const CV_API_END_POINT = "http://localhost:8000/api/v1/cv";
 export const provinces = [
   "An Giang",
   "Bà Rịa - Vũng Tàu",

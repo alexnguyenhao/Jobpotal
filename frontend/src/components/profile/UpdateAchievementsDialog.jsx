@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Dialog,
@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { Star, Plus, Trash2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "@/redux/authSlice";
-import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { achievementSchema } from "@/lib/achievementSchema";
@@ -34,14 +33,15 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(achievementSchema),
-    defaultValues: { achievements: [] },
+    defaultValues: {
+      achievements: [],
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "achievements",
   });
-
   useEffect(() => {
     if (open) {
       reset({
@@ -50,16 +50,18 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
             ? user.profile.achievements
             : [
                 {
-                  achievement: "",
+                  title: "",
+                  description: "",
+                  year: "",
                 },
               ],
       });
     }
   }, [open, user, reset]);
-
   const onSubmit = async (data) => {
     try {
       setLoading(true);
+
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
         { achievements: data.achievements },
@@ -82,7 +84,7 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl bg-gradient-to-b from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100">
+      <DialogContent className="max-w-3xl bg-gradient-to-b from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100">
         <DialogHeader className="pb-3 border-b">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800">
             <Star className="text-[#6A38C2]" size={20} />
@@ -101,7 +103,7 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
                 key={field.id}
                 className="relative border border-gray-200 bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
               >
-                {/* Nút xoá */}
+                {/* Remove Button */}
                 <button
                   type="button"
                   onClick={() => remove(index)}
@@ -111,20 +113,57 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
                   <Trash2 size={18} />
                 </button>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Achievement
-                  </Label>
-                  <Input
-                    {...register(`achievements.${index}`)}
-                    placeholder="e.g. Top 10 Outstanding Students 2024"
-                    className="border-gray-200 focus:border-[#6A38C2] focus:ring-[#6A38C2]/40"
-                  />
-                  {errors.achievements?.[index] && (
-                    <p className="text-xs text-red-500">
-                      {errors.achievements[index]?.message}
-                    </p>
-                  )}
+                <div className="space-y-3">
+                  {/* Title */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">
+                      Title
+                    </Label>
+                    <Input
+                      {...register(`achievements.${index}.title`)}
+                      placeholder="e.g. Outstanding Student Award"
+                      className="border-gray-200 focus:border-[#6A38C2] focus:ring-[#6A38C2]/40"
+                    />
+                    {errors.achievements?.[index]?.title && (
+                      <p className="text-xs text-red-500">
+                        {errors.achievements[index].title.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">
+                      Description
+                    </Label>
+                    <Input
+                      {...register(`achievements.${index}.description`)}
+                      placeholder="e.g. Awarded for academic excellence..."
+                      className="border-gray-200 focus:border-[#6A38C2] focus:ring-[#6A38C2]/40"
+                    />
+                    {errors.achievements?.[index]?.description && (
+                      <p className="text-xs text-red-500">
+                        {errors.achievements[index].description.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Year */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">
+                      Year
+                    </Label>
+                    <Input
+                      {...register(`achievements.${index}.year`)}
+                      placeholder="e.g. 2024"
+                      className="border-gray-200 focus:border-[#6A38C2] focus:ring-[#6A38C2]/40"
+                    />
+                    {errors.achievements?.[index]?.year && (
+                      <p className="text-xs text-red-500">
+                        {errors.achievements[index].year.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -135,7 +174,13 @@ export default function UpdateAchievementsDialog({ open, setOpen }) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => append("")}
+              onClick={() =>
+                append({
+                  title: "",
+                  description: "",
+                  year: "",
+                })
+              }
               className="flex items-center gap-2 border-[#6A38C2]/30 text-[#6A38C2]"
             >
               <Plus size={16} /> Add Achievement
