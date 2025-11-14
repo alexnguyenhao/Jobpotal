@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Save, Download, LayoutTemplate, Share2 } from "lucide-react";
+import { Save, LayoutTemplate, Share2 } from "lucide-react";
 import useCV from "@/hooks/useCV";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import StyleEditor from "./StyleEditor";
-import html2pdf from "html2pdf.js";
 
 import {
   Popover,
@@ -20,10 +19,12 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+import PDFExport from "@/components/common/PDFExport";
+
 const TopBar = ({ cvData, onTemplateChange, updateField }) => {
   if (!cvData) return null;
 
-  const { createCV, shareCV } = useCV(); // <-- ĐÃ SỬA
+  const { createCV, shareCV, updateCV } = useCV();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -34,6 +35,7 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
       }
     });
   };
+
   const handleUpdate = () => {
     updateCV(cvData._id, cvData);
   };
@@ -44,17 +46,6 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
       navigator.clipboard.writeText(url);
       alert("Share link copied!");
     }
-  };
-
-  const handleDownload = () => {
-    const element = document.getElementById("cv-preview");
-    const opt = {
-      margin: 0,
-      filename: `${cvData.title || "my-cv"}.pdf`,
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
-    };
-    html2pdf().set(opt).from(element).save();
   };
 
   const templateList = [
@@ -90,7 +81,6 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose template" />
               </SelectTrigger>
-
               <SelectContent>
                 {templateList.map((tpl) => (
                   <SelectItem key={tpl.value} value={tpl.value}>
@@ -101,6 +91,8 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
             </Select>
           </PopoverContent>
         </Popover>
+
+        {/* STYLE */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">🎨 Style</Button>
@@ -115,15 +107,17 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
         <Button variant="outline" onClick={handleShare}>
           <Share2 size={18} /> Share
         </Button>
+
         <Button variant="outline" onClick={handleCreate}>
           <Save size={18} /> Create
         </Button>
+
         <Button variant="outline" onClick={handleUpdate}>
           <Save size={18} /> Update
         </Button>
-        <Button className="bg-[#6A38C2] text-white" onClick={handleDownload}>
-          <Download size={18} /> Export PDF
-        </Button>
+
+        {/* NEW PDF EXPORT COMPONENT */}
+        <PDFExport targetId="cv-print-area" filename={cvData.title} />
       </div>
     </div>
   );

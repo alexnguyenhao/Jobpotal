@@ -4,10 +4,10 @@ import { useSelector } from "react-redux";
 import useCV from "@/hooks/useCV";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Share2 } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 
-import html2pdf from "html2pdf.js";
 import LivePreview from "@/components/cv/builder/LivePreview";
+import PDFExport from "@/components/common/PDFExport";
 
 const CVView = () => {
   const { id } = useParams();
@@ -46,7 +46,7 @@ const CVView = () => {
     );
   }
 
-  // Gộp lại thành cvData chuẩn
+  // Gộp lại thành cvData
   const cvData = {
     _id: meta._id,
     title: meta.title,
@@ -65,20 +65,6 @@ const CVView = () => {
     achievements,
     projects,
     styleConfig,
-  };
-
-  // DOWNLOAD PDF
-  const handleDownload = () => {
-    const element = document.getElementById("cv-print-area");
-
-    const opt = {
-      margin: 0,
-      filename: `${cvData.title || "my-cv"}.pdf`,
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
-    };
-
-    html2pdf().set(opt).from(element).save();
   };
 
   // SHARE CV
@@ -103,9 +89,8 @@ const CVView = () => {
             <Share2 size={18} className="mr-1" /> Chia sẻ
           </Button>
 
-          <Button className="bg-[#6A38C2] text-white" onClick={handleDownload}>
-            <Download size={18} className="mr-1" /> Tải PDF
-          </Button>
+          {/* Nút export PDF mới */}
+          <PDFExport targetId="cv-print-area" filename={cvData.title} />
         </div>
       </div>
 

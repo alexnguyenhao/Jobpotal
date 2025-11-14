@@ -21,9 +21,10 @@ const LivePreview = ({ cvData }) => {
           id="cv-print-area"
           className="bg-white"
           style={{
-            width: "860px", // A4 width
-            minHeight: "1216px", // A4 height
-            overflow: "hidden", // tránh rò layout khi xuất PDF
+            width: "794px", // A4 chuẩn 96 DPI
+            minHeight: "1123px", // A4 chuẩn
+            overflow: "visible", // để xuất PDF full content
+            padding: "24px",
           }}
         >
           <SelectedTemplate data={cvData} />
