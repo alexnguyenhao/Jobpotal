@@ -1,29 +1,33 @@
-import ModernTemplate from "../templates/ModernTemplate";
-import ClassicTemplate from "../templates/ClassicTemplate";
-import CreativeTemplate from "../templates/CreativeTemplate";
+import ModernTemplate from "@/components/cv/templates/ModernTemplate";
+import ClassicTemplate from "@/components/cv/templates/ClassicTemplate";
+import CreativeTemplate from "@/components/cv/templates/CreativeTemplate";
+
+const TEMPLATE_MAP = {
+  modern: ModernTemplate,
+  classic: ClassicTemplate,
+  creative: CreativeTemplate,
+};
 
 const LivePreview = ({ cvData }) => {
-  const renderTemplate = () => {
-    switch (cvData.template) {
-      case "classic":
-        return <ClassicTemplate data={cvData} />;
-      case "creative":
-        return <CreativeTemplate data={cvData} />;
-      default:
-        return <ModernTemplate data={cvData} />;
-    }
-  };
+  if (!cvData) return null;
+
+  const SelectedTemplate = TEMPLATE_MAP[cvData.template] || ModernTemplate;
 
   return (
-    <div className="flex-1 bg-gray-100 overflow-auto p-6 flex justify-center">
-      <div
-        className="bg-white shadow-xl p-10 rounded-lg"
-        style={{
-          width: "794px", // A4 width px
-          minHeight: "1123px", // A4 height px
-        }}
-      >
-        {renderTemplate()}
+    <div className="flex-1 overflow-auto bg-gray-100 p-10">
+      <div className="flex justify-center">
+        {/* Vùng này sẽ được export PDF */}
+        <div
+          id="cv-print-area"
+          className="bg-white"
+          style={{
+            width: "860px", // A4 width
+            minHeight: "1216px", // A4 height
+            overflow: "hidden", // tránh rò layout khi xuất PDF
+          }}
+        >
+          <SelectedTemplate data={cvData} />
+        </div>
       </div>
     </div>
   );

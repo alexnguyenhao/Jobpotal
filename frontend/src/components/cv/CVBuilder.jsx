@@ -1,70 +1,108 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import useCV from "@/hooks/useCV";
-import { useSelector, useDispatch } from "react-redux";
-import { setSingleCV } from "@/redux/cvSlice";
+import { useSelector } from "react-redux";
 
 import TopBar from "@/components/cv/builder/TopBar";
 import Sidebar from "@/components/cv/builder/Sidebar";
 import LivePreview from "@/components/cv/builder/LivePreview";
 
 const CVBuilder = () => {
-  const dispatch = useDispatch();
-  const { singleCV } = useSelector((state) => state.cv);
-  const { createCV, getCV, updateCV } = useCV();
-  const [searchParams] = useSearchParams();
+  const {
+    meta,
+    personalInfo,
+    education,
+    workExperience,
+    skills,
+    certifications,
+    languages,
+    achievements,
+    projects,
+    styleConfig,
+  } = useSelector((state) => state.cv);
 
+  const { createCV, getCV, updateCV } = useCV();
+
+  const [searchParams] = useSearchParams();
   const templateParam = searchParams.get("template");
   const cvId = searchParams.get("id");
-
   const [cvData, setCvData] = useState(null);
-
-  /* =============================
-        LOAD CV (new or from id)
-  ============================= */
+  const hasInitialized = useRef(false);
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     if (cvId) {
       getCV(cvId);
     } else if (templateParam) {
-      createCV(templateParam).then((newCV) => {
+      createCV({ template: templateParam }).then((newCV) => {
         if (newCV) {
-          dispatch(setSingleCV(newCV));
-          setCvData(newCV);
+          getCV(newCV._id);
         }
       });
     }
   }, []);
-
-  /* =============================
-        SYNC REDUX → LOCAL STATE
-  ============================= */
   useEffect(() => {
-    if (singleCV) setCvData(singleCV);
-  }, [singleCV]);
+    if (!meta._id) return;
 
-  /* =============================
-        HANDLE INPUT CHANGE
-  ============================= */
+    setCvData({
+      _id: meta._id,
+      title: meta.title,
+      template: meta.template,
+      isPublic: meta.isPublic,
+      shareUrl: meta.shareUrl,
+      createdAt: meta.createdAt,
+      updatedAt: meta.updatedAt,
+      user: meta.user,
+
+      personalInfo,
+      education,
+      workExperience,
+      skills,
+      certifications,
+      languages,
+      achievements,
+      projects,
+      styleConfig,
+    });
+  }, [
+    meta,
+    personalInfo,
+    education,
+    workExperience,
+    skills,
+    certifications,
+    languages,
+    achievements,
+    projects,
+    styleConfig,
+  ]);
   const updateField = (path, value) => {
-    const clone = { ...cvData };
-    let ref = clone;
+    setCvData((prev) => {
+      const updated = structuredClone(prev);
 
-    const keys = path.split(".");
-    keys.slice(0, -1).forEach((k) => (ref = ref[k]));
-    ref[keys[keys.length - 1]] = value;
+      if (!path.includes(".")) {
+        updated[path] = value;
+      } else {
+        const keys = path.split(".");
+        let ref = updated;
 
-    setCvData(clone);
-    updateCV(clone._id, clone); // autosave
+        keys.slice(0, -1).forEach((k) => {
+          ref = ref[k];
+        });
+
+        ref[keys[keys.length - 1]] = value;
+      }
+      updateCV(updated._id, updated);
+
+      return updated;
+    });
   };
 
-  /* =============================
-        HANDLE TEMPLATE CHANGE
-  ============================= */
   const handleTemplateChange = (newTemplate) => {
     const updated = { ...cvData, template: newTemplate };
-
-    setCvData(updated); // đổi template realtime
-    updateCV(updated._id, updated); // lưu backend
+    setCvData(updated);
+    updateCV(updated._id, { template: newTemplate });
   };
 
   if (!cvData)
@@ -76,11 +114,14 @@ const CVBuilder = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <TopBar cvData={cvData} onTemplateChange={handleTemplateChange} />
+      <TopBar
+        cvData={cvData}
+        onTemplateChange={handleTemplateChange}
+        updateField={updateField}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar cvData={cvData} updateField={updateField} />
-
         <LivePreview cvData={cvData} />
       </div>
     </div>

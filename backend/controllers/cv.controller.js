@@ -2,7 +2,6 @@ import { CV } from "../models/cv.model.js";
 import { Profile } from "../models/profile.model.js";
 import { User } from "../models/user.model.js";
 import crypto from "crypto";
-
 export const createCV = async (req, res) => {
   try {
     const userId = req.id;
@@ -24,29 +23,33 @@ export const createCV = async (req, res) => {
       personalInfo: {
         fullName: user.fullName,
         email: user.email,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
         phone: user.phoneNumber,
         address: user.address,
         profilePhoto: user.profilePhoto,
         summary: profile.careerObjective,
+        position: req.body.position || "",
       },
 
-      education: Array.isArray(profile.education) ? profile.education : [],
+      education: profile.education || [],
+      workExperience: profile.workExperience || [],
+      skills: profile.skills || [],
+      certifications: profile.certifications || [],
+      languages: profile.languages || [],
+      achievements: profile.achievements || [],
+      projects: profile.projects || [],
 
-      workExperience: Array.isArray(profile.workExperience)
-        ? profile.workExperience
-        : [],
-
-      skills: Array.isArray(profile.skills) ? profile.skills : [],
-
-      certifications: Array.isArray(profile.certifications)
-        ? profile.certifications
-        : [],
-
-      languages: Array.isArray(profile.languages) ? profile.languages : [],
-      achievements: Array.isArray(profile.achievements)
-        ? profile.achievements
-        : [],
-      projects: Array.isArray(profile.projects) ? profile.projects : [],
+      styleConfig: {
+        fontFamily: "font-sans",
+        fontSizeClass: "text-base",
+        primaryColor: "#4D6CFF",
+        backgroundColor: "#ffffff",
+        textColor: "#111",
+        spacing: "normal",
+        borderRadius: 12,
+        shadowLevel: 1,
+      },
     });
 
     res.status(201).json({ success: true, cv });
@@ -55,6 +58,7 @@ export const createCV = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 export const getMyCVs = async (req, res) => {
   const cvs = await CV.find({ user: req.id }).sort({ createdAt: -1 });
   res.status(200).json({ success: true, cvs });
@@ -66,7 +70,6 @@ export const getCVById = async (req, res) => {
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
 
-  // user cannot access someone else private CV
   if (!cv.isPublic && cv.user.toString() !== req.id) {
     return res
       .status(403)
@@ -76,23 +79,23 @@ export const getCVById = async (req, res) => {
   res.status(200).json({ success: true, cv });
 };
 
-/* -----------------------------------
-   UPDATE CV (protected)
------------------------------------ */
 export const updateCV = async (req, res) => {
-  const cv = await CV.findById(req.params.id);
+  try {
+    const cvId = req.params.id;
 
-  if (!cv)
-    return res.status(404).json({ success: false, message: "CV not found" });
-  if (cv.user.toString() !== req.id)
-    return res
-      .status(403)
-      .json({ success: false, message: "Permission denied" });
+    const updatedCV = await CV.findByIdAndUpdate(
+      cvId,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
 
-  const updated = await CV.findByIdAndUpdate(cv._id, req.body, { new: true });
-
-  res.status(200).json({ success: true, cv: updated });
+    res.json({ success: true, cv: updatedCV });
+  } catch (err) {
+    console.log("CV UPDATE ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
+
 export const deleteCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -107,6 +110,7 @@ export const deleteCV = async (req, res) => {
 
   res.status(200).json({ success: true, message: "CV deleted" });
 };
+
 export const makePublic = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -116,10 +120,12 @@ export const makePublic = async (req, res) => {
     return res
       .status(403)
       .json({ success: false, message: "Permission denied" });
+
   const shareUrl = crypto.randomBytes(8).toString("hex");
 
   cv.isPublic = true;
   cv.shareUrl = shareUrl;
+
   await cv.save();
 
   res.status(200).json({
@@ -138,10 +144,13 @@ export const getPublicCV = async (req, res) => {
 
   res.status(200).json({ success: true, cv });
 };
+
 export const unShareCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
+
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
+
   if (cv.user.toString() !== req.id)
     return res
       .status(403)
@@ -149,6 +158,7 @@ export const unShareCV = async (req, res) => {
 
   cv.isPublic = false;
   cv.shareUrl = null;
+
   await cv.save();
 
   res.status(200).json({ success: true, message: "CV unshared" });

@@ -2,15 +2,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const ExperienceSection = ({ cvData, updateField }) => {
-  const handleEdit = (i, key, v) => {
-    const arr = [...cvData.workExperience];
-    arr[i][key] = v;
-    updateField("workExperience", arr);
+  const handleEdit = (index, key, val) => {
+    const cloned = cvData.workExperience.map((item) => structuredClone(item));
+    cloned[index][key] = val;
+    updateField("workExperience", cloned);
   };
 
   const handleAdd = () => {
     updateField("workExperience", [
-      ...cvData.workExperience,
+      ...cvData.workExperience.map((i) => structuredClone(i)),
       {
         position: "",
         company: "",
@@ -21,10 +21,12 @@ const ExperienceSection = ({ cvData, updateField }) => {
     ]);
   };
 
-  const handleDelete = (i) => {
+  const handleDelete = (index) => {
     updateField(
       "workExperience",
-      cvData.workExperience.filter((_, idx) => idx !== i)
+      cvData.workExperience
+        .filter((_, i) => i !== index)
+        .map((i) => structuredClone(i))
     );
   };
 

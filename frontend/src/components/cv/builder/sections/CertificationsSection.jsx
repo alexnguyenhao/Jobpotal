@@ -1,23 +1,27 @@
 import { Input } from "@/components/ui/input";
 
 const CertificationsSection = ({ cvData, updateField }) => {
-  const update = (i, key, v) => {
-    const arr = [...cvData.certifications];
-    arr[i][key] = v;
-    updateField("certifications", arr);
+  const update = (index, key, val) => {
+    const cloned = cvData.certifications.map((c) => structuredClone(c));
+    cloned[index][key] = val;
+    updateField("certifications", cloned);
   };
 
-  const add = () =>
+  const add = () => {
     updateField("certifications", [
-      ...cvData.certifications,
+      ...cvData.certifications.map((c) => structuredClone(c)),
       { name: "", organization: "", dateIssued: "" },
     ]);
+  };
 
-  const remove = (i) =>
+  const remove = (index) => {
     updateField(
       "certifications",
-      cvData.certifications.filter((_, idx) => idx !== i)
+      cvData.certifications
+        .filter((_, i) => i !== index)
+        .map((c) => structuredClone(c))
     );
+  };
 
   return (
     <div className="mb-10">

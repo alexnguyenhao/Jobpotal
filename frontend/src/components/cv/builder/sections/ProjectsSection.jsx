@@ -2,23 +2,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const ProjectsSection = ({ cvData, updateField }) => {
-  const onEdit = (i, key, val) => {
-    const arr = [...cvData.projects];
-    arr[i][key] = val;
-    updateField("projects", arr);
+  const onEdit = (index, key, val) => {
+    const cloned = cvData.projects.map((p) => structuredClone(p));
+    cloned[index][key] = val;
+    updateField("projects", cloned);
   };
 
-  const add = () =>
+  const add = () => {
     updateField("projects", [
-      ...cvData.projects,
+      ...cvData.projects.map((p) => structuredClone(p)),
       { title: "", link: "", description: "", technologies: [] },
     ]);
+  };
 
-  const del = (i) =>
+  const del = (index) => {
     updateField(
       "projects",
-      cvData.projects.filter((_, idx) => idx !== i)
+      cvData.projects
+        .filter((_, i) => i !== index)
+        .map((p) => structuredClone(p))
     );
+  };
 
   return (
     <div className="mb-10">

@@ -2,23 +2,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const AchievementsSection = ({ cvData, updateField }) => {
-  const edit = (i, key, v) => {
-    const arr = [...cvData.achievements];
-    arr[i][key] = v;
-    updateField("achievements", arr);
+  const edit = (index, key, val) => {
+    const cloned = cvData.achievements.map((a) => structuredClone(a));
+    cloned[index][key] = val;
+    updateField("achievements", cloned);
   };
 
-  const add = () =>
+  const add = () => {
     updateField("achievements", [
-      ...cvData.achievements,
+      ...cvData.achievements.map((a) => structuredClone(a)),
       { title: "", description: "", year: "" },
     ]);
+  };
 
-  const remove = (i) =>
+  const remove = (index) => {
     updateField(
       "achievements",
-      cvData.achievements.filter((_, idx) => idx !== i)
+      cvData.achievements
+        .filter((_, i) => i !== index)
+        .map((a) => structuredClone(a))
     );
+  };
 
   return (
     <div className="mb-10">

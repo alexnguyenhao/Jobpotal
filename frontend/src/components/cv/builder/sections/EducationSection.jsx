@@ -3,14 +3,14 @@ import { Textarea } from "@/components/ui/textarea";
 
 const EducationSection = ({ cvData, updateField }) => {
   const handleEdit = (index, key, val) => {
-    const arr = [...cvData.education];
-    arr[index][key] = val;
-    updateField("education", arr);
+    const cloned = cvData.education.map((item) => structuredClone(item));
+    cloned[index][key] = val;
+    updateField("education", cloned);
   };
 
   const handleAdd = () => {
     updateField("education", [
-      ...cvData.education,
+      ...cvData.education.map((i) => structuredClone(i)),
       {
         school: "",
         degree: "",
@@ -25,7 +25,9 @@ const EducationSection = ({ cvData, updateField }) => {
   const handleDelete = (index) => {
     updateField(
       "education",
-      cvData.education.filter((_, i) => i !== index)
+      cvData.education
+        .filter((_, i) => i !== index)
+        .map((i) => structuredClone(i))
     );
   };
 

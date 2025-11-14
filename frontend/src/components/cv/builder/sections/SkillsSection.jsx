@@ -9,10 +9,9 @@ const SkillsSection = ({ cvData, updateField }) => {
         rows={3}
         value={cvData.skills.join(", ")}
         onChange={(e) =>
-          updateField(
-            "skills",
-            e.target.value.split(",").map((s) => s.trim())
-          )
+          updateField("skills", [
+            ...e.target.value.split(",").map((s) => s.trim()),
+          ])
         }
         placeholder="React, Tailwind, Node.js..."
       />

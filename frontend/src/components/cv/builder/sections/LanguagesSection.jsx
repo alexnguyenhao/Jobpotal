@@ -1,23 +1,27 @@
 import { Input } from "@/components/ui/input";
 
 const LanguagesSection = ({ cvData, updateField }) => {
-  const edit = (i, key, v) => {
-    const arr = [...cvData.languages];
-    arr[i][key] = v;
-    updateField("languages", arr);
+  const edit = (index, key, val) => {
+    const cloned = cvData.languages.map((l) => structuredClone(l));
+    cloned[index][key] = val;
+    updateField("languages", cloned);
   };
 
-  const add = () =>
+  const add = () => {
     updateField("languages", [
-      ...cvData.languages,
+      ...cvData.languages.map((l) => structuredClone(l)),
       { language: "", proficiency: "" },
     ]);
+  };
 
-  const remove = (i) =>
+  const remove = (index) => {
     updateField(
       "languages",
-      cvData.languages.filter((_, idx) => idx !== i)
+      cvData.languages
+        .filter((_, i) => i !== index)
+        .map((l) => structuredClone(l))
     );
+  };
 
   return (
     <div className="mb-10">

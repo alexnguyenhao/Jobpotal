@@ -3,6 +3,8 @@ import { Save, Download, LayoutTemplate, Share2 } from "lucide-react";
 import useCV from "@/hooks/useCV";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import StyleEditor from "./StyleEditor";
+import html2pdf from "html2pdf.js";
 
 import {
   Popover,
@@ -18,15 +20,22 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const TopBar = ({ cvData, onTemplateChange }) => {
+const TopBar = ({ cvData, onTemplateChange, updateField }) => {
   if (!cvData) return null;
 
   const { createCV, shareCV } = useCV(); // <-- ĐÃ SỬA
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const handleSave = () => {
-    createCV(cvData); // <-- ĐÃ SỬA
+  const handleCreate = () => {
+    createCV({ template: cvData.template }).then((newCV) => {
+      if (newCV) {
+        navigate(`/cv/builder?id=${newCV._id}`);
+      }
+    });
+  };
+  const handleUpdate = () => {
+    updateCV(cvData._id, cvData);
   };
 
   const handleShare = async () => {
@@ -35,6 +44,17 @@ const TopBar = ({ cvData, onTemplateChange }) => {
       navigator.clipboard.writeText(url);
       alert("Share link copied!");
     }
+  };
+
+  const handleDownload = () => {
+    const element = document.getElementById("cv-preview");
+    const opt = {
+      margin: 0,
+      filename: `${cvData.title || "my-cv"}.pdf`,
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
+    };
+    html2pdf().set(opt).from(element).save();
   };
 
   const templateList = [
@@ -81,16 +101,27 @@ const TopBar = ({ cvData, onTemplateChange }) => {
             </Select>
           </PopoverContent>
         </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">🎨 Style</Button>
+          </PopoverTrigger>
+
+          <PopoverContent className="w-80 max-h-[420px] overflow-y-auto p-4">
+            <p className="font-semibold mb-3">Customize Style</p>
+            <StyleEditor cvData={cvData} updateField={updateField} />
+          </PopoverContent>
+        </Popover>
 
         <Button variant="outline" onClick={handleShare}>
           <Share2 size={18} /> Share
         </Button>
-
-        <Button variant="outline" onClick={handleSave}>
-          <Save size={18} /> Save
+        <Button variant="outline" onClick={handleCreate}>
+          <Save size={18} /> Create
         </Button>
-
-        <Button className="bg-[#6A38C2] text-white">
+        <Button variant="outline" onClick={handleUpdate}>
+          <Save size={18} /> Update
+        </Button>
+        <Button className="bg-[#6A38C2] text-white" onClick={handleDownload}>
           <Download size={18} /> Export PDF
         </Button>
       </div>

@@ -11,18 +11,15 @@ import ClassicTemplate from "@/components/cv/templates/ClassicTemplate";
 import CreativeTemplate from "@/components/cv/templates/CreativeTemplate";
 
 const TemplatePreviewModal = ({ open, onClose, template }) => {
-  // =======================
-  // DEMO DATA (FULL)
-  // =======================
   const demoData = {
     personalInfo: {
-      fullName: "Nguyễn Văn A",
+      fullName: "Nguyen Van A",
       email: "nguyenvana@example.com",
       phone: "0987 123 456",
-      address: "Hà Nội, Việt Nam",
+      address: "Hanoi, Vietnam",
       profilePhoto: "/default-avatar.png",
       summary:
-        "Front-end Developer với 3 năm kinh nghiệm xây dựng giao diện tối ưu, chuyên React, Tailwind và UX.",
+        "Front-end Developer with 3 years of experience in building optimized interfaces, specializing in React, Tailwind, and UX.",
     },
 
     skills: [
@@ -36,13 +33,13 @@ const TemplatePreviewModal = ({ open, onClose, template }) => {
 
     education: [
       {
-        school: "Đại học Bách Khoa Hà Nội",
-        degree: "Cử nhân",
-        major: "Công nghệ thông tin",
+        school: "Hanoi University of Science and Technology",
+        degree: "Bachelor's Degree",
+        major: "Information Technology",
         startDate: "2018",
         endDate: "2022",
         description:
-          "Tốt nghiệp loại Giỏi, tham gia CLB Lập Trình & Hackathon.",
+          "Graduated with Distinction, participated in Programming Club & Hackathons.",
       },
     ],
 
@@ -53,37 +50,37 @@ const TemplatePreviewModal = ({ open, onClose, template }) => {
         startDate: "2021",
         endDate: "2023",
         description:
-          "Phát triển giao diện, tối ưu tốc độ tải trang 40%, xây dựng UI component tái sử dụng.",
+          "Developed user interfaces, optimized page loading speed by 40%, built reusable UI components.",
       },
     ],
 
     projects: [
       {
-        name: "Job Portal UI",
+        title: "Job Portal UI",
         link: "#",
         description:
-          "Nền tảng tìm kiếm việc làm, có AI matching và CV Builder.",
-        techStack: ["React", "Node.js", "MongoDB"],
+          "A job search platform with AI matching and a CV Builder system.",
+        technologies: ["React", "TailwindCSS", "Node.js"],
       },
     ],
 
     certifications: [
       {
         title: "AWS Cloud Practitioner",
-        issuer: "Amazon",
-        date: "2022",
+        organization: "Amazon Web Services",
+        dateIssued: "2022",
       },
     ],
 
     languages: [
-      { language: "Tiếng Việt", level: "Native" },
-      { language: "Tiếng Anh", level: "Fluent" },
+      { language: "Vietnamese", level: "Native" },
+      { language: "English", level: "Fluent" },
     ],
 
     achievements: [
       {
-        title: "Sinh viên xuất sắc",
-        description: "Top 5% khoa CNTT",
+        title: "Outstanding Student Award",
+        description: "Top 5% in the IT department",
         year: "2021",
       },
     ],
@@ -110,14 +107,24 @@ const TemplatePreviewModal = ({ open, onClose, template }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
+      <DialogContent
+        className="w-full h-[95vh] max-w-[95vw] p-0 overflow-hidden rounded-xl"
+        style={{ maxWidth: "95vw" }}
+      >
+        <DialogHeader className="px-6 py-4 shadow">
           <DialogTitle className="text-xl font-bold capitalize">
             {template} Template Preview
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex justify-center py-6">{renderTemplate()}</div>
+        <div className="w-full h-full overflow-auto flex justify-center py-10 bg-gray-100">
+          <div
+            className="origin-top transform scale-[0.8]"
+            style={{ width: "794px" }} // A4 width
+          >
+            {renderTemplate()}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -18,7 +18,6 @@ const CVHome = () => {
   const navigate = useNavigate();
   const [openPreview, setOpenPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-
   const previewTemplate = (template) => {
     setSelectedTemplate(template);
     setOpenPreview(true);
@@ -58,39 +57,12 @@ const CVHome = () => {
           </div>
         </div>
       </section>
-
-      {/* ================= TEMPLATE PREVIEW ================= */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold text-center mb-10">
           Professional CV Templates
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* Modern Template */}
-          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
-            <div
-              onClick={() => previewTemplate("modern")}
-              className="h-72 w-full rounded-lg overflow-hidden border cursor-pointer"
-            >
-              <img
-                src={modernThumbnail}
-                alt="Modern Preview"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <p className="text-center mt-4 text-gray-800 font-semibold text-lg">
-              Modern CV
-            </p>
-
-            <Button
-              className="w-full mt-3"
-              onClick={() => navigate("/cv/builder?template=modern")}
-            >
-              Use this template
-            </Button>
-          </div>
-
           {/* Classic Template */}
           <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
             <div
@@ -115,7 +87,30 @@ const CVHome = () => {
               Use this template
             </Button>
           </div>
+          {/* Modern Template */}
+          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+            <div
+              onClick={() => previewTemplate("modern")}
+              className="h-72 w-full rounded-lg overflow-hidden border cursor-pointer"
+            >
+              <img
+                src={modernThumbnail}
+                alt="Modern Preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
 
+            <p className="text-center mt-4 text-gray-800 font-semibold text-lg">
+              Modern CV
+            </p>
+
+            <Button
+              className="w-full mt-3"
+              onClick={() => navigate("/cv/builder?template=modern")}
+            >
+              Use this template
+            </Button>
+          </div>
           {/* Creative Template */}
           <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
             <div
@@ -186,7 +181,6 @@ const CVHome = () => {
         </div>
       </section>
 
-      {/* ================= FINAL CTA ================= */}
       <section className="py-20 text-center">
         <h2 className="text-4xl font-bold mb-6">
           Ready to create your first CV?
@@ -204,8 +198,6 @@ const CVHome = () => {
           Create CV Now <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
       </section>
-
-      {/* ================= TEMPLATE MODAL ================= */}
       <TemplatePreviewModal
         open={openPreview}
         onClose={() => setOpenPreview(false)}
