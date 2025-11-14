@@ -88,9 +88,38 @@ const RecruiterResume = () => {
           {user.fullName}
         </h1>
 
-        <p className="text-lg text-gray-700 mt-1">{p.title}</p>
+        <p className="text-lg text-gray-700 mt-1">
+          {p.title || "Your Professional Summary"}
+        </p>
 
+        {user.bio && (
+          <p className="text-gray-600 text-sm max-w-2xl mx-auto mt-2">
+            {user.bio}
+          </p>
+        )}
+
+        {p.careerObjective && (
+          <p className="text-gray-500 italic text-sm max-w-xl mx-auto mt-2">
+            {p.careerObjective}
+          </p>
+        )}
+
+        {/* Contact + Personal Info */}
         <div className="flex flex-wrap justify-center gap-6 mt-5 text-sm text-gray-700">
+          {user.dateOfBirth && (
+            <span className="flex items-center gap-1">
+              <Calendar size={16} className="text-[#6A38C2]" />
+              {user.dateOfBirth.split("T")[0]}
+            </span>
+          )}
+
+          {user.gender && (
+            <span className="flex items-center gap-1">
+              <User2 size={16} className="text-[#6A38C2]" />
+              {user.gender}
+            </span>
+          )}
+
           {user.email && (
             <span className="flex items-center gap-1">
               <Mail size={16} className="text-[#6A38C2]" />
@@ -165,7 +194,7 @@ const RecruiterResume = () => {
             </div>
           ))
         ) : (
-          <Empty text="No education added." />
+          <Empty text="Add your education details." />
         )}
       </Section>
 
@@ -186,29 +215,58 @@ const RecruiterResume = () => {
           p.projects.map((proj, i) => (
             <div key={i} className="mb-4">
               <h3 className="text-lg font-semibold">{proj.name}</h3>
-              <p className="text-sm">{proj.description}</p>
+              <p>{proj.technologies.join(", ")}</p>
+              {proj.link && (
+                <a
+                  href={proj.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#6A38C2] underline text-sm"
+                >
+                  {proj.link}
+                </a>
+              )}
+
+              <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">
+                {proj.description}
+              </p>
             </div>
           ))
         ) : (
-          <Empty text="No projects added." />
+          <Empty text="Add your personal or school projects." />
         )}
       </Section>
 
+      {/* ----------- CERTIFICATIONS ------------- */}
       <Section title="Certifications" icon={<Award />}>
         {p.certifications?.length ? (
           p.certifications.map((cert, i) => (
-            <p key={i} className="text-sm mb-2">
-              • {cert.name} — {cert.organization}
-            </p>
+            <div key={i} className="mb-3">
+              <h3 className="font-semibold">
+                {cert.name} by {cert.organization}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {cert.dateIssued && `• Issued: ${formatDate(cert.dateIssued)}`}
+              </p>
+            </div>
           ))
         ) : (
-          <Empty text="No certifications added." />
+          <Empty text="No certifications added yet." />
         )}
       </Section>
 
       <Section title="Achievements" icon={<Star />}>
         {p.achievements?.length ? (
-          p.achievements.map((ach, i) => <p key={i}>• {ach}</p>)
+          p.achievements.map((ach, i) => (
+            <div key={i} className="mb-4">
+              <h3 className="font-semibold">
+                {ach.title} - {ach.year}
+              </h3>
+              <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">
+                {ach.description}
+              </p>
+            </div>
+          ))
         ) : (
           <Empty text="No achievements added." />
         )}

@@ -20,11 +20,12 @@ import {
 } from "@/components/ui/select";
 
 import PDFExport from "@/components/common/PDFExport";
+import { toast } from "sonner";
 
 const TopBar = ({ cvData, onTemplateChange, updateField }) => {
   if (!cvData) return null;
 
-  const { createCV, shareCV, updateCV } = useCV();
+  const { createCV, shareCV, unShareCV, updateCV } = useCV();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -44,7 +45,26 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
     const url = await shareCV(cvData._id);
     if (url) {
       navigator.clipboard.writeText(url);
-      alert("Share link copied!");
+      toast.success("Share link copied!");
+    }
+  };
+
+  const handleTogglePublic = async () => {
+    if (cvData.isPublic) {
+      // Set Private
+      await unShareCV(cvData._id);
+      updateField("isPublic", false);
+      updateField("shareUrl", null);
+      toast.success("CV is now private");
+    } else {
+      // Set Public
+      const url = await shareCV(cvData._id);
+      if (url) {
+        updateField("isPublic", true);
+        updateField("shareUrl", url);
+        navigator.clipboard.writeText(url);
+        toast.success("Public link copied!");
+      }
     }
   };
 
@@ -104,6 +124,14 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
           </PopoverContent>
         </Popover>
 
+        {/* PUBLIC / PRIVATE */}
+        <Button
+          variant={cvData.isPublic ? "default" : "outline"}
+          onClick={handleTogglePublic}
+        >
+          {cvData.isPublic ? "🔒 Set Private" : "🌍 Public CV"}
+        </Button>
+
         <Button variant="outline" onClick={handleShare}>
           <Share2 size={18} /> Share
         </Button>
@@ -116,7 +144,7 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
           <Save size={18} /> Update
         </Button>
 
-        {/* NEW PDF EXPORT COMPONENT */}
+        {/* PDF EXPORT */}
         <PDFExport targetId="cv-print-area" filename={cvData.title} />
       </div>
     </div>

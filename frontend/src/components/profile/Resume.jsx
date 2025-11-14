@@ -187,9 +187,10 @@ const StudentResume = () => {
         {p.certifications?.length ? (
           p.certifications.map((cert, i) => (
             <div key={i} className="mb-3">
-              <h3 className="font-semibold">{cert.name}</h3>
+              <h3 className="font-semibold">
+                {cert.name} by {cert.organization}
+              </h3>
               <p className="text-sm text-gray-500">
-                {cert.organization}{" "}
                 {cert.dateIssued && `• Issued: ${formatDate(cert.dateIssued)}`}
               </p>
             </div>
@@ -205,7 +206,7 @@ const StudentResume = () => {
           p.projects.map((proj, i) => (
             <div key={i} className="mb-4">
               <h3 className="text-lg font-semibold">{proj.name}</h3>
-
+              <p>{proj.technologies.join(", ")}</p>
               {proj.link && (
                 <a
                   href={proj.link}
@@ -227,18 +228,19 @@ const StudentResume = () => {
         )}
       </Section>
 
-      {/* ----------- ACHIEVEMENTS ------------- */}
-      <Section title="Achievements" icon={<Star />}>
+      <Section title="Achievements" icon={<Award />}>
         {p.achievements?.length ? (
           p.achievements.map((ach, i) => (
             <div key={i} className="mb-3">
-              <h3 className="font-semibold">{ach.title}</h3>
-              <p className="text-sm text-gray-700">{ach.description}</p>
-              <p className="text-sm text-gray-500">{ach.year}</p>
+              <h3 className="font-semibold">
+                {ach.title} - {ach.year}
+              </h3>
+              <p className="text-sm text-gray-700 mt-1 whitespace-pre-line"></p>
+              {ach.description}
             </div>
           ))
         ) : (
-          <Empty text="No achievements added." />
+          <Empty text="No achievements added yet." />
         )}
       </Section>
     </div>

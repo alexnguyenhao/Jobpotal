@@ -163,3 +163,27 @@ export const unShareCV = async (req, res) => {
 
   res.status(200).json({ success: true, message: "CV unshared" });
 };
+export const getCVForRecruiter = async (req, res) => {
+  try {
+    const cv = await CV.findById(req.params.id);
+
+    if (!cv) {
+      return res.status(404).json({
+        success: false,
+        message: "CV not found",
+      });
+    }
+
+    // ❗ Không check: cv.user === req.id
+    return res.status(200).json({
+      success: true,
+      cv,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

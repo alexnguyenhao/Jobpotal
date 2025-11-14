@@ -29,6 +29,7 @@ import CVHome from "@/components/cv/CVHome.jsx";
 import CVBuilder from "@/components/cv/CVBuilder.jsx";
 import CVList from "@/components/cv/CVList.jsx";
 import CVView from "@/components/cv/CVView.jsx";
+import ApplicantCVView from "@/components/admin/ApplicantCVView.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -53,7 +54,8 @@ const appRouter = createBrowserRouter([
       { path: "/cv/home", element: <CVHome /> },
       { path: "/cv/builder", element: <CVBuilder /> },
       { path: "/cv/list", element: <CVList /> },
-      { path: "/cv/view/:id", element: <CVView /> },
+      { path: "/cv/:id", element: <CVView /> },
+      { path: "/cv/view/:id", element: <ApplicantCVView /> },
     ],
   },
 

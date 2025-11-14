@@ -43,10 +43,9 @@ const ClassicTemplate = ({ data }) => {
     >
       <h1 className="text-4xl font-bold">{info.fullName}</h1>
       <p className="text-lg">{info.position}</p>
-
-      <p className="mt-2 text-sm opacity-80">
-        {info.email} • {info.phone} • {info.address}
-      </p>
+      <p className="text-sm opacity-70">Email: {info.email}</p>
+      <p className="text-sm opacity-70">Phone: {info.phone}</p>
+      <p className="text-sm opacity-70">Address: {info.address}</p>
 
       {info.dateOfBirth && (
         <p className="text-sm opacity-70">
@@ -61,50 +60,56 @@ const ClassicTemplate = ({ data }) => {
         <p>{info.summary}</p>
       </Section>
 
-      <Section title="Skills" primaryColor={s.primaryColor}>
-        <div className="flex flex-wrap gap-2">
-          {data.skills?.map((skill, i) => (
-            <span
-              key={i}
-              className="px-3 py-1 rounded text-sm"
-              style={{
-                backgroundColor: s.primaryColor + "22",
-                color: s.textColor,
-              }}
-            >
-              {skill}
-            </span>
+      {data.skills?.length > 0 && (
+        <Section title="Skills" primaryColor={s.primaryColor}>
+          <div className="flex flex-wrap gap-2">
+            {data.skills?.map((skill, i) => (
+              <span
+                key={i}
+                className="px-3 py-1 rounded text-sm"
+                style={{
+                  backgroundColor: s.primaryColor + "22",
+                  color: s.textColor,
+                }}
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {data.workExperience?.length > 0 && (
+        <Section title="Work Experience" primaryColor={s.primaryColor}>
+          {data.workExperience?.map((exp, i) => (
+            <div key={i} className="mt-4">
+              <h3 className="font-semibold text-lg">
+                {exp.position} – {exp.company}
+              </h3>
+              <p className="text-sm opacity-70">
+                {formatRange(exp.startDate, exp.endDate)}
+              </p>
+              <p className="mt-1">{exp.description}</p>
+            </div>
           ))}
-        </div>
-      </Section>
+        </Section>
+      )}
 
-      <Section title="Work Experience" primaryColor={s.primaryColor}>
-        {data.workExperience?.map((exp, i) => (
-          <div key={i} className="mt-4">
-            <h3 className="font-semibold text-lg">
-              {exp.position} – {exp.company}
-            </h3>
-            <p className="text-sm opacity-70">
-              {formatRange(exp.startDate, exp.endDate)}
-            </p>
-            <p className="mt-1">{exp.description}</p>
-          </div>
-        ))}
-      </Section>
-
-      <Section title="Education" primaryColor={s.primaryColor}>
-        {data.education?.map((edu, i) => (
-          <div key={i} className="mt-4">
-            <h3 className="font-semibold text-lg">
-              {edu.degree}, {edu.major}
-            </h3>
-            <p className="text-sm opacity-70">
-              {edu.school} ({formatRange(edu.startDate, edu.endDate)})
-            </p>
-            <p className="mt-1">{edu.description}</p>
-          </div>
-        ))}
-      </Section>
+      {data.education?.length > 0 && (
+        <Section title="Education" primaryColor={s.primaryColor}>
+          {data.education?.map((edu, i) => (
+            <div key={i} className="mt-4">
+              <h3 className="font-semibold text-lg">
+                {edu.degree}, {edu.major}
+              </h3>
+              <p className="text-sm opacity-70">
+                {edu.school} ({formatRange(edu.startDate, edu.endDate)})
+              </p>
+              <p className="mt-1">{edu.description}</p>
+            </div>
+          ))}
+        </Section>
+      )}
 
       {data.certifications?.length > 0 && (
         <Section title="Certifications" primaryColor={s.primaryColor}>
@@ -130,9 +135,10 @@ const ClassicTemplate = ({ data }) => {
         <Section title="Achievements" primaryColor={s.primaryColor}>
           {data.achievements.map((a, i) => (
             <div key={i} className="mt-2">
-              <p className="font-semibold">{a.title}</p>
+              <p className="font-semibold">
+                {a.title} - {a.year}
+              </p>
               <p className="text-sm">{a.description}</p>
-              {a.year && <p className="text-xs opacity-70">Year: {a.year}</p>}
             </div>
           ))}
         </Section>

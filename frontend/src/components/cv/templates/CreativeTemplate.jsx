@@ -41,96 +41,211 @@ const CreativeTemplate = ({ data }) => {
           {info.position && (
             <p className="text-lg mt-1 opacity-90">{info.position}</p>
           )}
-          <p className="opacity-90 text-sm mt-2">
-            {info.email} • {info.phone}
-          </p>
+          {info.email && (
+            <p className="opacity-90 text-sm">Email: {info.email}</p>
+          )}
+          {info.phone && (
+            <p className="opacity-90 text-sm">Phone: {info.phone}</p>
+          )}
+          {info.address && (
+            <p className="opacity-90 text-sm">Address: {info.address}</p>
+          )}
         </div>
       </div>
 
       {/* SUMMARY */}
-      <section className="mt-8">
-        <h2
-          className="text-2xl font-bold mb-2"
-          style={{ borderBottom: `2px solid ${s.textColor}` }}
-        >
-          Summary
-        </h2>
-        <p>{info.summary}</p>
-      </section>
+      {info.summary && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Summary
+          </h2>
+          <p>{info.summary}</p>
+        </section>
+      )}
 
       {/* SKILLS */}
-      <section className="mt-8">
-        <h2
-          className="text-2xl font-bold mb-2"
-          style={{ borderBottom: `2px solid ${s.textColor}` }}
-        >
-          Skills
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {data.skills.map((sk, i) => (
-            <span
-              key={i}
-              className="px-4 py-1 rounded-full text-sm"
-              style={{
-                backgroundColor: s.backgroundColor + "88",
-                color: s.textColor,
-              }}
-            >
-              {sk}
-            </span>
-          ))}
-        </div>
-      </section>
+      {data.skills?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Skills
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {data.skills.map((sk, i) => (
+              <span
+                key={i}
+                className="px-4 py-1 rounded-full text-sm"
+                style={{
+                  backgroundColor: s.backgroundColor + "88",
+                  color: s.textColor,
+                }}
+              >
+                {sk}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* EXPERIENCE */}
-      <section className="mt-8">
-        <h2
-          className="text-2xl font-bold mb-2"
-          style={{ borderBottom: `2px solid ${s.textColor}` }}
-        >
-          Work Experience
-        </h2>
-        {data.workExperience.map((exp, i) => (
-          <div
-            key={i}
-            className="mt-4 p-4 rounded-lg"
-            style={{ backgroundColor: cardBg }}
+      {data.experience?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
           >
-            <h3 className="font-bold">
-              {exp.position} – {exp.company}
-            </h3>
-            <p className="opacity-80 text-sm">
-              {formatRange(exp.startDate, exp.endDate)}
-            </p>
-            <p className="mt-2">{exp.description}</p>
-          </div>
-        ))}
-      </section>
+            Work Experience
+          </h2>
+          {data.workExperience.map((exp, i) => (
+            <div
+              key={i}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: cardBg }}
+            >
+              <h3 className="font-bold">
+                {exp.position} – {exp.company}
+              </h3>
+              <p className="opacity-80 text-sm">
+                {formatRange(exp.startDate, exp.endDate)}
+              </p>
+              <p className="mt-2">{exp.description}</p>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* EDUCATION */}
-      <section className="mt-8">
-        <h2
-          className="text-2xl font-bold mb-2"
-          style={{ borderBottom: `2px solid ${s.textColor}` }}
-        >
-          Education
-        </h2>
-        {data.education.map((edu, i) => (
-          <div
-            key={i}
-            className="mt-4 p-4 rounded-lg"
-            style={{ backgroundColor: cardBg }}
+      {data.education?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
           >
-            <h3 className="font-bold">
-              {edu.degree}, {edu.major}
-            </h3>
-            <p className="opacity-80 text-sm">
-              {edu.school} ({formatRange(edu.startDate, edu.endDate)})
-            </p>
-            <p className="mt-2">{edu.description}</p>
-          </div>
-        ))}
-      </section>
+            Education
+          </h2>
+          {data.education.map((edu, i) => (
+            <div
+              key={i}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: cardBg }}
+            >
+              <h3 className="font-bold">
+                {edu.degree}, {edu.major}
+              </h3>
+              <p className="opacity-80 text-sm">
+                {edu.school} ({formatRange(edu.startDate, edu.endDate)})
+              </p>
+              <p className="mt-2">{edu.description}</p>
+            </div>
+          ))}
+        </section>
+      )}
+      {/* PROJECTS */}
+      {data.projects?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Projects
+          </h2>
+          {data.projects.map((proj, i) => (
+            <div
+              key={i}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: cardBg }}
+            >
+              <h3 className="font-bold">{proj.title}</h3>
+              <p>{proj.technologies.join(", ")}</p>
+              <p className="mt-2">{proj.description}</p>
+              {proj.link && (
+                <p className="mt-1">
+                  Link:{" "}
+                  <a
+                    href={proj.link}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                  >
+                    {proj.link}
+                  </a>
+                </p>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+      {/* CERTIFICATIONS */}
+      {data.certifications?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Certifications
+          </h2>
+          {data.certifications.map((cert, i) => (
+            <div
+              key={i}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: cardBg }}
+            >
+              <h3 className="font-bold">
+                {cert.name} by {cert.organization}
+              </h3>
+
+              <p className="opacity-80 text-sm">
+                Issued: {formatDate(cert.dateIssued)}
+              </p>
+            </div>
+          ))}
+        </section>
+      )}
+      {/* ACHIEVEMENTS */}
+      {data.achievements?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Achievements
+          </h2>
+          {data.achievements.map((ach, i) => (
+            <div
+              key={i}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: cardBg }}
+            >
+              <h3 className="font-bold">
+                {ach.title} ({ach.year})
+              </h3>
+              <p className="mt-2">{ach.description}</p>
+            </div>
+          ))}
+        </section>
+      )}
+      {/* LANGUAGES */}
+      {data.languages?.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ borderBottom: `2px solid ${s.textColor}` }}
+          >
+            Languages
+          </h2>
+          <ul className="list-disc list-inside">
+            {data.languages.map((lang, i) => (
+              <li key={i}>
+                {lang.language} - {lang.proficiency}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 };

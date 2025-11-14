@@ -107,71 +107,154 @@ const ModernTemplate = ({ data }) => {
       {/* RIGHT MAIN CONTENT */}
       <main className={`w-2/3 ${spacing}`}>
         {/* SUMMARY */}
-        <section>
-          <h2
-            className="text-2xl font-bold mb-2 pb-1"
-            style={{
-              color: s.primaryColor,
-              borderBottom: `2px solid ${s.primaryColor}`,
-            }}
-          >
-            Professional Summary
-          </h2>
-          <p className="opacity-90">{info.summary}</p>
-        </section>
+        {info.summary && (
+          <section>
+            <h2
+              className="text-2xl font-bold mb-2 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Professional Summary
+            </h2>
+            <p className="opacity-90">{info.summary}</p>
+          </section>
+        )}
 
         {/* EXPERIENCE */}
-        <section className="mt-10">
-          <h2
-            className="text-2xl font-bold mb-3 pb-1"
-            style={{
-              color: s.primaryColor,
-              borderBottom: `2px solid ${s.primaryColor}`,
-            }}
-          >
-            Work Experience
-          </h2>
+        {data.workExperience?.length > 0 && (
+          <section className="mt-10">
+            <h2
+              className="text-2xl font-bold mb-3 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Work Experience
+            </h2>
 
-          <div className="space-y-6">
-            {data.workExperience?.map((exp, i) => (
-              <div key={i}>
-                <h3 className="font-semibold text-lg">
-                  {exp.position} – {exp.company}
-                </h3>
-                <p className="text-sm opacity-70">
-                  {formatDate(exp.startDate)} → {formatDate(exp.endDate)}
-                </p>
-                <p className="mt-2">{exp.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+            <div className="space-y-6">
+              {data.workExperience?.map((exp, i) => (
+                <div key={i}>
+                  <h3 className="font-semibold text-lg">
+                    {exp.position} – {exp.company}
+                  </h3>
+                  <p className="text-sm opacity-70">
+                    {formatDate(exp.startDate)} → {formatDate(exp.endDate)}
+                  </p>
+                  <p className="mt-2">{exp.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* EDUCATION */}
-        <section className="mt-10">
-          <h2
-            className="text-2xl font-bold mb-3 pb-1"
-            style={{
-              color: s.primaryColor,
-              borderBottom: `2px solid ${s.primaryColor}`,
-            }}
-          >
-            Education
-          </h2>
-
-          {data.education?.map((edu, i) => (
-            <div key={i} className="mt-4">
-              <h3 className="font-semibold text-base">
-                {edu.degree}, {edu.major}
-              </h3>
-              <p className="text-sm opacity-70">
-                {edu.school} ({formatDate(edu.startDate)} →{" "}
-                {formatDate(edu.endDate)})
-              </p>
-              <p className="mt-2">{edu.description}</p>
-            </div>
-          ))}
-        </section>
+        {data.education?.length > 0 && (
+          <section className="mt-10">
+            <h2
+              className="text-2xl font-bold mb-3 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Education
+            </h2>
+            {data.education?.map((edu, i) => (
+              <div key={i} className="mt-4">
+                <h3 className="font-semibold text-base">
+                  {edu.degree}, {edu.major}
+                </h3>
+                <p className="text-sm opacity-70">
+                  {edu.school} ({formatDate(edu.startDate)} →{" "}
+                  {formatDate(edu.endDate)})
+                </p>
+                <p className="mt-2">{edu.description}</p>
+              </div>
+            ))}
+          </section>
+        )}
+        {/* PROJECTS */}
+        {data.projects?.length > 0 && (
+          <section className="mt-10">
+            <h2
+              className="text-2xl font-bold mb-3 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Projects
+            </h2>
+            {data.projects.map((proj, i) => (
+              <div key={i} className="mt-4">
+                <h3 className="font-semibold text-base">{proj.title}</h3>
+                <p>{proj.technologies}</p>
+                <p className="mt-2">{proj.description}</p>
+                {proj.link && (
+                  <p className="mt-1">
+                    Link:{" "}
+                    <a
+                      href={proj.link}
+                      className="text-blue-600 underline"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {proj.link}
+                    </a>
+                  </p>
+                )}
+              </div>
+            ))}
+          </section>
+        )}
+        {/* CERTIFICATIONS */}
+        {data.certifications?.length > 0 && (
+          <section className="mt-10">
+            <h2
+              className="text-2xl font-bold mb-3 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Certifications
+            </h2>
+            {data.certifications.map((cert, i) => (
+              <div key={i} className="mt-4">
+                <h3 className="font-semibold text-base">{cert.name}</h3>
+                <p>{cert.organization}</p>
+                <p className="text-sm opacity-70">
+                  {formatDate(cert.dateIssued)}
+                </p>
+              </div>
+            ))}
+          </section>
+        )}
+        {data.achievements?.length > 0 && (
+          <section className="mt-10">
+            <h2
+              className="text-2xl font-bold mb-3 pb-1"
+              style={{
+                color: s.primaryColor,
+                borderBottom: `2px solid ${s.primaryColor}`,
+              }}
+            >
+              Achievements
+            </h2>
+            {data.achievements.map((ach, i) => (
+              <div key={i} className="mt-4">
+                <h3 className="font-semibold text-base">
+                  {ach.title} - ({ach.year})
+                </h3>
+                <p className="mt-2">{ach.description}</p>
+              </div>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );

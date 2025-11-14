@@ -1,50 +1,84 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
+import { CV } from "../models/cv.model.js";
 export const applyJob = async (req, res) => {
   try {
     const userId = req.id;
     const jobId = req.params.id;
-    if (!jobId) {
+    const { cvId } = req.body;
+
+    // ❗ Chỉ null mới là apply bằng profile
+    const usingProfile = cvId === null;
+
+    // ❗ Bắt FE gửi cvId không hợp lệ
+    if (cvId === undefined || cvId === "") {
       return res.status(400).json({
-        message: "Job id required",
+        message: "cvId must be null (profile) or valid CV ID",
         success: false,
       });
     }
-    //check if the user has already applied for the job
-    const existingApplication = await Application.findOne({
+
+    if (!jobId) {
+      return res.status(400).json({
+        message: "Job ID is required",
+        success: false,
+      });
+    }
+
+    // Check double apply (đã đủ an toàn)
+    const existing = await Application.findOne({
       job: jobId,
       applicant: userId,
     });
-    if (existingApplication) {
+
+    if (existing) {
       return res.status(400).json({
         message: "You have already applied for this job",
         success: false,
       });
     }
 
-    //check if the job exists
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(400).json({
-        message: "Job not found",
-        success: false,
-      });
+    let cv = null;
+
+    // Nếu apply bằng CV — kiểm tra CV có thuộc user hay không
+    if (!usingProfile) {
+      cv = await CV.findById(cvId);
+      if (!cv || cv.user.toString() !== userId) {
+        return res.status(403).json({
+          message: "Invalid CV selected.",
+          success: false,
+        });
+      }
     }
-    //create a new application
-    const newApplication = await Application.create({
+
+    // Tạo application
+    const application = await Application.create({
       job: jobId,
       applicant: userId,
+      cv: usingProfile ? null : cvId,
+      usedProfile: usingProfile,
     });
-    job.applications.push(newApplication._id);
-    await job.save();
+
+    await Job.findByIdAndUpdate(jobId, {
+      $push: { applications: application._id },
+    });
+
     return res.status(201).json({
-      message: "Job applied successfully",
+      message: usingProfile
+        ? "Applied using your profile!"
+        : "Applied using selected CV!",
       success: true,
+      application,
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      message: "Server error",
+      success: false,
+    });
   }
 };
+
 export const getAppliedJobs = async (req, res) => {
   try {
     const userId = req.id;
@@ -76,31 +110,42 @@ export const getAppliedJobs = async (req, res) => {
 export const getApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
+
     const job = await Job.findById(jobId).populate({
       path: "applications",
       options: { sort: { createdAt: -1 } },
-      populate: {
-        path: "applicant",
-        select: "-password -__v",
-        populate: {
-          path: "profile",
+      populate: [
+        {
+          path: "applicant",
+          select: "-password -__v",
+          populate: { path: "profile" },
         },
-      },
+        {
+          path: "cv",
+        },
+      ],
     });
+
     if (!job) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "Job not found",
         success: false,
       });
     }
+
     return res.status(200).json({
       job,
       success: true,
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      message: "Server error",
+      success: false,
+    });
   }
 };
+
 export const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;

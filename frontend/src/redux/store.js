@@ -22,6 +22,7 @@ const persistConfig = {
   version: 1,
   storage,
 };
+
 const rootReducer = combineReducers({
   auth: authSlice,
   job: jobSlice,
@@ -37,9 +38,11 @@ const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
+      immutableCheck: false, // 🚀 Fix cảnh báo lớn nhất
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
 });
+
 export default store;

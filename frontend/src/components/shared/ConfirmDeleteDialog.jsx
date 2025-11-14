@@ -1,4 +1,7 @@
-// 📂 src/components/shared/ConfirmDeleteDialog.jsx
+// ✔ This dialog does NOT render its own "Delete" button.
+// ✔ You control open/close and confirm from parent.
+// ✔ Perfect for lists.
+
 import React from "react";
 import {
   AlertDialog,
@@ -9,35 +12,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 
-const ConfirmDeleteDialog = ({ title, description, onConfirm }) => {
+const ConfirmDeleteDialog = ({ open, onClose, onConfirm, title, message }) => {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 w-full justify-start"
-        >
-          <Trash2 className="w-4 h-4" /> Delete
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title || "Confirm Deletion"}</AlertDialogTitle>
+          <AlertDialogTitle>{title || "Confirm Delete"}</AlertDialogTitle>
           <AlertDialogDescription>
-            {description ||
-              "Are you sure you want to delete this item? This action cannot be undone."}
+            {message || "Are you sure you want to delete this item?"}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+
           <AlertDialogAction
-            onClick={onConfirm}
             className="bg-red-600 text-white hover:bg-red-700"
+            onClick={onConfirm}
           >
             Yes, Delete
           </AlertDialogAction>

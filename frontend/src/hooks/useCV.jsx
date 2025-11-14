@@ -223,6 +223,50 @@ const useCV = () => {
       toast.error("Cannot load public CV");
     }
   };
+  const getCVForRecruiter = async (id) => {
+    try {
+      dispatch(setLoading(true));
+
+      const res = await axios.get(`${CV_API_END_POINT}/view/${id}`, {
+        withCredentials: true,
+      });
+
+      if (res.data.success) {
+        const cv = res.data.cv;
+
+        // --- dispatch all CV data into redux ---
+        dispatch(
+          updateMeta({
+            _id: cv._id ?? cv.id,
+            title: cv.title,
+            template: cv.template,
+            isPublic: cv.isPublic,
+            shareUrl: cv.shareUrl,
+            createdAt: cv.createdAt,
+            updatedAt: cv.updatedAt,
+            user: cv.user,
+          })
+        );
+
+        dispatch(updatePersonalInfo(cv.personalInfo ?? {}));
+        dispatch(updateEducation(cv.education ?? []));
+        dispatch(updateWorkExperience(cv.workExperience ?? []));
+        dispatch(updateSkills(cv.skills ?? []));
+        dispatch(updateCertifications(cv.certifications ?? []));
+        dispatch(updateLanguages(cv.languages ?? []));
+        dispatch(updateAchievements(cv.achievements ?? []));
+        dispatch(updateProjects(cv.projects ?? []));
+        dispatch(updateStyleConfig(cv.styleConfig ?? {}));
+
+        dispatch(setLoading(false));
+        return cv;
+      }
+    } catch (e) {
+      dispatch(setLoading(false));
+      toast.error("Failed to load applicant CV");
+      return null;
+    }
+  };
 
   return {
     cvs,
@@ -245,6 +289,7 @@ const useCV = () => {
     shareCV,
     unShareCV,
     getPublicCV,
+    getCVForRecruiter,
   };
 };
 

@@ -369,7 +369,7 @@ export const updateProfile = async (req, res) => {
     if (achievements !== undefined)
       profile.achievements = Array.isArray(achievements)
         ? achievements
-        : achievements.split(",").map((a) => a.trim());
+        : JSON.parse(achievements);
     if (projects !== undefined)
       profile.projects = Array.isArray(projects)
         ? projects

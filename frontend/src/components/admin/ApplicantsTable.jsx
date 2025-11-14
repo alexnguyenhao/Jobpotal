@@ -25,6 +25,7 @@ const shortListingStatus = ["Accepted", "Rejected"];
 const ApplicantsTable = () => {
   const { applicants } = useSelector((store) => store.application);
   const navigate = useNavigate();
+
   const statusHandler = async (status, id) => {
     try {
       axios.defaults.withCredentials = true;
@@ -32,7 +33,6 @@ const ApplicantsTable = () => {
         `${APPLICATION_API_END_POINT}/status/${id}/update`,
         { status }
       );
-      console.log(res);
       if (res.data.success) {
         toast.success(res.data.message);
       }
@@ -40,6 +40,7 @@ const ApplicantsTable = () => {
       toast.error(error.response.data.message);
     }
   };
+
   // Empty state khi không có ứng viên
   if (!applicants?.applications?.length) {
     return (
@@ -55,6 +56,7 @@ const ApplicantsTable = () => {
         <TableCaption className="text-gray-500 text-sm mb-4">
           A list of your recent applicants
         </TableCaption>
+
         <TableHeader>
           <TableRow className="bg-gray-50">
             <TableHead className="font-semibold text-gray-700 py-4">
@@ -77,12 +79,14 @@ const ApplicantsTable = () => {
             </TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {applicants.applications.map((item) => (
             <TableRow
               key={item._id}
               className="hover:bg-gray-50 transition-colors duration-200"
             >
+              {/* FULL NAME */}
               <TableCell className="text-gray-800 py-3">
                 <Link
                   to={`/resume/${item?.applicant?._id}`}
@@ -91,32 +95,51 @@ const ApplicantsTable = () => {
                   {item?.applicant?.fullName || "N/A"}
                 </Link>
               </TableCell>
+
+              {/* EMAIL */}
               <TableCell className="text-gray-800 py-3">
                 {item?.applicant?.email || "N/A"}
               </TableCell>
+
+              {/* CONTACT */}
               <TableCell className="text-gray-800 py-3">
                 {item?.applicant?.phoneNumber || "N/A"}
               </TableCell>
+
+              {/* RESUME - UPDATED LOGIC */}
               <TableCell className="py-3">
-                {item?.applicant?.resume ? (
-                  <a
-                    href={item.applicant.resume}
-                    className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {item.applicant.resumeOriginalName || "View Resume"}
-                  </a>
+                {item.usedProfile ? (
+                  item?.applicant?.resume ? (
+                    <a
+                      href={item?.applicant?.resume}
+                      className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {item.applicant.resumeOriginalName || "View Resume"}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">No Resume</span>
+                  )
+                ) : item.cv ? (
+                  <Link to={`/cv/view/${item.cv._id}`}>View CV</Link>
                 ) : (
-                  <span className="text-gray-400">No Resume</span>
+                  <span className="text-gray-400">No CV</span>
                 )}
               </TableCell>
-              <TableCell className="text-gray-800 py-3">28-10-2025</TableCell>
+
+              {/* DATE */}
+              <TableCell className="text-gray-800 py-3">
+                {new Date(item.createdAt).toLocaleDateString("en-GB")}
+              </TableCell>
+
+              {/* ACTION */}
               <TableCell className="text-right py-3">
                 <Popover>
                   <PopoverTrigger>
                     <MoreHorizontal className="h-5 w-5 text-gray-500 hover:text-gray-800 cursor-pointer transition-colors" />
                   </PopoverTrigger>
+
                   <PopoverContent className="w-40 bg-white shadow-lg rounded-md border border-gray-200 p-2">
                     {shortListingStatus.map((status) => (
                       <div

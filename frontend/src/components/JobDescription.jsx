@@ -10,6 +10,8 @@ import { setSingleJob } from "@/redux/jobSlice.js";
 import { useDispatch, useSelector } from "react-redux";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
 import { Heart, HeartOff, Send, CheckCircle } from "lucide-react";
+import ResumeSelectionDialog from "./appliedJob/ResumeSelectionDialog";
+import useCV from "@/hooks/useCV";
 import { toast } from "sonner";
 import {
   DollarSign,
@@ -33,56 +35,60 @@ const JobDescription = () => {
   const navigate = useNavigate();
 
   const [isApplied, setIsApplied] = useState(false);
-  const [isExpired, setIsExpired] = useState(false); // ✅ Check deadline
+  const [isExpired, setIsExpired] = useState(false);
   const { savedJobs, saveJob, unsaveJob } = useSavedJobs(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  // ✅ Apply job handler
-  const applyJobHandle = async () => {
+  const [openResumeDialog, setOpenResumeDialog] = useState(false);
+  const { cvs, fetchMyCVs } = useCV();
+  const applyJobWithCV = async (cvId) => {
     try {
-      const res = await axios(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {
-        withCredentials: true,
-      });
+      const res = await axios.post(
+        `${APPLICATION_API_END_POINT}/apply/${jobId}`,
+        { cvId },
+        { withCredentials: true }
+      );
+
       if (res.data.success) {
         setIsApplied(true);
+        toast.success("🎉 Applied with selected CV!");
+        setOpenResumeDialog(false);
+
         dispatch(
           setSingleJob({
             ...singleJob,
             applications: [...singleJob.applications, { applicant: user?._id }],
           })
         );
-        toast.success("🎉 Applied successfully!");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "❌ Failed to apply");
     }
   };
 
-  // ✅ Fetch Job Data
   useEffect(() => {
+    fetchMyCVs(); // Load CV list
+
     const fetchJob = async () => {
       try {
         const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
           withCredentials: true,
         });
+
         if (res.data.success) {
           const job = res.data.job;
           dispatch(setSingleJob(job));
 
-          // ✅ Check deadline (auto disable apply)
-          if (new Date(job.applicationDeadline) < new Date()) {
-            setIsExpired(true);
-          } else {
-            setIsExpired(false);
-          }
+          // Check deadline
+          setIsExpired(new Date(res.data.job.applicationDeadline) < new Date());
 
-          // ✅ Check if already applied
+          // Check applied
           const applied = job.applications?.some(
             (a) => a.applicant === user?._id
           );
-          setIsApplied(applied || false);
+          setIsApplied(applied);
 
-          // ✅ Check if saved
+          // Check saved
           const saved = savedJobs?.some(
             (j) => (j._id || j).toString() === jobId
           );
@@ -92,8 +98,9 @@ const JobDescription = () => {
         console.error("Fetch Job Error:", err);
       }
     };
+
     fetchJob();
-  }, [jobId, dispatch, user?._id]);
+  }, [jobId, savedJobs, user?._id]);
 
   const company = singleJob?.company;
   const salary = singleJob?.salary;
@@ -102,9 +109,9 @@ const JobDescription = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-10 px-4 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* LEFT COLUMN */}
+        {/* LEFT SECTION */}
         <div className="md:col-span-2 space-y-6">
-          {/* JOB HEADER */}
+          {/* ---------------- HEADER ---------------- */}
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="space-y-2">
@@ -134,24 +141,22 @@ const JobDescription = () => {
                   </span>
                 </div>
 
-                {/* ✅ Hiển thị cảnh báo khi hết hạn */}
                 {isExpired && (
                   <div className="mt-3 text-red-600 font-medium flex items-center gap-2">
-                    ⚠️ This job has expired and no longer accepts applications.
+                    ⚠️ This job has expired.
                   </div>
                 )}
 
-                {/* ✅ Nút Apply & Save */}
+                {/* ---------------- APPLY + SAVE BUTTONS ---------------- */}
                 <div className="mt-4 flex gap-3">
+                  {/* APPLY BUTTON */}
                   <Button
                     disabled={isApplied || isExpired}
-                    onClick={
-                      !isApplied && !isExpired ? applyJobHandle : undefined
-                    }
+                    onClick={() => {
+                      if (!isApplied && !isExpired) setOpenResumeDialog(true);
+                    }}
                     className={`flex items-center gap-2 ${
-                      isExpired
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : isApplied
+                      isExpired || isApplied
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-[#7209B7] hover:bg-[#5e0994]"
                     }`}
@@ -164,6 +169,7 @@ const JobDescription = () => {
                       : "Apply Now"}
                   </Button>
 
+                  {/* SAVE BUTTON */}
                   <Button
                     onClick={() => {
                       if (isSaved) {
@@ -173,7 +179,7 @@ const JobDescription = () => {
                       } else {
                         saveJob(jobId);
                         setIsSaved(true);
-                        toast.success("Job saved successfully!");
+                        toast.success("Job saved!");
                       }
                     }}
                     className={`flex items-center gap-2 border transition-all ${
@@ -202,6 +208,7 @@ const JobDescription = () => {
           {/* JOB DETAILS */}
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 space-y-8">
             <Section title="Job Description" text={singleJob?.description} />
+
             {singleJob?.requirements?.length > 0 && (
               <Section
                 title="Requirements"
@@ -209,16 +216,17 @@ const JobDescription = () => {
                 icon="•"
               />
             )}
+
             {singleJob?.benefits?.length > 0 && (
               <Section title="Benefits" list={singleJob.benefits} icon="✓" />
             )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
+        {/* ---------------- RIGHT SIDEBAR ---------------- */}
         <div className="space-y-6">
           {/* COMPANY CARD */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
+          <div className="bg-white p-6 rounded-xl shadow-md border text-center">
             {company?.logo && (
               <img
                 src={company.logo}
@@ -227,12 +235,14 @@ const JobDescription = () => {
                 className="mx-auto h-20 w-20 object-cover rounded-full mb-4 border cursor-pointer hover:scale-105 transition-transform"
               />
             )}
+
             <h3
               onClick={() => navigate(`/company/${company?._id}`)}
               className="text-xl font-bold text-gray-900 hover:text-[#7209B7] cursor-pointer"
             >
               {company?.name}
             </h3>
+
             <p className="text-sm text-gray-600 mt-1">
               {formatLocation(company?.location)}
             </p>
@@ -267,24 +277,28 @@ const JobDescription = () => {
             </div>
           </div>
 
-          {/* JOB INFO CARD */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 space-y-4">
+          {/* JOB INFO */}
+          <div className="bg-white p-6 rounded-xl shadow-md border space-y-4">
             <h4 className="text-lg font-semibold text-gray-800">
               Job Information
             </h4>
+
             <div className="space-y-3 text-sm text-gray-700">
               <InfoLine
                 icon={<Briefcase className="w-4 h-4 text-[#6A38C2]" />}
                 text={`Seniority: ${singleJob?.seniorityLevel || "N/A"}`}
               />
+
               <InfoLine
                 icon={<Hourglass className="w-4 h-4 text-[#6A38C2]" />}
                 text={`Experience: ${singleJob?.experienceLevel || "N/A"}`}
               />
+
               <InfoLine
                 icon={<DollarSign className="w-4 h-4 text-[#6A38C2]" />}
                 text={formatSalary(salary)}
               />
+
               <InfoLine
                 icon={<CalendarDays className="w-4 h-4 text-[#6A38C2]" />}
                 text={`Deadline: ${
@@ -295,39 +309,32 @@ const JobDescription = () => {
                     : "N/A"
                 }`}
               />
+
               <InfoLine
                 icon={<Users className="w-4 h-4 text-[#6A38C2]" />}
                 text={`Applicants: ${singleJob?.applications?.length || 0}`}
-              />
-              <InfoLine
-                icon={<Briefcase className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Openings: ${singleJob?.numberOfPositions || "1"}`}
-              />
-              <InfoLine
-                icon={<Clock className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Posted: ${
-                  singleJob?.createdAt
-                    ? new Date(singleJob.createdAt).toLocaleDateString("en-GB")
-                    : "N/A"
-                }`}
-              />
-              <InfoLine
-                icon={<Briefcase className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Type: ${
-                  singleJob?.jobType?.length > 0
-                    ? singleJob.jobType.join(", ")
-                    : "N/A"
-                }`}
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* ---------------- RESUME SELECTION MODAL ---------------- */}
+      <ResumeSelectionDialog
+        open={openResumeDialog}
+        setOpen={setOpenResumeDialog}
+        resumes={cvs}
+        onSelectResume={(resumeId) => applyJobWithCV(resumeId)}
+        onSelectProfile={() => applyJobWithCV(null)}
+      />
     </div>
   );
 };
 
-// ✅ Sub-components
+/* ------------------------------------------------------ */
+/* COMPONENTS */
+/* ------------------------------------------------------ */
+
 const InfoTag = ({ icon, label }) => (
   <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-full">
     <span className="text-[#6A38C2]">{icon}</span>
@@ -338,11 +345,7 @@ const InfoTag = ({ icon, label }) => (
 const Section = ({ title, text, list, icon }) => (
   <div>
     <h2 className="text-2xl font-semibold text-gray-800 mb-3">{title}</h2>
-    {text && (
-      <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-        {text}
-      </p>
-    )}
+    {text && <p className="text-gray-700 whitespace-pre-line">{text}</p>}
     {list && (
       <ul className="list-disc list-inside text-gray-700 space-y-2">
         {list.map((item, idx) => (
@@ -373,29 +376,29 @@ const InfoLine = ({ icon, text, link }) => (
     )}
   </div>
 );
-
-// ✅ Helpers
 const formatLocation = (loc) => {
   if (!loc) return "No location info";
   if (typeof loc === "string") return loc;
-  if (typeof loc === "object") {
-    const { address, district, province } = loc;
-    return [address, district, province].filter(Boolean).join(", ");
-  }
-  return "N/A";
+
+  const { address, district, province } = loc;
+  return [address, district, province].filter(Boolean).join(", ");
 };
 
 const formatSalary = (salary) => {
   if (!salary) return "Not specified";
   if (typeof salary === "string") return salary;
+
   const { min, max, currency, isNegotiable } = salary;
+
   if (isNegotiable) return "Negotiable";
   if (min && max)
     return `${min.toLocaleString()} - ${max.toLocaleString()} ${
       currency || "VND"
     }`;
+
   if (min) return `From ${min.toLocaleString()} ${currency || "VND"}`;
   if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
+
   return "Not specified";
 };
 

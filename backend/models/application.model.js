@@ -17,6 +17,11 @@ const applicationSchema = new mongoose.Schema(
       enum: ["pending", "rejected", "accepted"],
       default: "pending",
     },
+    cv: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CV",
+      default: null,
+    },
   },
   { timestamps: true }
 );

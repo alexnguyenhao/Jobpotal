@@ -3,12 +3,11 @@ import useCV from "@/hooks/useCV";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FileText, Trash2, Eye, PlusCircle, FolderOpen } from "lucide-react";
+import ConfirmDeleteDialog from "../shared/ConfirmDeleteDialog";
 
 import modernThumbnail from "@/components/cv/assets/modern-thumbnail.jpg";
 import classicThumbnail from "@/components/cv/assets/classic-thumbnail.jpg";
 import creativeThumbnail from "@/components/cv/assets/creative-thumbnail.jpg";
-
-import ConfirmDeleteDialog from "../shared/ConfirmDeleteDialog";
 
 const templateThumbnails = {
   modern: modernThumbnail,
@@ -21,6 +20,15 @@ const CVList = () => {
   const navigate = useNavigate();
 
   const [deleteId, setDeleteId] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+
+    await deleteCV(deleteId);
+    setDeleteId(null);
+    setDialogOpen(false);
+  };
 
   useEffect(() => {
     fetchMyCVs();
@@ -95,7 +103,7 @@ const CVList = () => {
                 <Button
                   size="sm"
                   className="flex-1"
-                  onClick={() => navigate(`/cv/view/${cv._id}`)}
+                  onClick={() => navigate(`/cv/${cv._id}`)}
                 >
                   <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
@@ -108,23 +116,36 @@ const CVList = () => {
                 >
                   <FileText className="w-4 h-4 mr-1" /> Edit
                 </Button>
-                <div>
-                  <ConfirmDeleteDialog
-                    open={!!deleteId}
-                    onClose={() => setDeleteId(null)}
-                    onConfirm={() => {
-                      deleteCV(deleteId);
-                      setDeleteId(null);
-                    }}
-                    title="Delete CV"
-                    message="Are you sure you want to delete this CV? This action cannot be undone."
-                  />
-                </div>
+
+                {/* DELETE WITH CONFIRMATION */}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => {
+                    setDeleteId(cv._id);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" /> Delete
+                </Button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* CONFIRM DELETE DIALOG */}
+      <ConfirmDeleteDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setDeleteId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete CV"
+        message="Are you sure you want to delete this CV?"
+      />
     </div>
   );
 };
