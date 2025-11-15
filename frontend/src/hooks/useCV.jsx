@@ -160,7 +160,6 @@ const useCV = () => {
         return true;
       }
     } catch (e) {
-      // axios throws CanceledError in modern versions when aborted
       if (e.name !== "CanceledError") toast.error("Autosave failed");
       return false;
     }
@@ -233,8 +232,6 @@ const useCV = () => {
 
       if (res.data.success) {
         const cv = res.data.cv;
-
-        // --- dispatch all CV data into redux ---
         dispatch(
           updateMeta({
             _id: cv._id ?? cv.id,

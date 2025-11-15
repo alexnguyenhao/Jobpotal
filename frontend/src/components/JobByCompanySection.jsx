@@ -148,7 +148,7 @@ const JobByCompanySection = () => {
                     jobsByCompany[com._id].map((job) => (
                       <div
                         key={job._id}
-                        onClick={() => navigate(`/job/${job._id}`)}
+                        onClick={() => navigate(`/description/${job._id}`)}
                         className="flex items-start gap-3 p-3 border border-gray-100 rounded-lg hover:border-[#6A38C2] hover:shadow-sm transition cursor-pointer"
                       >
                         <img

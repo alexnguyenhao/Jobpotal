@@ -6,9 +6,11 @@ import { setSavedJobs, addSavedJob, removeSavedJob } from "@/redux/jobSlice.js";
 
 const useSavedJobs = (autoFetch = true) => {
   const dispatch = useDispatch();
+  const { user } = useSelector((store) => store.auth);
   const { savedJobs } = useSelector((store) => store.job);
 
   const fetchSavedJobs = async () => {
+    if (!user) return;
     try {
       const res = await axios.get(`${USER_API_END_POINT}/saved`, {
         withCredentials: true,

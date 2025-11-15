@@ -17,31 +17,34 @@ const NavBar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const hasFetched = useRef(false);
-
-  // ✅ Prevent scroll on mobile menu
   useEffect(() => {
     document.body.classList.toggle("overflow-hidden", isMenuOpen);
     return () => document.body.classList.remove("overflow-hidden");
   }, [isMenuOpen]);
-
-  // ✅ Fetch user profile ONCE when app loads (and only if not logged in)
   useEffect(() => {
     if (hasFetched.current || isAuthenticated) return;
+    const hasSessionCookie = document.cookie.includes("token=");
+    if (!hasSessionCookie) {
+      dispatch(logout());
+      return;
+    }
+
     hasFetched.current = true;
 
     const checkUser = async () => {
       try {
         dispatch(setLoading(true));
+
         const res = await axios.get(`${USER_API_END_POINT}/profile`, {
           withCredentials: true,
         });
+
         if (res.data.success) {
           dispatch(setUser(res.data.user));
         } else {
           dispatch(logout());
         }
       } catch (error) {
-        console.warn("No active session:", error?.response?.status);
         dispatch(logout());
       } finally {
         dispatch(setLoading(false));
@@ -51,7 +54,6 @@ const NavBar = () => {
     checkUser();
   }, [dispatch, isAuthenticated]);
 
-  // ✅ Logout Handler (Redux + Cookie + Redirect)
   const logoutHandler = async () => {
     setIsLoggingOut(true);
     try {
@@ -68,8 +70,6 @@ const NavBar = () => {
       setIsMenuOpen(false);
     }
   };
-
-  // ✅ Role-based home route
   const homeRoute = user?.role === "recruiter" ? "/admin/companies" : "/";
 
   return (

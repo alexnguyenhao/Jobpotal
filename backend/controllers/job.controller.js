@@ -1,9 +1,4 @@
 import { Job } from "../models/job.model.js";
-import { User } from "../models/user.model.js";
-import { sendEmail } from "../libs/send-email.js";
-// ===============================
-// 🟢 ADMIN - Post a new job
-// ===============================
 export const postJob = async (req, res) => {
   try {
     const {
@@ -29,6 +24,7 @@ export const postJob = async (req, res) => {
 
     const userId = req.id;
 
+    // Validate
     if (
       !title ||
       !description ||
@@ -49,6 +45,7 @@ export const postJob = async (req, res) => {
       });
     }
 
+    // Format requirements
     const formattedRequirements =
       typeof requirements === "string"
         ? requirements
@@ -57,6 +54,7 @@ export const postJob = async (req, res) => {
             .filter(Boolean)
         : requirements;
 
+    // Format benefits
     const formattedBenefits =
       typeof benefits === "string"
         ? benefits
@@ -65,6 +63,7 @@ export const postJob = async (req, res) => {
             .filter(Boolean)
         : benefits;
 
+    // Create job
     const job = await Job.create({
       title,
       description,
@@ -90,43 +89,9 @@ export const postJob = async (req, res) => {
       applicationDeadline: new Date(applicationDeadline),
       created_by: userId,
     });
-    const studentUsers = await User.find({
-      role: "student",
-    }).select("email fullName");
-    console.log("studentUsers:", studentUsers);
-    for (const u of studentUsers) {
-      await sendEmail(
-        u.email,
-        `New Job Posted: ${job.title}`,
-        `
-    <div style="font-family: Arial; padding: 10px;">
-      <h2 style="color:#6A38C2;">New Job Posted</h2>
-      <p>Hello ${u.fullName},</p>
-      <p>A new job has been posted that may match your interest:</p>
-
-      <h3>${job.title}</h3>
-      <p><strong>Location:</strong> ${job.location.province}</p>
-
-      <br/>
-      <a 
-        href="http://localhost:5173/description/${job._id}"
-        style="
-          display:inline-block; 
-          padding:10px 15px; 
-          background:#6A38C2; 
-          color:white; 
-          text-decoration:none; 
-          border-radius:6px;"
-      >
-        View Job →
-      </a>
-    </div>
-    `
-      );
-    }
 
     return res.status(201).json({
-      message: "✅ New job posted & notifications sent!",
+      message: "✅ New job posted!",
       success: true,
       job,
     });
@@ -173,8 +138,6 @@ export const searchJobs = async (req, res) => {
     } = req.query;
 
     const query = {};
-
-    // 🔍 Keyword Search (title + description)
     if (keyword) {
       query.$or = [
         { title: { $regex: keyword, $options: "i" } },
@@ -236,10 +199,6 @@ export const getJobById = async (req, res) => {
     });
   }
 };
-
-// ===============================
-// 🟡 ADMIN - Get jobs by admin
-// ===============================
 export const getAdminJobs = async (req, res) => {
   try {
     const adminId = req.id;
@@ -258,44 +217,95 @@ export const getAdminJobs = async (req, res) => {
 };
 export const updateJob = async (req, res) => {
   try {
-    const job = await Job.findByIdAndUpdate(req.params.id, req.body, {
+    const jobId = req.params.id;
+
+    // Validate ID
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: "Job ID is required",
+      });
+    }
+
+    const jobCheck = await Job.findById(jobId);
+
+    if (!jobCheck) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    // Ownership check
+    if (jobCheck.created_by.toString() !== req.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to update this job",
+      });
+    }
+
+    const job = await Job.findByIdAndUpdate(jobId, req.body, {
       new: true,
+      runValidators: true,
     });
-    if (!job)
-      return res.status(404).json({ message: "Job not found", success: false });
 
     return res.status(200).json({
-      message: "Job updated successfully",
       success: true,
+      message: "Job updated successfully",
       job,
     });
   } catch (err) {
     console.error("❌ Update Job Error:", err);
     return res.status(500).json({
-      message: "Internal server error",
       success: false,
+      message: "Internal server error",
     });
   }
 };
 
 export const deleteJob = async (req, res) => {
   try {
-    const job = await Job.findByIdAndDelete(req.params.id);
-    if (!job)
-      return res.status(404).json({ message: "Job not found", success: false });
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: "Job ID is required",
+      });
+    }
+
+    const jobCheck = await Job.findById(jobId);
+
+    if (!jobCheck) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    // Ownership check
+    if (jobCheck.created_by.toString() !== req.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to delete this job",
+      });
+    }
+
+    await Job.findByIdAndDelete(jobId);
 
     return res.status(200).json({
-      message: "Job deleted successfully",
       success: true,
+      message: "Job deleted successfully",
     });
   } catch (err) {
     console.error("❌ Delete Job Error:", err);
     return res.status(500).json({
-      message: "Internal server error",
       success: false,
+      message: "Internal server error",
     });
   }
 };
+
 export const getJobsByCompany = async (req, res) => {
   try {
     const companyId = req.params.companyId;

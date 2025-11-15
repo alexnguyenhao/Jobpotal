@@ -4,16 +4,25 @@ import { CV } from "../models/cv.model.js";
 export const applyJob = async (req, res) => {
   try {
     const userId = req.id;
+
+    // ❗ Nếu user chưa login → req.id không tồn tại
+    if (!userId) {
+      return res.status(401).json({
+        message: "You must login to apply for a job",
+        success: false,
+      });
+    }
+
     const jobId = req.params.id;
     const { cvId } = req.body;
 
     // ❗ Chỉ null mới là apply bằng profile
     const usingProfile = cvId === null;
 
-    // ❗ Bắt FE gửi cvId không hợp lệ
+    // ❗ Bắt lỗi FE gửi sai format
     if (cvId === undefined || cvId === "") {
       return res.status(400).json({
-        message: "cvId must be null (profile) or valid CV ID",
+        message: "cvId must be null (profile) or a valid CV ID",
         success: false,
       });
     }
@@ -25,7 +34,7 @@ export const applyJob = async (req, res) => {
       });
     }
 
-    // Check double apply (đã đủ an toàn)
+    // ❗ Kiểm tra đã apply trước đó chưa
     const existing = await Application.findOne({
       job: jobId,
       applicant: userId,
@@ -40,7 +49,7 @@ export const applyJob = async (req, res) => {
 
     let cv = null;
 
-    // Nếu apply bằng CV — kiểm tra CV có thuộc user hay không
+    // Nếu apply bằng CV → xác thực CV có thuộc user
     if (!usingProfile) {
       cv = await CV.findById(cvId);
       if (!cv || cv.user.toString() !== userId) {

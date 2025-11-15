@@ -62,13 +62,26 @@ const JobDescription = () => {
         );
       }
     } catch (error) {
+      const status = error?.response?.status;
+
+      // 🔥 Nếu 401 → Redirect đến login
+      if (status === 401) {
+        toast.error("Please login to apply.");
+        navigate("/login");
+        return;
+      }
+
       toast.error(error?.response?.data?.message || "❌ Failed to apply");
     }
   };
 
   useEffect(() => {
-    fetchMyCVs(); // Load CV list
+    // 🟣 1. Only fetch CVs if user is logged in
+    if (user) {
+      fetchMyCVs();
+    }
 
+    // 🟣 2. Fetch Job (public - always allowed)
     const fetchJob = async () => {
       try {
         const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
@@ -80,18 +93,18 @@ const JobDescription = () => {
           dispatch(setSingleJob(job));
 
           // Check deadline
-          setIsExpired(new Date(res.data.job.applicationDeadline) < new Date());
+          setIsExpired(new Date(job.applicationDeadline) < new Date());
 
-          // Check applied
-          const applied = job.applications?.some(
-            (a) => a.applicant === user?._id
-          );
+          // Check applied (only if logged in)
+          const applied = user
+            ? job.applications?.some((a) => a.applicant === user?._id)
+            : false;
           setIsApplied(applied);
 
-          // Check saved
-          const saved = savedJobs?.some(
-            (j) => (j._id || j).toString() === jobId
-          );
+          // Check saved jobs (only if logged in)
+          const saved = user
+            ? savedJobs?.some((j) => (j._id || j).toString() === jobId)
+            : false;
           setIsSaved(saved);
         }
       } catch (err) {
@@ -100,7 +113,7 @@ const JobDescription = () => {
     };
 
     fetchJob();
-  }, [jobId, savedJobs, user?._id]);
+  }, [jobId, savedJobs, user]);
 
   const company = singleJob?.company;
   const salary = singleJob?.salary;
@@ -318,8 +331,6 @@ const JobDescription = () => {
           </div>
         </div>
       </div>
-
-      {/* ---------------- RESUME SELECTION MODAL ---------------- */}
       <ResumeSelectionDialog
         open={openResumeDialog}
         setOpen={setOpenResumeDialog}
@@ -330,11 +341,6 @@ const JobDescription = () => {
     </div>
   );
 };
-
-/* ------------------------------------------------------ */
-/* COMPONENTS */
-/* ------------------------------------------------------ */
-
 const InfoTag = ({ icon, label }) => (
   <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-full">
     <span className="text-[#6A38C2]">{icon}</span>
