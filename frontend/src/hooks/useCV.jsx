@@ -1,10 +1,11 @@
 // src/hooks/useCV.jsx
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef } from "react";
 import { CV_API_END_POINT } from "@/utils/constant";
 import {
   setCVs,
-  setFullCV,
+  updateMeta,
   updatePersonalInfo,
   updateEducation,
   updateWorkExperience,
@@ -14,30 +15,49 @@ import {
   updateAchievements,
   updateProjects,
   updateStyleConfig,
-  updateMeta,
   setLoading,
 } from "@/redux/cvSlice";
 import { toast } from "sonner";
 
-let saveController = null;
+// ❗ Không dùng biến global — gây bug khi nhiều component mount
+// let saveController = null;
 
 const useCV = () => {
   const dispatch = useDispatch();
-  const {
-    cvs,
-    meta,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    styleConfig,
-    loading,
-  } = useSelector((state) => state.cv);
+  const state = useSelector((state) => state.cv);
 
+  // Controller để hủy request autosave
+  const abortRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  // Cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (abortRef.current) {
+        try {
+          abortRef.current.abort();
+        } catch {}
+      }
+    };
+  }, []);
+
+  //--------------------------------------
+  // Helper: abort previous & create new controller
+  //--------------------------------------
+  const createAbortSignal = () => {
+    if (abortRef.current) {
+      try {
+        abortRef.current.abort();
+      } catch {}
+    }
+    abortRef.current = new AbortController();
+    return abortRef.current.signal;
+  };
+
+  //--------------------------------------
+  // Fetch user's CV list
+  //--------------------------------------
   const fetchMyCVs = async () => {
     try {
       dispatch(setLoading(true));
@@ -45,7 +65,9 @@ const useCV = () => {
         withCredentials: true,
       });
 
-      if (res.data.success) dispatch(setCVs(res.data.cvs));
+      if (res.data.success) {
+        dispatch(setCVs(res.data.cvs));
+      }
     } catch {
       toast.error("Cannot load CV list");
     } finally {
@@ -53,6 +75,9 @@ const useCV = () => {
     }
   };
 
+  //--------------------------------------
+  // Create new CV
+  //--------------------------------------
   const createCV = async (payload) => {
     try {
       const res = await axios.post(`${CV_API_END_POINT}/create`, payload, {
@@ -69,10 +94,13 @@ const useCV = () => {
     }
   };
 
-  // GET single CV by id: dispatch small updates (not one big setSingleCV)
+  //--------------------------------------
+  // Load a single CV
+  //--------------------------------------
   const getCV = async (id) => {
     try {
       dispatch(setLoading(true));
+
       const res = await axios.get(`${CV_API_END_POINT}/${id}`, {
         withCredentials: true,
       });
@@ -80,7 +108,6 @@ const useCV = () => {
       if (res.data.success) {
         const cv = res.data.cv;
 
-        // dispatch parts separately to avoid pushing one huge object
         dispatch(
           updateMeta({
             _id: cv._id ?? cv.id,
@@ -96,9 +123,7 @@ const useCV = () => {
 
         dispatch(updatePersonalInfo(cv.personalInfo ?? {}));
         dispatch(updateEducation(cv.education ?? []));
-        dispatch(
-          updateWorkExperience(cv.workExperience ?? cv.workExperience ?? [])
-        );
+        dispatch(updateWorkExperience(cv.workExperience ?? []));
         dispatch(updateSkills(cv.skills ?? []));
         dispatch(updateCertifications(cv.certifications ?? []));
         dispatch(updateLanguages(cv.languages ?? []));
@@ -112,37 +137,36 @@ const useCV = () => {
       dispatch(setLoading(false));
     }
   };
-  const updateCV = async (id, payload) => {
+
+  //--------------------------------------
+  // Update CV (Autosave)
+  //--------------------------------------
+  const updateCV = async (id, payload, { showToast = false } = {}) => {
     try {
-      if (saveController) saveController.abort();
-      saveController = new AbortController();
+      const signal = createAbortSignal();
 
       const res = await axios.put(`${CV_API_END_POINT}/${id}`, payload, {
         withCredentials: true,
-        signal: saveController.signal,
+        signal,
       });
+
+      if (!mountedRef.current) return false;
 
       if (res.data.success) {
         const cv = res.data.cv;
-        if (
-          cv.title ||
-          cv.template ||
-          cv.isPublic !== undefined ||
-          cv.shareUrl
-        ) {
-          dispatch(
-            updateMeta({
-              _id: cv._id ?? cv.id,
-              title: cv.title,
-              template: cv.template,
-              isPublic: cv.isPublic,
-              shareUrl: cv.shareUrl,
-              createdAt: cv.createdAt,
-              updatedAt: cv.updatedAt,
-              user: cv.user,
-            })
-          );
-        }
+
+        dispatch(
+          updateMeta({
+            _id: cv._id ?? cv.id,
+            title: cv.title,
+            template: cv.template,
+            isPublic: cv.isPublic,
+            shareUrl: cv.shareUrl,
+            createdAt: cv.createdAt,
+            updatedAt: cv.updatedAt,
+            user: cv.user,
+          })
+        );
 
         if (cv.personalInfo) dispatch(updatePersonalInfo(cv.personalInfo));
         if (cv.education) dispatch(updateEducation(cv.education));
@@ -156,15 +180,23 @@ const useCV = () => {
         if (cv.projects) dispatch(updateProjects(cv.projects));
         if (cv.styleConfig) dispatch(updateStyleConfig(cv.styleConfig));
 
-        toast.success("CV updated");
+        if (showToast) toast.success("CV updated");
         return true;
       }
     } catch (e) {
-      if (e.name !== "CanceledError") toast.error("Autosave failed");
+      const isCanceled =
+        axios.isCancel?.(e) ||
+        e.code === "ERR_CANCELED" ||
+        e.name === "CanceledError";
+
+      if (!isCanceled) toast.error("Autosave failed");
       return false;
     }
   };
 
+  //--------------------------------------
+  // Delete CV
+  //--------------------------------------
   const deleteCV = async (id) => {
     try {
       const res = await axios.delete(`${CV_API_END_POINT}/${id}`, {
@@ -180,6 +212,9 @@ const useCV = () => {
     }
   };
 
+  //--------------------------------------
+  // Share CV
+  //--------------------------------------
   const shareCV = async (id) => {
     try {
       const res = await axios.put(
@@ -197,6 +232,9 @@ const useCV = () => {
     }
   };
 
+  //--------------------------------------
+  // Unshare CV
+  //--------------------------------------
   const unShareCV = async (id) => {
     try {
       const res = await axios.put(
@@ -206,7 +244,7 @@ const useCV = () => {
       );
 
       if (res.data.success) {
-        toast.success("CV is private now");
+        toast.success("CV is now private");
         fetchMyCVs();
       }
     } catch {
@@ -214,6 +252,9 @@ const useCV = () => {
     }
   };
 
+  //--------------------------------------
+  // Public CV
+  //--------------------------------------
   const getPublicCV = async (shareUrl) => {
     try {
       const res = await axios.get(`${CV_API_END_POINT}/public/${shareUrl}`);
@@ -222,6 +263,10 @@ const useCV = () => {
       toast.error("Cannot load public CV");
     }
   };
+
+  //--------------------------------------
+  // Recruiter CV view
+  //--------------------------------------
   const getCVForRecruiter = async (id) => {
     try {
       dispatch(setLoading(true));
@@ -232,6 +277,7 @@ const useCV = () => {
 
       if (res.data.success) {
         const cv = res.data.cv;
+
         dispatch(
           updateMeta({
             _id: cv._id ?? cv.id,
@@ -255,29 +301,21 @@ const useCV = () => {
         dispatch(updateProjects(cv.projects ?? []));
         dispatch(updateStyleConfig(cv.styleConfig ?? {}));
 
-        dispatch(setLoading(false));
         return cv;
       }
-    } catch (e) {
-      dispatch(setLoading(false));
+    } catch {
       toast.error("Failed to load applicant CV");
       return null;
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
+  //--------------------------------------
+  // Return all
+  //--------------------------------------
   return {
-    cvs,
-    meta,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    styleConfig,
-    loading,
+    ...state, // cvs, meta, personalInfo, ...
     createCV,
     fetchMyCVs,
     getCV,

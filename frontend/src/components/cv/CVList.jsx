@@ -22,6 +22,10 @@ const CVList = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  useEffect(() => {
+    fetchMyCVs();
+  }, []); // 🔥 chỉ chạy 1 lần khi mount
+
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
 
@@ -29,10 +33,6 @@ const CVList = () => {
     setDeleteId(null);
     setDialogOpen(false);
   };
-
-  useEffect(() => {
-    fetchMyCVs();
-  }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
@@ -74,7 +74,7 @@ const CVList = () => {
             {/* Thumbnail */}
             <div className="h-56 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
               <img
-                src={templateThumbnails[cv.template]}
+                src={templateThumbnails[cv.template] ?? modernThumbnail}
                 alt="CV Template Thumbnail"
                 className="w-full h-full object-cover"
                 onError={(e) =>
@@ -117,7 +117,6 @@ const CVList = () => {
                   <FileText className="w-4 h-4 mr-1" /> Edit
                 </Button>
 
-                {/* DELETE WITH CONFIRMATION */}
                 <Button
                   size="sm"
                   variant="destructive"

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import useCV from "@/hooks/useCV";
 import { useSelector } from "react-redux";
@@ -6,6 +6,15 @@ import { useSelector } from "react-redux";
 import TopBar from "@/components/cv/builder/TopBar";
 import Sidebar from "@/components/cv/builder/Sidebar";
 import LivePreview from "@/components/cv/builder/LivePreview";
+
+// Debounce function
+const debounce = (func, delay) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(...args), delay);
+  };
+};
 
 const CVBuilder = () => {
   const {
@@ -26,8 +35,18 @@ const CVBuilder = () => {
   const [searchParams] = useSearchParams();
   const templateParam = searchParams.get("template");
   const cvId = searchParams.get("id");
+
   const [cvData, setCvData] = useState(null);
   const hasInitialized = useRef(false);
+  const debouncedUpdateCV = useMemo(
+    () =>
+      debounce((id, data) => {
+        updateCV(id, data);
+      }, 400),
+    []
+  );
+
+  // Load CV or create CV only once
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -42,6 +61,8 @@ const CVBuilder = () => {
       });
     }
   }, []);
+
+  // Sync Redux -> Local cvData
   useEffect(() => {
     if (!meta._id) return;
 
@@ -77,6 +98,8 @@ const CVBuilder = () => {
     projects,
     styleConfig,
   ]);
+
+  // 🔥 Update field with debounced save
   const updateField = (path, value) => {
     setCvData((prev) => {
       const updated = structuredClone(prev);
@@ -93,15 +116,19 @@ const CVBuilder = () => {
 
         ref[keys[keys.length - 1]] = value;
       }
-      updateCV(updated._id, updated);
+
+      // 🔥 chỉ gọi API sau khi user dừng gõ 400ms
+      debouncedUpdateCV(updated._id, updated);
 
       return updated;
     });
   };
 
+  // Template change (không cần debounce)
   const handleTemplateChange = (newTemplate) => {
     const updated = { ...cvData, template: newTemplate };
     setCvData(updated);
+
     updateCV(updated._id, { template: newTemplate });
   };
 

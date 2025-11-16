@@ -39,6 +39,7 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
 
   const handleUpdate = () => {
     updateCV(cvData._id, cvData);
+    toast.success("CV updated successfully");
   };
 
   const handleShare = async () => {
