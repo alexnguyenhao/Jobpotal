@@ -2,13 +2,14 @@ import React from "react";
 import { formatDate } from "../../../utils/formatDate";
 
 const ModernTemplate = ({ data }) => {
-  const info = data.personalInfo;
-  const s = data.styleConfig || {};
+  // Fallback dữ liệu nếu undefined
+  const info = data?.personalInfo || {};
+  const s = data?.styleConfig || {};
 
   const wrapperStyle = {
-    backgroundColor: s.backgroundColor,
-    color: s.textColor,
-    borderRadius: s.borderRadius,
+    backgroundColor: s.backgroundColor || "#ffffff",
+    color: s.textColor || "#333",
+    borderRadius: s.borderRadius || 0,
     overflow: "hidden",
     boxShadow:
       s.shadowLevel === 0
@@ -20,26 +21,29 @@ const ModernTemplate = ({ data }) => {
         : "0 8px 25px rgba(0,0,0,0.25)",
   };
 
+  // Padding config
   const spacing =
     s.spacing === "tight" ? "p-6" : s.spacing === "wide" ? "p-12" : "p-8";
 
   return (
     <div
-      className={`w-[860px] mx-auto flex ${s.fontFamily} ${s.fontSizeClass}`}
+      // SỬA: Dùng max-w-[210mm] và min-h-[297mm] để chuẩn khổ A4
+      className={`w-full max-w-[210mm] min-h-[297mm] mx-auto flex ${s.fontFamily} ${s.fontSizeClass}`}
       style={wrapperStyle}
     >
       {/* LEFT SIDEBAR */}
       <aside
-        className={`w-1/3 text-white ${spacing}`}
+        className={`w-1/3 text-white ${spacing} flex flex-col`}
         style={{
-          background: `linear-gradient(180deg, ${s.primaryColor}, ${
-            s.primaryColor + "AA"
+          background: `linear-gradient(180deg, ${s.primaryColor || "#333"}, ${
+            (s.primaryColor || "#333") + "AA"
           })`,
         }}
       >
-        <div className="w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg">
+        <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg flex-shrink-0">
           <img
-            src={info.profilePhoto || "/default-avatar.png"}
+            src={info.profilePhoto || "https://via.placeholder.com/150"}
+            alt="Avatar"
             className="w-full h-full object-cover"
           />
         </div>
@@ -49,102 +53,119 @@ const ModernTemplate = ({ data }) => {
         </h1>
 
         {info.position && (
-          <p className="text-center text-sm opacity-90 mt-1">{info.position}</p>
+          <p className="text-center text-sm opacity-90 mt-2 font-medium">
+            {info.position}
+          </p>
         )}
 
-        <div className="mt-8 text-sm opacity-90 space-y-2">
-          <p>
-            <b>Email:</b> {info.email}
-          </p>
-          <p>
-            <b>Phone:</b> {info.phone}
-          </p>
+        <div className="mt-8 text-sm opacity-95 space-y-3">
+          {info.email && (
+            <p className="break-words">
+              <b>Email:</b> <br /> {info.email}
+            </p>
+          )}
+          {info.phone && (
+            <p>
+              <b>Phone:</b> <br /> {info.phone}
+            </p>
+          )}
           {info.dateOfBirth && (
             <p>
-              <b>DOB:</b> {formatDate(info.dateOfBirth)}
+              <b>DOB:</b> <br /> {formatDate(info.dateOfBirth)}
             </p>
           )}
-          {info.gender && (
+          {info.address && (
             <p>
-              <b>Gender:</b> {info.gender}
+              <b>Address:</b> <br /> {info.address}
             </p>
           )}
-          <p>
-            <b>Address:</b> {info.address}
-          </p>
         </div>
 
-        <h3 className="text-lg font-semibold mt-12">Skills</h3>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {data.skills?.map((skill, i) => (
-            <span
-              key={i}
-              className="px-3 py-1 rounded-full text-xs"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.9)",
-                color: s.primaryColor,
-              }}
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+        {/* Skills in Sidebar */}
+        {data.skills?.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold border-b border-white/30 pb-1 mb-3">
+              Skills
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {data.skills.map((skill, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-1 rounded text-xs font-semibold"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    color: "#fff",
+                  }}
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {data.languages?.length > 0 && (
-          <>
-            <h3 className="text-lg font-semibold mt-10">Languages</h3>
-            <ul className="mt-2 space-y-1 text-sm opacity-90">
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold border-b border-white/30 pb-1 mb-3">
+              Languages
+            </h3>
+            <ul className="space-y-1 text-sm">
               {data.languages.map((l, i) => (
-                <li key={i}>
-                  {l.language} – {l.proficiency}
+                <li key={i} className="flex justify-between">
+                  <span>{l.language}</span>
+                  <span className="opacity-70 italic">{l.proficiency}</span>
                 </li>
               ))}
             </ul>
-          </>
+          </div>
         )}
       </aside>
 
       {/* RIGHT MAIN CONTENT */}
-      <main className={`w-2/3 ${spacing}`}>
+      <main className={`w-2/3 ${spacing} bg-white`}>
         {/* SUMMARY */}
         {info.summary && (
-          <section>
+          <section className="mb-8">
             <h2
-              className="text-2xl font-bold mb-2 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
-              }}
+              className="text-xl font-bold mb-3 uppercase tracking-wide"
+              style={{ color: s.primaryColor }}
             >
-              Professional Summary
+              Profile
             </h2>
-            <p className="opacity-90">{info.summary}</p>
+            <p className="opacity-80 text-justify leading-relaxed">
+              {info.summary}
+            </p>
           </section>
         )}
 
         {/* EXPERIENCE */}
         {data.workExperience?.length > 0 && (
-          <section className="mt-10">
+          <section className="mb-8">
             <h2
-              className="text-2xl font-bold mb-3 pb-1"
+              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
               style={{
                 color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
+                borderColor: s.primaryColor + "33",
               }}
             >
               Work Experience
             </h2>
 
-            <div className="space-y-6">
-              {data.workExperience?.map((exp, i) => (
+            <div className="space-y-5">
+              {data.workExperience.map((exp, i) => (
                 <div key={i}>
-                  <h3 className="font-semibold text-lg">
-                    {exp.position} – {exp.company}
-                  </h3>
-                  <p className="text-sm opacity-70">
-                    {formatDate(exp.startDate)} → {formatDate(exp.endDate)}
+                  <div className="flex justify-between items-baseline">
+                    <h3 className="font-bold text-lg">{exp.position}</h3>
+                    <span className="text-sm opacity-60 whitespace-nowrap ml-2">
+                      {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold opacity-80 mb-1">
+                    {exp.company}
                   </p>
-                  <p className="mt-2">{exp.description}</p>
+                  <p className="text-sm opacity-80 whitespace-pre-line">
+                    {exp.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -153,104 +174,64 @@ const ModernTemplate = ({ data }) => {
 
         {/* EDUCATION */}
         {data.education?.length > 0 && (
-          <section className="mt-10">
+          <section className="mb-8">
             <h2
-              className="text-2xl font-bold mb-3 pb-1"
+              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
               style={{
                 color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
+                borderColor: s.primaryColor + "33",
               }}
             >
               Education
             </h2>
-            {data.education?.map((edu, i) => (
-              <div key={i} className="mt-4">
-                <h3 className="font-semibold text-base">
-                  {edu.degree}, {edu.major}
-                </h3>
-                <p className="text-sm opacity-70">
-                  {edu.school} ({formatDate(edu.startDate)} →{" "}
-                  {formatDate(edu.endDate)})
+            {data.education.map((edu, i) => (
+              <div key={i} className="mb-4">
+                <div className="flex justify-between items-baseline">
+                  <h3 className="font-bold text-base">{edu.school}</h3>
+                  <span className="text-sm opacity-60">
+                    {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                  </span>
+                </div>
+                <p className="text-sm font-medium">
+                  {edu.degree} {edu.major && `- ${edu.major}`}
                 </p>
-                <p className="mt-2">{edu.description}</p>
+                <p className="text-sm opacity-80 mt-1">{edu.description}</p>
               </div>
             ))}
           </section>
         )}
+
         {/* PROJECTS */}
         {data.projects?.length > 0 && (
-          <section className="mt-10">
+          <section className="mb-8">
             <h2
-              className="text-2xl font-bold mb-3 pb-1"
+              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
               style={{
                 color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
+                borderColor: s.primaryColor + "33",
               }}
             >
               Projects
             </h2>
             {data.projects.map((proj, i) => (
-              <div key={i} className="mt-4">
-                <h3 className="font-semibold text-base">{proj.title}</h3>
-                <p>{proj.technologies}</p>
-                <p className="mt-2">{proj.description}</p>
-                {proj.link && (
-                  <p className="mt-1">
-                    Link:{" "}
+              <div key={i} className="mb-4">
+                <div className="flex justify-between">
+                  <h3 className="font-bold">{proj.name}</h3>
+                  {proj.link && (
                     <a
                       href={proj.link}
-                      className="text-blue-600 underline"
+                      className="text-xs text-blue-600 underline"
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {proj.link}
+                      Link
                     </a>
-                  </p>
-                )}
-              </div>
-            ))}
-          </section>
-        )}
-        {/* CERTIFICATIONS */}
-        {data.certifications?.length > 0 && (
-          <section className="mt-10">
-            <h2
-              className="text-2xl font-bold mb-3 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
-              }}
-            >
-              Certifications
-            </h2>
-            {data.certifications.map((cert, i) => (
-              <div key={i} className="mt-4">
-                <h3 className="font-semibold text-base">{cert.name}</h3>
-                <p>{cert.organization}</p>
-                <p className="text-sm opacity-70">
-                  {formatDate(cert.dateIssued)}
+                  )}
+                </div>
+                <p className="text-xs italic opacity-70 mb-1">
+                  {proj.technologies}
                 </p>
-              </div>
-            ))}
-          </section>
-        )}
-        {data.achievements?.length > 0 && (
-          <section className="mt-10">
-            <h2
-              className="text-2xl font-bold mb-3 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderBottom: `2px solid ${s.primaryColor}`,
-              }}
-            >
-              Achievements
-            </h2>
-            {data.achievements.map((ach, i) => (
-              <div key={i} className="mt-4">
-                <h3 className="font-semibold text-base">
-                  {ach.title} - ({ach.year})
-                </h3>
-                <p className="mt-2">{ach.description}</p>
+                <p className="text-sm opacity-80">{proj.description}</p>
               </div>
             ))}
           </section>
