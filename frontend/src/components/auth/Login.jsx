@@ -1,5 +1,18 @@
 import React, { useState } from "react";
-import NavBar from "@/components/shared/NavBar.jsx";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+// Store & Utils
+import { USER_API_END_POINT } from "@/utils/constant";
+import { loginSchema } from "@/lib/loginSchema";
+import { setLoading, setUser } from "@/redux/authSlice";
+
+// Components
+import NavBar from "@/components/shared/NavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,17 +23,9 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { USER_API_END_POINT } from "@/utils/constant";
-import { toast } from "sonner";
-import { useDispatch, useSelector } from "react-redux";
-import { setLoading, setUser } from "@/redux/authSlice";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/lib/loginSchema";
+
+// Icons
+import { Eye, EyeOff, Loader2, Briefcase, User, KeyRound } from "lucide-react";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,13 +33,12 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ✅ Setup react-hook-form + zod
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      role: "",
+      role: "", // Bắt buộc chọn role để login
     },
   });
 
@@ -59,30 +63,47 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <NavBar />
 
-      <main className="flex-grow flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-          {/* LEFT SIDE */}
-          <div className="hidden md:flex flex-col justify-center items-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-10">
-            <h2 className="text-3xl font-bold mb-4">Welcome Back 👋</h2>
-            <p className="text-sm text-indigo-100 mb-8 text-center">
-              Login to continue exploring job opportunities and career growth.
-            </p>
+      <main className="flex-grow flex items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 border border-gray-100">
+          {/* LEFT SIDE: BANNER */}
+          <div className="hidden lg:flex flex-col justify-center items-start p-12 bg-[#6A38C2] text-white relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+
+            <div className="relative z-10 space-y-6">
+              <div className="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-4xl font-bold leading-tight">
+                Welcome Back!
+              </h2>
+              <p className="text-indigo-100 text-lg max-w-md leading-relaxed">
+                To keep connected with us please login with your personal info.
+                <br />
+                Let's get you to your dream job.
+              </p>
+            </div>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="p-8 md:p-10 flex flex-col justify-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              Login to Your Account
-            </h2>
+          {/* RIGHT SIDE: LOGIN FORM */}
+          <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Login Account
+              </h2>
+              <p className="text-gray-500 mt-2">
+                Please login to continue to your dashboard.
+              </p>
+            </div>
 
-            {/* ✅ FORM START */}
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5"
+                className="space-y-6"
               >
                 {/* Email */}
                 <FormField
@@ -90,13 +111,17 @@ const Login = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="you@example.com"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type="email"
+                            placeholder="name@example.com"
+                            className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10"
+                            {...field}
+                          />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -109,56 +134,58 @@ const Login = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex justify-between items-center">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          to="/forgot-password"
+                          className="text-xs font-medium text-[#6A38C2] hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                      </div>
                       <FormControl>
                         <div className="relative">
+                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                           <Input
-                            {...field}
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pr-10"
+                            className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10 pr-10"
+                            {...field}
                           />
-                          <div
-                            onClick={() => setShowPassword((prev) => !prev)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600 cursor-pointer"
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           >
                             {showPassword ? (
                               <EyeOff size={18} />
                             ) : (
                               <Eye size={18} />
                             )}
-                          </div>
+                          </button>
                         </div>
                       </FormControl>
-                      <div className="flex justify-end mt-1">
-                        <Link
-                          to="/forgot-password"
-                          className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Role */}
+                {/* Role Selection */}
                 <FormField
                   control={form.control}
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>I am a...</FormLabel>
+                      <FormLabel>Login as</FormLabel>
                       <FormControl>
-                        <div className="flex gap-4 mt-2">
+                        <div className="grid grid-cols-2 gap-4">
                           {["student", "recruiter"].map((r) => (
                             <label
                               key={r}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer transition ${
+                              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
                                 field.value === r
-                                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                                  : "border-gray-300 text-gray-600 hover:border-purple-300"
+                                  ? "border-[#6A38C2] bg-purple-50 text-[#6A38C2] font-semibold"
+                                  : "border-gray-200 text-gray-600 hover:border-purple-200 hover:bg-gray-50"
                               }`}
                             >
                               <input
@@ -168,9 +195,7 @@ const Login = () => {
                                 onChange={() => field.onChange(r)}
                                 className="hidden"
                               />
-                              <span className="capitalize font-medium">
-                                {r}
-                              </span>
+                              <span className="capitalize">{r}</span>
                             </label>
                           ))}
                         </div>
@@ -180,15 +205,15 @@ const Login = () => {
                   )}
                 />
 
-                {/* Submit */}
+                {/* Submit Button */}
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-4 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-semibold py-2 rounded-lg transition-all"
+                  className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all mt-4"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging
                       in...
                     </>
                   ) : (
@@ -196,18 +221,17 @@ const Login = () => {
                   )}
                 </Button>
 
-                <p className="text-center text-gray-500 text-sm mt-4">
-                  Don’t have an account?{" "}
+                <p className="text-center text-sm text-gray-500">
+                  Don't have an account?{" "}
                   <Link
                     to="/signup"
-                    className="text-indigo-600 hover:underline font-medium"
+                    className="text-[#6A38C2] font-bold hover:underline"
                   >
                     Sign up
                   </Link>
                 </p>
               </form>
             </Form>
-            {/* ✅ FORM END */}
           </div>
         </div>
       </main>
