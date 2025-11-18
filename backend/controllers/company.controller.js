@@ -61,7 +61,29 @@ export const getCompany = async (req, res) => {
     });
   }
 };
+// Lấy danh sách tất cả công ty (Cho trang chủ - Public)
+export const getAllCompanies = async (req, res) => {
+  try {
+    // Lấy tất cả công ty, chỉ lấy field cần thiết để nhẹ
+    const companies = await Company.find(
+      {},
+      { name: 1, logo: 1, location: 1, _id: 1 }
+    )
+      .sort({ createdAt: -1 })
+      .limit(20);
 
+    return res.status(200).json({
+      success: true,
+      companies,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get companies",
+    });
+  }
+};
 // 🔍 Lấy chi tiết 1 công ty
 export const getCompanyById = async (req, res) => {
   try {
@@ -131,10 +153,6 @@ export const getCompanyById = async (req, res) => {
     });
   }
 };
-
-// get company for user not login
-
-// ✏️ Cập nhật thông tin công ty (phiên bản mới nhất)
 export const updateCompany = async (req, res) => {
   try {
     const {

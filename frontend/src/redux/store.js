@@ -12,17 +12,20 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
+
 import storage from "redux-persist/lib/storage";
+
 import companySlice from "@/redux/companySlice.js";
 import applicationSlice from "@/redux/applicationSlice.js";
 import cvSlice from "@/redux/cvSlice.js";
+import careerGuideSlice from "@/redux/careerGuideSlice.js";
 
 const persistConfig = {
   key: "root",
-  version: 1,
   storage,
+  version: 1,
+  whitelist: ["auth", "cv", "application"],
 };
-
 const rootReducer = combineReducers({
   auth: authSlice,
   job: jobSlice,
@@ -30,19 +33,21 @@ const rootReducer = combineReducers({
   application: applicationSlice,
   category: categorySlice,
   cv: cvSlice,
+  careerGuide: careerGuideSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      immutableCheck: false, // 🚀 Fix cảnh báo lớn nhất
+      immutableCheck: false, // Tăng performance
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
 });
+
+export const persistor = persistStore(store);
 
 export default store;

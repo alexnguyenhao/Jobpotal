@@ -1,4 +1,16 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+// Store & Utils
+import { USER_API_END_POINT } from "@/utils/constant";
+import { setUser } from "@/redux/authSlice";
+import { updateProfileSchema } from "@/lib/updateProfileSchema";
+
+// UI Components
 import {
   Dialog,
   DialogContent,
@@ -7,9 +19,26 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea"; // Đảm bảo bạn đã có component này
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Icons
 import {
   Loader2,
   User2,
@@ -19,23 +48,10 @@ import {
   FileText,
   Sparkles,
   Target,
+  UploadCloud,
+  X,
+  Briefcase,
 } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import axios from "axios";
-import { USER_API_END_POINT } from "@/utils/constant";
-import { toast } from "sonner";
-import { setUser } from "@/redux/authSlice";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { updateProfileSchema } from "@/lib/updateProfileSchema";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
 
 const UpdateProfileDialog = ({ open, setOpen }) => {
   const dispatch = useDispatch();
@@ -46,8 +62,8 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       fullName: user?.fullName || "",
-      dateOfBirth: user?.dateOfBirth || "",
-      gender: user?.gender || "male,female,other",
+      dateOfBirth: user?.dateOfBirth ? user.dateOfBirth.split("T")[0] : "", // Fix date format
+      gender: user?.gender || "male",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       address: user?.address || "",
@@ -58,10 +74,21 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     },
   });
 
+  // Watch file để hiển thị tên file khi chọn
+  const fileValue = form.watch("file");
+
   const onSubmit = async (data) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
+
+    Object.keys(data).forEach((key) => {
+      if (key === "file") {
+        if (data.file) formData.append("file", data.file);
+      } else {
+        // Tránh gửi giá trị null/undefined
+        if (data[key] !== null && data[key] !== undefined) {
+          formData.append(key, data[key]);
+        }
+      }
     });
 
     try {
@@ -80,6 +107,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
         setOpen(false);
       }
     } catch (error) {
+      console.error(error);
       toast.error(error.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
@@ -88,96 +116,153 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] bg-gradient-to-b from-white to-gray-50 border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
-        {/* Header */}
-        <DialogHeader className="sticky top-0 bg-white z-10 pb-3 border-b">
-          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <User2 className="text-[#6A38C2]" size={20} />
-            Update Profile
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] bg-white p-0 gap-0 rounded-2xl overflow-hidden flex flex-col">
+        {/* --- HEADER --- */}
+        <DialogHeader className="px-6 py-4 bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+          <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <div className="p-2 bg-purple-100 rounded-full text-[#6A38C2]">
+              <User2 size={20} />
+            </div>
+            Edit Personal Profile
           </DialogTitle>
-          <DialogDescription className="text-gray-500">
-            Keep your personal and career details up to date.
+          <DialogDescription className="text-gray-500 text-sm">
+            Update your personal details, bio, and resume to stand out.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Form */}
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="overflow-y-auto max-h-[65vh] px-1 mt-2 space-y-8"
-          >
-            {/* Personal Info */}
-            <section>
-              <h3 className="text-[#6A38C2] text-sm font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide">
-                <User2 size={14} /> Personal Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <User2 size={16} className="text-[#6A38C2]" /> Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dateOfBirth"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <User2 size={16} className="text-[#6A38C2]" /> Date of
-                        Birth
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <User2 size={16} className="text-[#6A38C2]" /> Gender
-                      </FormLabel>
-                      <FormControl>
-                        <select
-                          {...field}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6A38C2]"
+        {/* --- SCROLLABLE FORM --- */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* SECTION 1: PERSONAL INFO */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2">
+                  <User2 size={16} className="text-[#6A38C2]" /> Personal
+                  Details
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date of Birth</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="johndoe@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+1 234 567 890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
                         >
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="City, Country" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* SECTION 2: PROFESSIONAL */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mt-2">
+                  <Briefcase size={16} className="text-[#6A38C2]" />{" "}
+                  Professional Info
+                </h3>
 
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="bio"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <Mail size={16} className="text-[#6A38C2]" /> Email
+                      <FormLabel className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-yellow-500" /> Bio
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="example@email.com"
+                        <Textarea
+                          className="min-h-[80px]"
+                          placeholder="A short bio about yourself..."
                           {...field}
                         />
                       </FormControl>
@@ -188,17 +273,17 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
                 <FormField
                   control={form.control}
-                  name="phoneNumber"
+                  name="careerObjective"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <Phone size={16} className="text-[#6A38C2]" /> Phone
-                        Number
+                      <FormLabel className="flex items-center gap-2">
+                        <Target size={14} className="text-red-500" /> Career
+                        Objective
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="+1 234 567 890"
+                        <Textarea
+                          className="min-h-[80px]"
+                          placeholder="What are your professional goals?"
                           {...field}
                         />
                       </FormControl>
@@ -209,131 +294,102 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="skills"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700">
-                        <MapPin size={16} className="text-[#6A38C2]" /> Address
-                      </FormLabel>
+                      <FormLabel>Skills</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Main St, New York" {...field} />
+                        <Input
+                          placeholder="React, Node.js, Design (comma separated)"
+                          {...field}
+                        />
                       </FormControl>
+                      <p className="text-xs text-gray-500">
+                        Separate skills with commas (,)
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </section>
 
-            {/* Professional Info */}
-            <section>
-              <h3 className="text-[#6A38C2] text-sm font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide">
-                <Target size={14} /> Professional Details
-              </h3>
+              {/* SECTION 3: RESUME UPLOAD */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mt-2">
+                  <FileText size={16} className="text-[#6A38C2]" /> Resume / CV
+                </h3>
 
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-gray-700">
-                      <Sparkles size={16} className="text-[#6A38C2]" /> Bio
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="A short introduction about yourself"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors relative group">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => form.setValue("file", e.target.files?.[0])}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                  />
 
-              <FormField
-                control={form.control}
-                name="careerObjective"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-gray-700">
-                      <FileText size={16} className="text-[#6A38C2]" /> Career
-                      Objective
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your professional goals" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                  <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                    <UploadCloud className="w-6 h-6 text-[#6A38C2]" />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="skills"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-gray-700">
-                      <Sparkles size={16} className="text-[#6A38C2]" /> Skills
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="React, Node.js, MongoDB" {...field} />
-                    </FormControl>
-                    <p className="text-xs text-gray-500">
-                      Separate skills with commas (,)
-                    </p>
-                  </FormItem>
-                )}
-              />
-
-              {/* Resume Upload */}
-              <FormField
-                control={form.control}
-                name="file"
-                render={() => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-gray-700">
-                      <FileText size={16} className="text-[#6A38C2]" /> Resume
-                      (PDF)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(e) =>
-                          form.setValue("file", e.target.files?.[0])
-                        }
-                        className="border-gray-200 focus:border-[#6A38C2]"
-                      />
-                    </FormControl>
-                    {form.getValues("file") && (
-                      <p className="text-xs text-gray-600 mt-1 truncate">
-                        {typeof form.getValues("file") === "string"
-                          ? form.getValues("file").split("/").pop()
-                          : form.getValues("file")?.name}
+                  {fileValue ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+                      <FileText size={16} />
+                      {fileValue.name}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent opening file dialog
+                          form.setValue("file", null);
+                        }}
+                        className="z-30 p-1 hover:bg-red-100 rounded-full text-red-500 ml-2"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-700">
+                        Click to upload or drag and drop
                       </p>
-                    )}
-                  </FormItem>
-                )}
-              />
-            </section>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PDF (MAX. 5MB)
+                      </p>
+                      {user?.resume && (
+                        <p className="text-xs text-blue-600 mt-3 font-medium bg-blue-50 px-3 py-1 rounded-full">
+                          Current: {user.resumeOriginalName || "View Resume"}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </form>
+          </Form>
+        </div>
 
-            {/* Footer */}
-            <DialogFooter className="sticky bottom-0 bg-white pt-4 border-t mt-6">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#6A38C2] hover:bg-[#592ba3] text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                    Updating...
-                  </>
-                ) : (
-                  "Update Profile"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        {/* --- FOOTER --- */}
+        <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={loading}
+            className="bg-[#6A38C2] hover:bg-[#592ba3] text-white min-w-[120px]"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

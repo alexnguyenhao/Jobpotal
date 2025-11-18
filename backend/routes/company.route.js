@@ -5,11 +5,13 @@ import {
   registerCompany,
   updateCompany,
   deleteCompany,
+  getAllCompanies,
 } from "../controllers/company.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { singleUpload } from "../middlewares/mutler.js";
 
 const router = express.Router();
+router.get("/public", getAllCompanies);
 router.post("/register", isAuthenticated, registerCompany);
 router.get("/get", isAuthenticated, getCompany);
 router.get("/admin/:id", isAuthenticated, getCompanyById);

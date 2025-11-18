@@ -1,9 +1,8 @@
-// src/redux/cvSlice.js
 import { createSlice } from "@reduxjs/toolkit";
+// [Giữ nguyên các imports và Thunks (createAsyncThunk) của bạn]
 
 const initialState = {
   cvs: [],
-
   // Tách nhỏ single CV thành nhiều phần
   meta: {
     _id: null,
@@ -15,7 +14,6 @@ const initialState = {
     updatedAt: null,
     user: null,
   },
-
   personalInfo: {
     fullName: "",
     email: "",
@@ -27,7 +25,6 @@ const initialState = {
     position: "",
     summary: "",
   },
-
   education: [],
   workExperience: [],
   skills: [],
@@ -35,7 +32,6 @@ const initialState = {
   languages: [],
   achievements: [],
   projects: [],
-
   styleConfig: {
     fontFamily: "font-sans",
     fontSizeClass: "text-base",
@@ -46,7 +42,6 @@ const initialState = {
     borderRadius: 12,
     shadowLevel: 1,
   },
-
   // flags
   loading: false,
   saving: false,
@@ -59,17 +54,38 @@ const cvSlice = createSlice({
   name: "cv",
   initialState,
   reducers: {
+    // ----------------------------------------------------
+    // 🔥 NEW CORE REDUCER: Cập nhật state bằng Path (Ví dụ: 'personalInfo.fullName')
+    // ----------------------------------------------------
+    updateLocalCVState: (state, action) => {
+      const { path, value } = action.payload;
+
+      // Logic này dựa vào thư viện Immer của Redux Toolkit để update nested state an toàn
+      const keys = path.split(".");
+      let target = state;
+
+      // Duyệt qua path, đảm bảo các object lồng nhau tồn tại
+      for (let i = 0; i < keys.length - 1; i++) {
+        // Nếu target không tồn tại (null/undefined), tạo object rỗng
+        if (!target[keys[i]]) target[keys[i]] = {};
+        target = target[keys[i]];
+      }
+      // Set giá trị cuối cùng
+      target[keys[keys.length - 1]] = value;
+    },
+    // ----------------------------------------------------
+
     // list
     setCVs: (state, action) => {
       state.cvs = action.payload;
     },
 
-    // ====== set whole CV (use sparingly, not for autosave) ======
+    // ====== set whole CV (Dùng để load data) ======
     setFullCV: (state, action) => {
       const cv = action.payload;
       if (!cv) return;
 
-      // meta
+      // Đây là logic merge dữ liệu rất tốt của bạn
       state.meta = {
         _id: cv._id ?? cv.id ?? state.meta._id,
         title: cv.title ?? state.meta.title,
@@ -81,6 +97,7 @@ const cvSlice = createSlice({
         user: cv.user ?? state.meta.user,
       };
 
+      // Cần đảm bảo các trường khác được merge đúng cách (dùng toán tử ?? của bạn là ổn)
       state.personalInfo = cv.personalInfo ?? state.personalInfo;
       state.education = cv.education ?? state.education;
       state.workExperience = cv.workExperience ?? state.workExperience;
@@ -92,7 +109,7 @@ const cvSlice = createSlice({
       state.styleConfig = cv.styleConfig ?? state.styleConfig;
     },
 
-    // ====== Update individual parts (use these in autosave) ======
+    // ====== Update individual parts (Giữ lại vì chúng là action update array/object) ======
     updateMeta: (state, action) => {
       state.meta = { ...state.meta, ...action.payload };
     },
@@ -102,34 +119,26 @@ const cvSlice = createSlice({
     },
 
     updateEducation: (state, action) => {
-      // replace full education array
-      state.education = action.payload;
+      state.education = action.payload; // Thay thế full array
     },
-
     updateWorkExperience: (state, action) => {
-      state.workExperience = action.payload;
+      state.workExperience = action.payload; // Thay thế full array
     },
-
     updateSkills: (state, action) => {
-      state.skills = action.payload;
+      state.skills = action.payload; // Thay thế full array
     },
-
     updateCertifications: (state, action) => {
-      state.certifications = action.payload;
+      state.certifications = action.payload; // Thay thế full array
     },
-
     updateLanguages: (state, action) => {
-      state.languages = action.payload;
+      state.languages = action.payload; // Thay thế full array
     },
-
     updateAchievements: (state, action) => {
-      state.achievements = action.payload;
+      state.achievements = action.payload; // Thay thế full array
     },
-
     updateProjects: (state, action) => {
-      state.projects = action.payload;
+      state.projects = action.payload; // Thay thế full array
     },
-
     updateStyleConfig: (state, action) => {
       state.styleConfig = { ...state.styleConfig, ...action.payload };
     },
@@ -150,9 +159,11 @@ const cvSlice = createSlice({
       state.autoSaveStatus = action.payload;
     },
     clearCVState: (state) => {
+      // Dùng Object.assign để reset state về initialState an toàn
       Object.assign(state, initialState);
     },
   },
+  // [extraReducers giữ nguyên]
 });
 
 export const {
@@ -168,6 +179,7 @@ export const {
   updateAchievements,
   updateProjects,
   updateStyleConfig,
+  updateLocalCVState, // ✅ EXPORT ACTION MỚI
   setLoading,
   setSaving,
   setError,

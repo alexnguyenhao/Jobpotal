@@ -94,6 +94,7 @@ const TopBar = ({ cvData, onTemplateChange, updateField }) => {
             <p className="font-semibold text-sm mb-2">Select Template</p>
 
             <Select
+              value={cvData.template}
               onValueChange={(value) => {
                 onTemplateChange(value);
                 setOpen(false);

@@ -1,5 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
+
+// UI Components
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -7,42 +14,44 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { SelectSearch } from "./shared/SelectSearch"; // Component SelectSearch của bạn
+
+// Icons
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  MapPin,
+  Briefcase,
+  Banknote,
+  Users,
+  RotateCcw,
+} from "lucide-react";
 import { provinces } from "@/utils/constant";
-import useGetAllCategories from "@/hooks/useGetAllCategoris";
-import { Search, Filter, ChevronDown, MapPin } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { SelectSearch } from "./shared/SelectSearch";
 
 const JobFilterBar = () => {
   const navigate = useNavigate();
   const { categories } = useSelector((store) => store.category);
   const { companies } = useSelector((store) => store.company);
-  useGetAllCategories();
+
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { register, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
       title: "",
-      company: "",
-      category: "",
       location: "",
+      category: "",
       jobType: "",
-      experience: "",
       seniorityLevel: "",
       salaryMin: "",
       salaryMax: "",
+      experience: "",
+      company: "",
     },
   });
-  const handleTitleChange = (e) => {
-    setValue("title", e.target.value);
-  };
+
   const onSubmit = (data) => {
     const params = new URLSearchParams();
-
     Object.entries(data).forEach(([key, val]) => {
       if (val && val !== "") {
         params.append(key === "title" ? "keyword" : key, val);
@@ -50,190 +59,219 @@ const JobFilterBar = () => {
     });
     navigate(`/jobs?${params.toString()}`);
   };
+
   const handleReset = () => {
     reset();
-    setShowAdvanced(false);
     navigate("/jobs");
   };
 
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 w-full">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-        {/* TOP FILTER ROW */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Keyword */}
-          <div className="relative flex-1 min-w-[200px]">
+    <div className="w-full max-w-5xl mx-auto">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-2 transition-all duration-300"
+      >
+        {/* --- TOP SECTION: MAIN SEARCH --- */}
+        <div className="flex flex-col md:flex-row items-center gap-2 p-2">
+          {/* 1. Keyword Input */}
+          <div className="relative flex-grow w-full md:w-auto group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#6A38C2] transition-colors" />
             <Input
-              placeholder="Search job title, skill..."
+              placeholder="Search job title, keyword, or company..."
+              className="h-12 pl-10 border-transparent bg-gray-50 focus:bg-white focus:border-[#6A38C2]/30 focus:ring-2 focus:ring-[#6A38C2]/20 rounded-xl text-base"
               {...register("title")}
-              onChange={handleTitleChange}
-              value={watch("title")}
-              className="h-9 pl-8 text-sm"
             />
-            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400" />
           </div>
 
-          {/* Location */}
-          <SelectSearch
-            items={provinces.map((p) => ({ _id: p, name: p }))}
-            value={watch("location")}
-            onChange={(v) => setValue("location", v)}
-            placeholder="Location"
-            labelKey="name"
-            valueKey="_id"
-          />
+          <div className="hidden md:block w-[1px] h-8 bg-gray-200 mx-1"></div>
 
-          {/* Category */}
-          <SelectSearch
-            items={categories}
-            value={watch("category")}
-            onChange={(v) => setValue("category", v)}
-            placeholder="Category"
-            labelKey="name"
-            valueKey="_id"
-          />
+          {/* 2. Location Select */}
+          <div className="w-full md:w-[220px] relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
+            <div className="pl-7">
+              <SelectSearch
+                items={provinces.map((p) => ({ _id: p, name: p }))}
+                value={watch("location")}
+                onChange={(v) => setValue("location", v)}
+                placeholder="All Locations"
+                labelKey="name"
+                valueKey="_id"
+                className="h-12 border-none bg-transparent focus:ring-0 shadow-none text-gray-600 font-medium"
+              />
+            </div>
+          </div>
 
-          {/* Search Button */}
-          <Button
-            type="submit"
-            className="h-9 px-4 bg-[#7209B7] hover:bg-[#5c0f8e] text-white text-sm"
-          >
-            <Search className="w-4 h-4 mr-1" />
-            Search
-          </Button>
+          {/* 3. Action Buttons */}
+          <div className="flex gap-2 w-full md:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`h-12 px-4 border-gray-200 rounded-xl hover:bg-purple-50 hover:text-[#6A38C2] hover:border-purple-200 transition-all ${
+                showAdvanced
+                  ? "bg-purple-50 text-[#6A38C2] border-purple-200"
+                  : "text-gray-600"
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
 
-          {/* Toggle Advanced */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center text-[#7209B7] text-sm font-medium hover:underline"
-          >
-            {showAdvanced ? "Hide Filters" : "More Filters"}
-          </button>
+            <Button
+              type="submit"
+              className="h-12 px-8 bg-[#6A38C2] hover:bg-[#582bb6] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex-grow md:flex-grow-0"
+            >
+              Search Jobs
+            </Button>
+          </div>
         </div>
 
-        {/* ADVANCED FILTER PANEL */}
+        {/* --- BOTTOM SECTION: ADVANCED FILTERS --- */}
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden border-t border-gray-100 pt-3 mt-1"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="overflow-hidden"
             >
-              <div className="flex flex-wrap gap-2">
-                <div>
-                  <p className="font-medium text-gray-600 mb-1">Job type</p>
-                  <Select
-                    onValueChange={(v) => setValue("jobType", v)}
-                    value={watch("jobType")}
+              <div className="border-t border-gray-100 mt-2 p-4 md:p-6 bg-gray-50/50 rounded-b-xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {/* Category */}
+                  <FilterGroup
+                    label="Category"
+                    icon={<Briefcase className="w-4 h-4" />}
                   >
-                    <SelectTrigger className="h-8 w-[140px] text-xs font-medium bg-gray-50 border-gray-300 rounded-full px-3">
-                      <SelectValue placeholder="Job Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[
-                        "Full-time",
-                        "Part-time",
-                        "Remote",
-                        "Contract",
-                        "Internship",
-                      ].map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <SelectSearch
+                      items={categories}
+                      value={watch("category")}
+                      onChange={(v) => setValue("category", v)}
+                      placeholder="Select Category"
+                      labelKey="name"
+                      valueKey="_id"
+                    />
+                  </FilterGroup>
 
-                {/* Seniority */}
-                <div>
-                  <p className="font-medium text-gray-600 mb-1">Seniority</p>
-                  <Select
-                    onValueChange={(v) => setValue("seniorityLevel", v)}
-                    value={watch("seniorityLevel")}
+                  {/* Job Type */}
+                  <FilterGroup
+                    label="Job Type"
+                    icon={<Briefcase className="w-4 h-4" />}
                   >
-                    <SelectTrigger className="h-8 w-[150px] text-xs font-medium bg-gray-50 border-gray-300 rounded-full px-3">
-                      <SelectValue placeholder="Seniority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[
-                        "Intern",
-                        "Junior",
-                        "Mid",
-                        "Senior",
-                        "Lead",
-                        "Manager",
-                      ].map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <Select
+                      onValueChange={(v) => setValue("jobType", v)}
+                      value={watch("jobType")}
+                    >
+                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200">
+                        <SelectValue placeholder="Any Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[
+                          "Full-time",
+                          "Part-time",
+                          "Remote",
+                          "Contract",
+                          "Internship",
+                        ].map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FilterGroup>
 
-                {/* Salary Range */}
-                <div>
-                  <p className="font-medium text-gray-600 mb-1">Salary:</p>
-                  <div className="flex items-center bg-gray-50 h-8 px-3 rounded-full border border-gray-300 text-xs gap-1">
+                  {/* Seniority */}
+                  <FilterGroup
+                    label="Seniority"
+                    icon={<Users className="w-4 h-4" />}
+                  >
+                    <Select
+                      onValueChange={(v) => setValue("seniorityLevel", v)}
+                      value={watch("seniorityLevel")}
+                    >
+                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200">
+                        <SelectValue placeholder="Any Level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[
+                          "Intern",
+                          "Junior",
+                          "Mid",
+                          "Senior",
+                          "Lead",
+                          "Manager",
+                        ].map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FilterGroup>
+
+                  {/* Salary Range */}
+                  <FilterGroup
+                    label="Salary Range (Monthly)"
+                    icon={<Banknote className="w-4 h-4" />}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Input
+                        {...register("salaryMin")}
+                        placeholder="Min"
+                        className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                        type="number"
+                      />
+                      <span className="text-gray-400">-</span>
+                      <Input
+                        {...register("salaryMax")}
+                        placeholder="Max"
+                        className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                        type="number"
+                      />
+                    </div>
+                  </FilterGroup>
+
+                  {/* Experience */}
+                  <FilterGroup label="Experience (Years)">
                     <Input
-                      {...register("salaryMin")}
-                      placeholder="Min"
-                      className="h-7 w-14 text-xs border-none bg-transparent"
+                      {...register("experience")}
+                      placeholder="e.g. 2"
+                      className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                      type="number"
                     />
-                    <span>-</span>
-                    <Input
-                      {...register("salaryMax")}
-                      placeholder="Max"
-                      className="h-7 w-14 text-xs border-none bg-transparent"
+                  </FilterGroup>
+
+                  {/* Company */}
+                  <FilterGroup label="Specific Company">
+                    <SelectSearch
+                      items={companies}
+                      value={watch("company")}
+                      onChange={(v) => setValue("company", v)}
+                      placeholder="Select Company"
+                      labelKey="name"
+                      valueKey="_id"
                     />
-                  </div>
+                  </FilterGroup>
                 </div>
 
-                {/* Experience */}
-                <div>
-                  <p className="font-medium text-gray-600">Experience:</p>
-                  <Input
-                    {...register("experience")}
-                    placeholder="Experience"
-                    className="h-8 text-xs w-[150px] bg-gray-50 border-gray-300 rounded-full px-3"
-                  />
+                {/* Footer Actions */}
+                <div className="flex justify-end items-center mt-6 pt-4 border-t border-gray-200 border-dashed">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleReset}
+                    className="text-gray-500 hover:text-red-600 hover:bg-red-50 gap-2 h-9 text-sm"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Reset Filters
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="ml-3 bg-[#6A38C2] hover:bg-[#582bb6] text-white h-9 px-6 text-sm rounded-lg"
+                  >
+                    Apply Filters
+                  </Button>
                 </div>
-
-                {/* Company */}
-                <div>
-                  <p className="font-medium text-gray-600">Company:</p>
-                  <SelectSearch
-                    items={companies}
-                    value={watch("company")}
-                    onChange={(v) => setValue("company", v)}
-                    placeholder="Company"
-                    labelKey="name"
-                    valueKey="_id"
-                  />
-                </div>
-              </div>
-
-              {/* Apply + Reset */}
-              <div className="flex justify-end gap-2 mt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleReset}
-                  className="h-8 text-xs px-3 rounded-full"
-                >
-                  Reset
-                </Button>
-
-                <Button
-                  type="submit"
-                  className="h-8 text-xs px-4 rounded-full bg-[#7209B7] hover:bg-[#5c0f8e] text-white"
-                >
-                  Apply
-                </Button>
               </div>
             </motion.div>
           )}
@@ -243,9 +281,11 @@ const JobFilterBar = () => {
   );
 };
 
-const FilterField = ({ label, children }) => (
-  <div>
-    <label className="text-xs font-semibold text-gray-600 mb-1 block">
+// Helper Component for cleaner code
+const FilterGroup = ({ label, icon, children }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+      {icon && <span className="text-[#6A38C2]">{icon}</span>}
       {label}
     </label>
     {children}

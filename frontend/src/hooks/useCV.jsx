@@ -18,19 +18,12 @@ import {
   setLoading,
 } from "@/redux/cvSlice";
 import { toast } from "sonner";
-
-// ❗ Không dùng biến global — gây bug khi nhiều component mount
-// let saveController = null;
-
 const useCV = () => {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.cv);
-
-  // Controller để hủy request autosave
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const abortRef = useRef(null);
   const mountedRef = useRef(true);
-
-  // Cleanup khi unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;
@@ -41,10 +34,6 @@ const useCV = () => {
       }
     };
   }, []);
-
-  //--------------------------------------
-  // Helper: abort previous & create new controller
-  //--------------------------------------
   const createAbortSignal = () => {
     if (abortRef.current) {
       try {
@@ -54,11 +43,8 @@ const useCV = () => {
     abortRef.current = new AbortController();
     return abortRef.current.signal;
   };
-
-  //--------------------------------------
-  // Fetch user's CV list
-  //--------------------------------------
   const fetchMyCVs = async () => {
+    if (!isAuthenticated) return;
     try {
       dispatch(setLoading(true));
       const res = await axios.get(`${CV_API_END_POINT}/mine`, {
@@ -74,11 +60,11 @@ const useCV = () => {
       dispatch(setLoading(false));
     }
   };
-
-  //--------------------------------------
-  // Create new CV
-  //--------------------------------------
   const createCV = async (payload) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to create CV");
+      return null;
+    }
     try {
       const res = await axios.post(`${CV_API_END_POINT}/create`, payload, {
         withCredentials: true,
@@ -93,10 +79,6 @@ const useCV = () => {
       return null;
     }
   };
-
-  //--------------------------------------
-  // Load a single CV
-  //--------------------------------------
   const getCV = async (id) => {
     try {
       dispatch(setLoading(true));
@@ -137,10 +119,6 @@ const useCV = () => {
       dispatch(setLoading(false));
     }
   };
-
-  //--------------------------------------
-  // Update CV (Autosave)
-  //--------------------------------------
   const updateCV = async (id, payload, { showToast = false } = {}) => {
     try {
       const signal = createAbortSignal();
@@ -193,10 +171,6 @@ const useCV = () => {
       return false;
     }
   };
-
-  //--------------------------------------
-  // Delete CV
-  //--------------------------------------
   const deleteCV = async (id) => {
     try {
       const res = await axios.delete(`${CV_API_END_POINT}/${id}`, {
@@ -212,9 +186,6 @@ const useCV = () => {
     }
   };
 
-  //--------------------------------------
-  // Share CV
-  //--------------------------------------
   const shareCV = async (id) => {
     try {
       const res = await axios.put(
@@ -231,10 +202,6 @@ const useCV = () => {
       toast.error("Share failed");
     }
   };
-
-  //--------------------------------------
-  // Unshare CV
-  //--------------------------------------
   const unShareCV = async (id) => {
     try {
       const res = await axios.put(
@@ -252,9 +219,6 @@ const useCV = () => {
     }
   };
 
-  //--------------------------------------
-  // Public CV
-  //--------------------------------------
   const getPublicCV = async (shareUrl) => {
     try {
       const res = await axios.get(`${CV_API_END_POINT}/public/${shareUrl}`);
@@ -263,10 +227,6 @@ const useCV = () => {
       toast.error("Cannot load public CV");
     }
   };
-
-  //--------------------------------------
-  // Recruiter CV view
-  //--------------------------------------
   const getCVForRecruiter = async (id) => {
     try {
       dispatch(setLoading(true));
@@ -310,10 +270,6 @@ const useCV = () => {
       dispatch(setLoading(false));
     }
   };
-
-  //--------------------------------------
-  // Return all
-  //--------------------------------------
   return {
     ...state, // cvs, meta, personalInfo, ...
     createCV,

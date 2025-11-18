@@ -10,7 +10,7 @@ const PDFExport = ({ targetId, filename = "document" }) => {
   const exportPDF = async () => {
     const element = document.getElementById(targetId);
     if (!element) {
-      console.error("❌ Không tìm thấy targetId:", targetId);
+      console.error("❌ no element found with id:", targetId);
       return;
     }
 

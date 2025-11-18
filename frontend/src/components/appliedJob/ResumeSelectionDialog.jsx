@@ -3,9 +3,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
 export default function ResumeSelectionDialog({
   open,
   setOpen,
@@ -18,6 +20,11 @@ export default function ResumeSelectionDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Select a Resume to Apply</DialogTitle>
+
+          {/* 🔥 FIX WARNING - mô tả ẩn */}
+          <DialogDescription className="sr-only">
+            Choose a resume or use your profile information to apply.
+          </DialogDescription>
         </DialogHeader>
 
         {/* ➤ Option 1: Apply with Profile */}
@@ -32,6 +39,8 @@ export default function ResumeSelectionDialog({
             Use Profile
           </Button>
         </div>
+
+        {/* ➤ Resume List */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto">
           {resumes.map((cv) => (
             <div

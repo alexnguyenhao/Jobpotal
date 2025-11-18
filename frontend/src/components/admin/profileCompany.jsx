@@ -189,11 +189,6 @@ const ProfileCompany = () => {
     </div>
   );
 };
-
-/* 🔹 InfoRow có thể điều hướng theo loại link:
-   - link="url" → mở trong tab mới
-   - link="whatsapp" → mở chat WhatsApp
-   - link="email" → mở trình soạn email */
 const InfoRow = ({ icon, label, value, link }) => {
   if (!value) return null;
 

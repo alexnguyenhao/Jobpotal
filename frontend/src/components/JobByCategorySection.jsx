@@ -2,8 +2,25 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { getJobByCategory } from "@/hooks/useGetJobs";
 import { useNavigate } from "react-router-dom";
-import { MapPin, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Icons
+import {
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Briefcase,
+  Building2,
+  ArrowRight,
+} from "lucide-react";
+
+const ITEMS_PER_GROUP = 3;
 
 const JobByCategorySection = () => {
   const navigate = useNavigate();
@@ -11,196 +28,250 @@ const JobByCategorySection = () => {
 
   const [jobsByCategory, setJobsByCategory] = useState({});
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(1); // 👈 lưu hướng trượt
-  const [isManual, setIsManual] = useState(false);
+  const [direction, setDirection] = useState(0);
+  const [loadingJobs, setLoadingJobs] = useState(false);
 
-  const ITEMS_PER_GROUP = 3;
-  const INTERVAL = 10000;
-
-  // Gom nhóm danh mục theo 3 item / nhóm
+  // 1. Gom nhóm danh mục
   const groupedCategories = [];
-  for (let i = 0; i < categories.length; i += ITEMS_PER_GROUP) {
-    groupedCategories.push(categories.slice(i, i + ITEMS_PER_GROUP));
+  if (categories) {
+    for (let i = 0; i < categories.length; i += ITEMS_PER_GROUP) {
+      groupedCategories.push(categories.slice(i, i + ITEMS_PER_GROUP));
+    }
   }
 
-  // Auto slide
-  useEffect(() => {
-    if (groupedCategories.length === 0 || isManual) return;
-    const timer = setInterval(() => {
-      setDirection(1);
-      setIndex((prev) => (prev + 1) % groupedCategories.length);
-    }, INTERVAL);
-    return () => clearInterval(timer);
-  }, [groupedCategories.length, isManual]);
-
-  // Fetch jobs cho nhóm hiện tại (có cache)
+  // 2. Fetch Jobs khi chuyển slide
   useEffect(() => {
     const fetchJobs = async () => {
       const currentGroup = groupedCategories[index];
       if (!currentGroup) return;
 
-      // Nếu đã có data cache, bỏ qua
-      const hasCache = currentGroup.every((cat) => jobsByCategory[cat._id]);
-      if (hasCache) return;
+      // Kiểm tra xem đã có data trong cache chưa
+      const missingData = currentGroup.some((cat) => !jobsByCategory[cat._id]);
 
-      const result = { ...jobsByCategory };
-      for (const cat of currentGroup) {
-        if (!result[cat._id]) {
-          const jobs = await getJobByCategory(cat._id);
-          result[cat._id] = jobs.slice(0, 3);
-        }
+      if (missingData) {
+        setLoadingJobs(true);
+        const newJobsMap = { ...jobsByCategory };
+
+        await Promise.all(
+          currentGroup.map(async (cat) => {
+            if (!newJobsMap[cat._id]) {
+              const res = await getJobByCategory(cat._id);
+              // Lấy tối đa 3 job để hiển thị đẹp
+              newJobsMap[cat._id] = res ? res.slice(0, 3) : [];
+            }
+          })
+        );
+
+        setJobsByCategory(newJobsMap);
+        setLoadingJobs(false);
       }
-      setJobsByCategory(result);
     };
 
-    if (groupedCategories.length) fetchJobs();
+    if (groupedCategories.length > 0) {
+      fetchJobs();
+    }
   }, [index, groupedCategories]);
 
   if (!groupedCategories.length) return null;
 
-  // Điều hướng nhóm
+  // --- HANDLERS ---
   const handleNext = () => {
-    setIsManual(true);
     setDirection(1);
     setIndex((prev) => (prev + 1) % groupedCategories.length);
   };
 
   const handlePrev = () => {
-    setIsManual(true);
     setDirection(-1);
     setIndex((prev) => (prev === 0 ? groupedCategories.length - 1 : prev - 1));
   };
 
-  const slideVariants = {
+  // --- ANIMATION VARIANTS ---
+  const variants = {
     enter: (direction) => ({
-      x: direction > 0 ? 200 : -200,
+      x: direction > 0 ? 50 : -50,
       opacity: 0,
     }),
-    center: { x: 0, opacity: 1 },
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeOut" },
+    },
     exit: (direction) => ({
-      x: direction > 0 ? -200 : 200,
+      x: direction > 0 ? -50 : 50,
       opacity: 0,
+      transition: { duration: 0.3, ease: "easeIn" },
     }),
   };
 
   return (
-    <section className="relative my-16 w-full max-w-7xl mx-auto px-4 overflow-hidden">
-      <h2 className="text-2xl font-bold mb-8 text-center">
-        Jobs by <span className="text-[#6A38C2]">Category</span>
-      </h2>
+    <section className="py-20 bg-gray-50/50 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+              Explore Top <span className="text-[#6A38C2]">Categories</span>
+            </h2>
+            <p className="text-gray-500 text-lg">
+              Find the best opportunities in trending sectors.
+            </p>
+          </div>
 
-      {/* Nút điều hướng 2 bên */}
-      <button
-        onClick={handlePrev}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 
-        bg-white border border-gray-300 rounded-full p-3 shadow-md 
-        hover:bg-gray-100 hover:scale-105 transition"
-      >
-        <ChevronLeft className="w-6 h-6 text-gray-700" />
-      </button>
+          {/* Navigation Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handlePrev}
+              variant="outline"
+              size="icon"
+              className="rounded-full border-gray-300 hover:border-[#6A38C2] hover:text-[#6A38C2] h-10 w-10 bg-white"
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            <Button
+              onClick={handleNext}
+              variant="outline"
+              size="icon"
+              className="rounded-full border-gray-300 hover:border-[#6A38C2] hover:text-[#6A38C2] h-10 w-10 bg-white"
+            >
+              <ChevronRight size={20} />
+            </Button>
+          </div>
+        </div>
 
-      <button
-        onClick={handleNext}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 
-        bg-white border border-gray-300 rounded-full p-3 shadow-md 
-        hover:bg-gray-100 hover:scale-105 transition"
-      >
-        <ChevronRight className="w-6 h-6 text-gray-700" />
-      </button>
+        {/* SLIDER */}
+        <div className="relative min-h-[400px]">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={index}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {groupedCategories[index].map((cat) => (
+                <div
+                  key={cat._id}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group"
+                >
+                  {/* Card Header */}
+                  <div className="p-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 text-[#6A38C2] flex items-center justify-center">
+                        <Briefcase size={20} />
+                      </div>
+                      <h3 className="font-bold text-lg text-gray-900">
+                        {cat.name}
+                      </h3>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-[#6A38C2] hover:bg-purple-50 rounded-full px-3"
+                      onClick={() => navigate(`/jobs?category=${cat._id}`)}
+                    >
+                      View all <ArrowRight size={12} className="ml-1" />
+                    </Button>
+                  </div>
 
-      {/* Slide animation */}
-      <div className="relative h-auto">
-        <AnimatePresence custom={direction} mode="wait">
-          <motion.div
-            key={index}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 200, damping: 25 },
-              opacity: { duration: 0.2 },
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {groupedCategories[index].map((cat) => (
-              <div
-                key={cat._id}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-all"
-              >
-                <div className="py-3 px-4 bg-gray-100 text-center font-semibold text-lg text-gray-800">
-                  {cat.name}
-                </div>
-
-                <div className="p-4 space-y-3">
-                  {jobsByCategory[cat._id]?.length ? (
-                    jobsByCategory[cat._id].map((job) => (
-                      <div
-                        key={job._id}
-                        onClick={() => navigate(`/description/${job._id}`)}
-                        className="flex gap-3 p-3 border border-gray-200 rounded-lg hover:shadow-md hover:border-[#6A38C2] transition cursor-pointer"
-                      >
-                        <img
-                          src={
-                            job.company?.logo ||
-                            "https://via.placeholder.com/50"
-                          }
-                          alt="logo"
-                          className="w-12 h-12 object-contain rounded-md border bg-white"
-                        />
-
-                        <div className="flex-1">
-                          <p className="font-semibold text-[15px] text-gray-800 line-clamp-1">
-                            {job.title}
-                          </p>
-                          <p className="text-sm text-gray-500 line-clamp-1">
-                            {job.company?.name}
-                          </p>
-                          <div className="flex items-center text-[13px] text-red-500">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            {job.salary?.min
-                              ? `${job.salary.min} – ${job.salary.max} ${
-                                  job.salary.currency || "VND"
-                                }`
-                              : "Negotiable"}
-                          </div>
-                          <div className="flex items-center text-[13px] text-gray-600">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {job.location?.province || "N/A"}
+                  {/* Job List */}
+                  <div className="p-4 space-y-3 flex-1 bg-white">
+                    {loadingJobs && !jobsByCategory[cat._id] ? (
+                      // Skeleton Loading
+                      [1, 2, 3].map((i) => (
+                        <div key={i} className="flex gap-3 p-2">
+                          <Skeleton className="w-10 h-10 rounded-md" />
+                          <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
                           </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm text-center py-4">
-                      No jobs available.
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+                      ))
+                    ) : // Real Data
+                    jobsByCategory[cat._id]?.length > 0 ? (
+                      jobsByCategory[cat._id].map((job) => (
+                        <div
+                          key={job._id}
+                          onClick={() => navigate(`/description/${job._id}`)}
+                          className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group/item"
+                        >
+                          <Avatar className="h-10 w-10 rounded-lg border bg-white mt-1">
+                            <AvatarImage
+                              src={job.company?.logo}
+                              objectFit="contain"
+                            />
+                            <AvatarFallback className="rounded-lg bg-gray-100">
+                              <Building2 size={16} className="text-gray-400" />
+                            </AvatarFallback>
+                          </Avatar>
 
-      {/* Chỉ báo nhóm */}
-      <div className="flex justify-center gap-2 mt-6">
-        {groupedCategories.map((_, i) => (
-          <span
-            key={i}
-            onClick={() => {
-              setIndex(i);
-              setIsManual(true);
-            }}
-            className={`h-2 w-2 rounded-full cursor-pointer transition ${
-              i === index ? "bg-[#6A38C2]" : "bg-gray-300"
-            }`}
-          />
-        ))}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm text-gray-900 truncate group-hover/item:text-[#6A38C2] transition-colors">
+                              {job.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 truncate mb-1">
+                              {job.company?.name}
+                            </p>
+
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-1.5 py-0 h-5 bg-gray-100 text-gray-600 border-0 font-normal"
+                              >
+                                <MapPin size={10} className="mr-1" />{" "}
+                                {job.location?.province || "Remote"}
+                              </Badge>
+                              <span className="text-[10px] text-green-600 font-medium">
+                                {formatSalary(job.salary)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
+                        <Briefcase size={32} className="mb-2 opacity-20" />
+                        <p className="text-sm">No open positions yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Pagination Dots */}
+        <div className="flex justify-center gap-2 mt-10">
+          {groupedCategories.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setDirection(i > index ? 1 : -1);
+                setIndex(i);
+              }}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === index
+                  ? "w-8 bg-[#6A38C2]"
+                  : "w-2 bg-gray-300 hover:bg-gray-400"
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
+};
+
+// Helper format lương gọn
+const formatSalary = (salary) => {
+  if (!salary || salary.isNegotiable) return "Negotiable";
+  const { min, max, currency } = salary;
+  const fmt = (n) => (n >= 1000000 ? `${n / 1000000}M` : `${n / 1000}K`);
+  if (min && max) return `${fmt(min)}-${fmt(max)} ${currency || ""}`;
+  if (min) return `>${fmt(min)} ${currency || ""}`;
+  return "Negotiable";
 };
 
 export default JobByCategorySection;

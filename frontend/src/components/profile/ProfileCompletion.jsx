@@ -3,59 +3,83 @@ import React from "react";
 const ProfileCompletion = ({ profile }) => {
   if (!profile) return null;
 
+  // Danh sách các trường cần kiểm tra
   const checks = [
     !!profile.title,
-    profile.education?.length,
-    profile.workExperience?.length,
-    profile.certifications?.length,
-    profile.languages?.length,
-    profile.achievements?.length,
-    profile.projects?.length,
-    profile.skills?.length,
+    profile.education?.length > 0,
+    profile.workExperience?.length > 0,
+    profile.certifications?.length > 0,
+    profile.languages?.length > 0,
+    profile.achievements?.length > 0,
+    profile.projects?.length > 0,
+    profile.skills?.length > 0,
     !!profile.careerObjective,
   ];
-  const completion = Math.round(
-    (checks.filter(Boolean).length / checks.length) * 100
-  );
-  const color =
-    completion < 40
-      ? "text-red-500"
-      : completion < 70
-      ? "text-yellow-500"
-      : completion < 90
-      ? "text-blue-500"
-      : "text-green-500";
+
+  // Tính toán %
+  const completedCount = checks.filter(Boolean).length;
+  const totalCount = checks.length;
+  const completion = Math.round((completedCount / totalCount) * 100);
+
+  // Cấu hình màu sắc và thông điệp
+  const getStatus = (pct) => {
+    if (pct < 40) return { color: "text-red-500", msg: "Start Building" };
+    if (pct < 70) return { color: "text-yellow-500", msg: "Keep Going" };
+    if (pct < 100) return { color: "text-blue-500", msg: "Almost There" };
+    return { color: "text-green-500", msg: "Excellent!" };
+  };
+
+  const { color, msg } = getStatus(completion);
+
+  // Cấu hình SVG
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius; // ~113.097
+  const strokeDashoffset = circumference - (completion / 100) * circumference;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-12 h-12">
+    <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm px-3 py-2 rounded-xl border border-gray-100 shadow-sm">
+      {/* Circular Progress */}
+      <div className="relative w-10 h-10 flex-shrink-0">
         <svg className="w-full h-full transform -rotate-90">
+          {/* Background Circle */}
           <circle
-            cx="24"
-            cy="24"
-            r="20"
-            stroke="#e5e7eb"
-            strokeWidth="4"
+            cx="20"
+            cy="20"
+            r={radius}
+            stroke="#e5e7eb" // gray-200
+            strokeWidth="3"
             fill="transparent"
           />
+          {/* Progress Circle */}
           <circle
-            cx="24"
-            cy="24"
-            r="20"
+            cx="20"
+            cy="20"
+            r={radius}
             stroke="currentColor"
-            strokeWidth="4"
+            strokeWidth="3"
             fill="transparent"
-            className={`${color} transition-all duration-700`}
-            strokeDasharray={`${(completion / 100) * 125.6}, 125.6`}
+            className={`${color} transition-all duration-1000 ease-out`}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round" // Bo tròn đầu nét vẽ
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-700">
-          {completion}%
-        </span>
+
+        {/* Percentage Text */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] font-bold text-gray-700">
+            {completion}%
+          </span>
+        </div>
       </div>
-      <p className="text-sm text-gray-600">
-        <b>{completion}%</b> Complete
-      </p>
+
+      {/* Text Info */}
+      <div className="flex flex-col">
+        <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">
+          Profile Strength
+        </span>
+        <span className={`text-sm font-bold ${color}`}>{msg}</span>
+      </div>
     </div>
   );
 };

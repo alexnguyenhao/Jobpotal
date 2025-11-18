@@ -5,6 +5,8 @@ export const APPLICATION_API_END_POINT =
 export const COMPANY_API_END_POINT = "http://localhost:8000/api/v1/company";
 export const CATEGORY_API_END_POINT = "http://localhost:8000/api/v1/category";
 export const CV_API_END_POINT = "http://localhost:8000/api/v1/cv";
+export const CAREER_GUIDE_API_END_POINT =
+  "http://localhost:8000/api/v1/career-guides";
 export const provinces = [
   "An Giang",
   "Bà Rịa - Vũng Tàu",
@@ -69,4 +71,13 @@ export const provinces = [
   "Vĩnh Long",
   "Vĩnh Phúc",
   "Yên Bái",
+];
+export const categories = [
+  { value: "job-search", label: "Job Search" },
+  { value: "interview-tips", label: "Interview Tips" },
+  { value: "career-development", label: "Career Development" },
+  { value: "industry-insights", label: "Industry Insights" },
+  { value: "workplace-skills", label: "Workplace Skills" },
+  { value: "resume-writing", label: "Resume Writing" },
+  { value: "others", label: "Others" },
 ];

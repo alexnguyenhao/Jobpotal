@@ -235,9 +235,13 @@ export const login = async (req, res) => {
         success: false,
       });
 
-    const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { userId: user._id, role: user.role, company: user.company || null },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1d",
+      }
+    );
 
     return res
       .status(200)

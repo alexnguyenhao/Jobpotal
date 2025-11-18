@@ -1,4 +1,10 @@
 import React from "react";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
+
+// UI Components
 import {
   Table,
   TableBody,
@@ -13,18 +19,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreHorizontal } from "lucide-react";
-import { useSelector } from "react-redux";
-import axios from "axios";
-import { APPLICATION_API_END_POINT } from "@/utils/constant.js";
-import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-const shortListingStatus = ["Accepted", "Rejected"];
+// Icons
+import {
+  MoreHorizontal,
+  Check,
+  X,
+  FileText,
+  User,
+  Calendar,
+  Mail,
+  Phone,
+} from "lucide-react";
+
+import { APPLICATION_API_END_POINT } from "@/utils/constant.js";
 
 const ApplicantsTable = () => {
   const { applicants } = useSelector((store) => store.application);
-  const navigate = useNavigate();
 
   const statusHandler = async (status, id) => {
     try {
@@ -35,46 +49,52 @@ const ApplicantsTable = () => {
       );
       if (res.data.success) {
         toast.success(res.data.message);
+        // Note: You might need to dispatch an action to update the local state if not using socket.io
       }
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Update failed");
     }
   };
 
-  // Empty state khi không có ứng viên
+  // --- EMPTY STATE ---
   if (!applicants?.applications?.length) {
     return (
-      <div className="text-center py-10 text-gray-500 font-medium">
-        No applicants available
+      <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-200 text-center">
+        <div className="bg-gray-50 p-4 rounded-full mb-3">
+          <User className="w-8 h-8 text-gray-400" />
+        </div>
+        <p className="text-gray-500 font-medium">
+          No applicants found for this job yet.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl shadow-lg bg-white">
+    <div className="rounded-xl shadow-sm bg-white border border-gray-200 overflow-hidden">
       <Table>
-        <TableCaption className="text-gray-500 text-sm mb-4">
-          A list of your recent applicants
+        <TableCaption className="pb-4">
+          A list of your recent applicants.
         </TableCaption>
 
-        <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead className="font-semibold text-gray-700 py-4">
-              Full Name
+        <TableHeader className="bg-gray-50/50">
+          <TableRow>
+            <TableHead className="w-[300px] py-4 font-semibold text-gray-700">
+              Candidate
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-4">
-              Email
-            </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-4">
+            <TableHead className="font-semibold text-gray-700">
               Contact
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-4">
-              Resume
+            <TableHead className="font-semibold text-gray-700">
+              Resume / CV
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-4">
-              Date
+            <TableHead className="font-semibold text-gray-700">
+              Date Applied
             </TableHead>
-            <TableHead className="text-right font-semibold text-gray-700 py-4">
+            <TableHead className="font-semibold text-gray-700">
+              Status
+            </TableHead>
+            <TableHead className="text-right font-semibold text-gray-700 pr-6">
               Action
             </TableHead>
           </TableRow>
@@ -84,72 +104,142 @@ const ApplicantsTable = () => {
           {applicants.applications.map((item) => (
             <TableRow
               key={item._id}
-              className="hover:bg-gray-50 transition-colors duration-200"
+              className="hover:bg-slate-50 transition-colors group"
             >
-              {/* FULL NAME */}
-              <TableCell className="text-gray-800 py-3">
-                <Link
-                  to={`/resume/${item?.applicant?._id}`}
-                  state={{ applicant: item.applicant }}
-                >
-                  {item?.applicant?.fullName || "N/A"}
-                </Link>
+              {/* 1. CANDIDATE */}
+              <TableCell className="py-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border bg-white">
+                    <AvatarImage src={item?.applicant?.profilePhoto} />
+                    <AvatarFallback className="bg-purple-50 text-[#6A38C2] font-bold">
+                      {item?.applicant?.fullName?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Link
+                      to={`/resume/${item?.applicant?._id}`}
+                      className="font-semibold text-gray-900 hover:text-blue-600 transition-colors block"
+                    >
+                      {item?.applicant?.fullName || "Unknown"}
+                    </Link>
+                    <span className="text-xs text-gray-500">
+                      Applicant ID: {item._id.slice(-6)}
+                    </span>
+                  </div>
+                </div>
               </TableCell>
 
-              {/* EMAIL */}
-              <TableCell className="text-gray-800 py-3">
-                {item?.applicant?.email || "N/A"}
+              {/* 2. CONTACT */}
+              <TableCell>
+                <div className="flex flex-col gap-1 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-gray-400" />
+                    <span>{item?.applicant?.email || "N/A"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-gray-400" />
+                    <span>{item?.applicant?.phoneNumber || "N/A"}</span>
+                  </div>
+                </div>
               </TableCell>
 
-              {/* CONTACT */}
-              <TableCell className="text-gray-800 py-3">
-                {item?.applicant?.phoneNumber || "N/A"}
-              </TableCell>
-
-              {/* RESUME - UPDATED LOGIC */}
-              <TableCell className="py-3">
+              {/* 3. RESUME / CV */}
+              <TableCell>
                 {item.usedProfile ? (
+                  // Case 1: Uploaded Resume
                   item?.applicant?.resume ? (
                     <a
                       href={item?.applicant?.resume}
-                      className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
                     >
-                      {item.applicant.resumeOriginalName || "View Resume"}
+                      <FileText size={16} />
+                      {item.applicant.resumeOriginalName || "Download Resume"}
                     </a>
                   ) : (
-                    <span className="text-gray-400">No Resume</span>
+                    <span className="text-gray-400 text-sm italic">
+                      No Resume
+                    </span>
                   )
                 ) : item.cv ? (
-                  <Link to={`/cv/view/${item.cv._id}`}>View CV</Link>
+                  // Case 2: Online CV
+                  <Link
+                    to={`/cv/view/${item.cv._id}`}
+                    className="inline-flex items-center gap-2 text-[#6A38C2] hover:text-[#5a2ea6] hover:underline font-medium text-sm"
+                  >
+                    <FileText size={16} />
+                    View Online CV
+                  </Link>
                 ) : (
-                  <span className="text-gray-400">No CV</span>
+                  <span className="text-gray-400 text-sm italic">
+                    No CV provided
+                  </span>
                 )}
               </TableCell>
 
-              {/* DATE */}
-              <TableCell className="text-gray-800 py-3">
-                {new Date(item.createdAt).toLocaleDateString("en-GB")}
+              {/* 4. DATE */}
+              <TableCell className="text-gray-600 text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar size={14} className="text-gray-400" />
+                  {new Date(item.createdAt).toLocaleDateString("en-GB")}
+                </div>
               </TableCell>
 
-              {/* ACTION */}
-              <TableCell className="text-right py-3">
+              {/* 5. STATUS (New) */}
+              <TableCell>
+                <Badge
+                  variant="secondary"
+                  className={`font-normal px-2.5 py-0.5 ${
+                    item.status === "Accepted"
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : item.status === "Rejected"
+                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                      : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                  }`}
+                >
+                  {item.status || "Pending"}
+                </Badge>
+              </TableCell>
+
+              {/* 6. ACTIONS */}
+              <TableCell className="text-right pr-6">
                 <Popover>
-                  <PopoverTrigger>
-                    <MoreHorizontal className="h-5 w-5 text-gray-500 hover:text-gray-800 cursor-pointer transition-colors" />
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-500 hover:text-black"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-40 bg-white shadow-lg rounded-md border border-gray-200 p-2">
-                    {shortListingStatus.map((status) => (
-                      <div
-                        onClick={() => statusHandler(status, item?._id)}
-                        key={status}
-                        className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-sm cursor-pointer transition-colors duration-150"
-                      >
-                        <span>{status}</span>
-                      </div>
-                    ))}
+                  <PopoverContent className="w-40 p-1" align="end">
+                    <div className="space-y-0.5">
+                      {["Accepted", "Rejected"].map((status) => (
+                        <div
+                          key={status}
+                          onClick={() => statusHandler(status, item?._id)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded-md cursor-pointer transition-colors"
+                        >
+                          {status === "Accepted" ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-red-600" />
+                          )}
+                          <span
+                            className={
+                              status === "Accepted"
+                                ? "text-green-700 font-medium"
+                                : "text-red-700 font-medium"
+                            }
+                          >
+                            {status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </PopoverContent>
                 </Popover>
               </TableCell>

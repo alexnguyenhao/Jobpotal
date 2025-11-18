@@ -1,411 +1,468 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button.js";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import {
-  APPLICATION_API_END_POINT,
-  JOB_API_END_POINT,
-} from "@/utils/constant.js";
-import { setSingleJob } from "@/redux/jobSlice.js";
 import { useDispatch, useSelector } from "react-redux";
-import useSavedJobs from "@/hooks/useSavedJobs.jsx";
-import { Heart, HeartOff, Send, CheckCircle } from "lucide-react";
-import ResumeSelectionDialog from "./appliedJob/ResumeSelectionDialog";
-import useCV from "@/hooks/useCV";
+import axios from "axios";
 import { toast } from "sonner";
+
+// APIs & Actions
+import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from "@/utils/constant";
+import { setSingleJob } from "@/redux/jobSlice";
+import useSavedJobs from "@/hooks/useSavedJobs.jsx";
+import useCV from "@/hooks/useCV";
+
+// Components
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import ResumeSelectionDialog from "./appliedJob/ResumeSelectionDialog";
+
+// Icons
 import {
-  DollarSign,
   MapPin,
-  Hourglass,
+  DollarSign,
   Clock,
   Briefcase,
-  CalendarDays,
   Users,
-  Mail,
   Globe,
+  Mail,
   Phone,
   Building2,
+  CalendarDays,
+  CheckCircle2,
+  Share2,
+  Heart,
+  HeartOff,
+  ArrowLeft,
 } from "lucide-react";
 
 const JobDescription = () => {
-  const { singleJob } = useSelector((store) => store.job);
-  const { user } = useSelector((store) => store.auth);
-  const dispatch = useDispatch();
   const { id: jobId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { singleJob, loading } = useSelector((store) => store.job);
+  const { user } = useSelector((store) => store.auth);
+  const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
+  const { cvs, fetchMyCVs } = useCV();
 
   const [isApplied, setIsApplied] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
-  const { savedJobs, saveJob, unsaveJob } = useSavedJobs(false);
   const [isSaved, setIsSaved] = useState(false);
-
   const [openResumeDialog, setOpenResumeDialog] = useState(false);
-  const { cvs, fetchMyCVs } = useCV();
-  const applyJobWithCV = async (cvId) => {
+
+  // --- FETCH DATA ---
+  useEffect(() => {
+    if (user) fetchMyCVs();
+
+    const fetchJob = async () => {
+      try {
+        const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          const job = res.data.job;
+          dispatch(setSingleJob(job));
+
+          setIsExpired(new Date(job.applicationDeadline) < new Date());
+          setIsApplied(
+            user
+              ? job.applications?.some((a) => a.applicant === user?._id)
+              : false
+          );
+          setIsSaved(
+            user
+              ? savedJobs?.some((j) => (j._id || j).toString() === jobId)
+              : false
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchJob();
+  }, [jobId, user, savedJobs, dispatch]); // Added dependencies
+
+  // --- HANDLERS ---
+  const handleApply = async (cvId) => {
     try {
       const res = await axios.post(
         `${APPLICATION_API_END_POINT}/apply/${jobId}`,
         { cvId },
         { withCredentials: true }
       );
-
       if (res.data.success) {
         setIsApplied(true);
-        toast.success("🎉 Applied with selected CV!");
+        toast.success("🎉 Application submitted successfully!");
         setOpenResumeDialog(false);
-
-        dispatch(
-          setSingleJob({
-            ...singleJob,
-            applications: [...singleJob.applications, { applicant: user?._id }],
-          })
-        );
+        // Update local state
+        const updatedJob = {
+          ...singleJob,
+          applications: [...singleJob.applications, { applicant: user?._id }],
+        };
+        dispatch(setSingleJob(updatedJob));
       }
     } catch (error) {
-      const status = error?.response?.status;
-
-      // 🔥 Nếu 401 → Redirect đến login
-      if (status === 401) {
-        toast.error("Please login to apply.");
-        navigate("/login");
-        return;
-      }
-
-      toast.error(error?.response?.data?.message || "❌ Failed to apply");
+      if (error?.response?.status === 401) navigate("/login");
+      toast.error(error?.response?.data?.message || "Application failed");
     }
   };
 
-  useEffect(() => {
-    // 🟣 1. Only fetch CVs if user is logged in
-    if (user) {
-      fetchMyCVs();
+  const handleSaveToggle = () => {
+    if (!user) return navigate("/login");
+    if (isSaved) {
+      unsaveJob(jobId);
+      setIsSaved(false);
+      toast.info("Removed from saved jobs");
+    } else {
+      saveJob(jobId);
+      setIsSaved(true);
+      toast.success("Job saved!");
     }
+  };
 
-    // 🟣 2. Fetch Job (public - always allowed)
-    const fetchJob = async () => {
-      try {
-        const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
-          withCredentials: true,
-        });
+  if (!singleJob) return <JobSkeleton />;
 
-        if (res.data.success) {
-          const job = res.data.job;
-          dispatch(setSingleJob(job));
-
-          // Check deadline
-          setIsExpired(new Date(job.applicationDeadline) < new Date());
-
-          // Check applied (only if logged in)
-          const applied = user
-            ? job.applications?.some((a) => a.applicant === user?._id)
-            : false;
-          setIsApplied(applied);
-
-          // Check saved jobs (only if logged in)
-          const saved = user
-            ? savedJobs?.some((j) => (j._id || j).toString() === jobId)
-            : false;
-          setIsSaved(saved);
-        }
-      } catch (err) {
-        console.error("Fetch Job Error:", err);
-      }
-    };
-
-    fetchJob();
-  }, [jobId, savedJobs, user]);
-
-  const company = singleJob?.company;
-  const salary = singleJob?.salary;
-  const loc = singleJob?.location;
+  const {
+    title,
+    description,
+    requirements,
+    benefits,
+    company,
+    location,
+    salary,
+    experienceLevel,
+    seniorityLevel,
+    jobType,
+    applications,
+    createdAt,
+    applicationDeadline,
+  } = singleJob;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-10 px-4 md:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* LEFT SECTION */}
-        <div className="md:col-span-2 space-y-6">
-          {/* ---------------- HEADER ---------------- */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                  {singleJob?.title}
-                  <CheckCircle className="text-[#6A38C2] w-5 h-5" />
+    <div className="min-h-screen bg-white pb-20">
+      {/* --- HEADER SECTION --- */}
+      <div className="bg-slate-50 border-b border-slate-200 pt-10 pb-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <Button
+            variant="link"
+            className="pl-0 mb-4 text-slate-500 hover:text-[#6A38C2]"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft size={16} className="mr-1" /> Back to Jobs
+          </Button>
+
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+            <div className="flex gap-5">
+              <Avatar className="h-20 w-20 rounded-xl border bg-white shadow-sm">
+                <AvatarImage src={company?.logo} objectFit="object-contain" />
+                <AvatarFallback className="rounded-xl bg-slate-100">
+                  <Building2 size={32} className="text-slate-400" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                  {title}
                 </h1>
-
-                <div className="flex flex-wrap gap-4 text-sm text-gray-700 mt-2">
-                  <InfoTag icon={<MapPin />} label={formatLocation(loc)} />
-                  <InfoTag icon={<DollarSign />} label={formatSalary(salary)} />
-                  <InfoTag
-                    icon={<Hourglass />}
-                    label={singleJob?.experienceLevel || "Not specified"}
-                  />
-                </div>
-
-                <div className="mt-3 flex items-center gap-2 text-gray-500 text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    Deadline:{" "}
-                    {singleJob?.applicationDeadline
-                      ? new Date(
-                          singleJob.applicationDeadline
-                        ).toLocaleDateString("en-GB")
-                      : "N/A"}
+                <div className="flex flex-wrap gap-y-2 gap-x-4 text-sm text-slate-600 font-medium">
+                  <span
+                    className="flex items-center gap-1 text-[#6A38C2] hover:underline cursor-pointer"
+                    onClick={() => navigate(`/company/${company?._id}`)}
+                  >
+                    {company?.name}
                   </span>
-                </div>
-
-                {isExpired && (
-                  <div className="mt-3 text-red-600 font-medium flex items-center gap-2">
-                    ⚠️ This job has expired.
-                  </div>
-                )}
-
-                {/* ---------------- APPLY + SAVE BUTTONS ---------------- */}
-                <div className="mt-4 flex gap-3">
-                  {/* APPLY BUTTON */}
-                  <Button
-                    disabled={isApplied || isExpired}
-                    onClick={() => {
-                      if (!isApplied && !isExpired) setOpenResumeDialog(true);
-                    }}
-                    className={`flex items-center gap-2 ${
-                      isExpired || isApplied
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-[#7209B7] hover:bg-[#5e0994]"
-                    }`}
-                  >
-                    <Send className="w-4 h-4" />
-                    {isExpired
-                      ? "Expired"
-                      : isApplied
-                      ? "Applied"
-                      : "Apply Now"}
-                  </Button>
-
-                  {/* SAVE BUTTON */}
-                  <Button
-                    onClick={() => {
-                      if (isSaved) {
-                        unsaveJob(jobId);
-                        setIsSaved(false);
-                        toast.info("Removed from saved jobs");
-                      } else {
-                        saveJob(jobId);
-                        setIsSaved(true);
-                        toast.success("Job saved!");
-                      }
-                    }}
-                    className={`flex items-center gap-2 border transition-all ${
-                      isSaved
-                        ? "bg-[#6A38C2] text-white hover:bg-[#5e0994]"
-                        : "text-[#7209B7] border-[#7209B7] hover:bg-[#f7edff]"
-                    }`}
-                  >
-                    {isSaved ? (
-                      <>
-                        <Heart className="w-4 h-4 fill-white text-white" />
-                        Saved
-                      </>
-                    ) : (
-                      <>
-                        <HeartOff className="w-4 h-4" />
-                        Save Job
-                      </>
-                    )}
-                  </Button>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin size={14} /> {formatLocation(location)}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={14} /> {daysAgo(createdAt)}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* JOB DETAILS */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 space-y-8">
-            <Section title="Job Description" text={singleJob?.description} />
-
-            {singleJob?.requirements?.length > 0 && (
-              <Section
-                title="Requirements"
-                list={singleJob.requirements}
-                icon="•"
-              />
-            )}
-
-            {singleJob?.benefits?.length > 0 && (
-              <Section title="Benefits" list={singleJob.benefits} icon="✓" />
-            )}
-          </div>
-        </div>
-
-        {/* ---------------- RIGHT SIDEBAR ---------------- */}
-        <div className="space-y-6">
-          {/* COMPANY CARD */}
-          <div className="bg-white p-6 rounded-xl shadow-md border text-center">
-            {company?.logo && (
-              <img
-                src={company.logo}
-                alt="Company Logo"
-                onClick={() => navigate(`/company/${company._id}`)}
-                className="mx-auto h-20 w-20 object-cover rounded-full mb-4 border cursor-pointer hover:scale-105 transition-transform"
-              />
-            )}
-
-            <h3
-              onClick={() => navigate(`/company/${company?._id}`)}
-              className="text-xl font-bold text-gray-900 hover:text-[#7209B7] cursor-pointer"
-            >
-              {company?.name}
-            </h3>
-
-            <p className="text-sm text-gray-600 mt-1">
-              {formatLocation(company?.location)}
-            </p>
-
-            <div className="mt-5 space-y-3 text-sm text-gray-700 text-left">
-              {company?.industry && (
-                <InfoLine icon={<Building2 />} text={company.industry} />
-              )}
-              {company?.foundedYear && (
-                <InfoLine
-                  icon={<CalendarDays />}
-                  text={`Founded: ${company.foundedYear}`}
-                />
-              )}
-              {company?.website && (
-                <InfoLine
-                  icon={<Globe />}
-                  text={company.website}
-                  link={`https://${company.website}`}
-                />
-              )}
-              {company?.email && (
-                <InfoLine
-                  icon={<Mail />}
-                  text={company.email}
-                  link={`mailto:${company.email}`}
-                />
-              )}
-              {company?.phone && (
-                <InfoLine icon={<Phone />} text={company.phone} />
-              )}
-            </div>
-          </div>
-
-          {/* JOB INFO */}
-          <div className="bg-white p-6 rounded-xl shadow-md border space-y-4">
-            <h4 className="text-lg font-semibold text-gray-800">
-              Job Information
-            </h4>
-
-            <div className="space-y-3 text-sm text-gray-700">
-              <InfoLine
-                icon={<Briefcase className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Seniority: ${singleJob?.seniorityLevel || "N/A"}`}
-              />
-
-              <InfoLine
-                icon={<Hourglass className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Experience: ${singleJob?.experienceLevel || "N/A"}`}
-              />
-
-              <InfoLine
-                icon={<DollarSign className="w-4 h-4 text-[#6A38C2]" />}
-                text={formatSalary(salary)}
-              />
-
-              <InfoLine
-                icon={<CalendarDays className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Deadline: ${
-                  singleJob?.applicationDeadline
-                    ? new Date(
-                        singleJob.applicationDeadline
-                      ).toLocaleDateString("en-GB")
-                    : "N/A"
+            <div className="flex gap-3 w-full md:w-auto">
+              <Button
+                variant="outline"
+                size="icon"
+                className={`rounded-full border-slate-300 ${
+                  isSaved
+                    ? "text-red-500 bg-red-50 border-red-200"
+                    : "text-slate-600 hover:text-[#6A38C2]"
                 }`}
-              />
-
-              <InfoLine
-                icon={<Users className="w-4 h-4 text-[#6A38C2]" />}
-                text={`Applicants: ${singleJob?.applications?.length || 0}`}
-              />
+                onClick={handleSaveToggle}
+              >
+                {isSaved ? (
+                  <Heart fill="currentColor" size={20} />
+                ) : (
+                  <Heart size={20} />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full border-slate-300 text-slate-600 hover:text-[#6A38C2]"
+              >
+                <Share2 size={20} />
+              </Button>
+              <Button
+                size="lg"
+                className={`rounded-full px-8 font-bold shadow-lg shadow-purple-200 ${
+                  isApplied || isExpired
+                    ? "bg-slate-300 cursor-not-allowed text-slate-500"
+                    : "bg-[#6A38C2] hover:bg-[#582bb6] text-white"
+                }`}
+                disabled={isApplied || isExpired}
+                onClick={() =>
+                  !isApplied &&
+                  !isExpired &&
+                  (user ? setOpenResumeDialog(true) : navigate("/login"))
+                }
+              >
+                {isApplied ? "Applied" : isExpired ? "Expired" : "Apply Now"}
+              </Button>
             </div>
+          </div>
+
+          {/* Key Stats Tags */}
+          <div className="flex flex-wrap gap-3 mt-8">
+            <StatBadge
+              icon={<DollarSign size={14} />}
+              label={formatSalary(salary)}
+            />
+            <StatBadge
+              icon={<Briefcase size={14} />}
+              label={jobType || "Full-time"}
+            />
+            <StatBadge
+              icon={<Users size={14} />}
+              label={`${seniorityLevel || "Any"} Level`}
+            />
+            <StatBadge
+              icon={<Clock size={14} />}
+              label={`${experienceLevel || "0"} Yrs Exp`}
+            />
           </div>
         </div>
       </div>
+
+      {/* --- MAIN CONTENT GRID --- */}
+      <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* LEFT: DESCRIPTION */}
+        <div className="lg:col-span-2 space-y-10">
+          {/* Description */}
+          <section>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">
+              Job Description
+            </h3>
+            <div className="text-slate-600 leading-relaxed whitespace-pre-line text-base">
+              {description}
+            </div>
+          </section>
+
+          {/* Requirements */}
+          {requirements?.length > 0 && (
+            <section>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">
+                Requirements
+              </h3>
+              <ul className="space-y-3">
+                {requirements.map((req, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-start gap-3 text-slate-600"
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-[#6A38C2] shrink-0 mt-0.5" />
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Benefits */}
+          {benefits?.length > 0 && (
+            <section>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">
+                Benefits
+              </h3>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {benefits.map((ben, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-center gap-2 text-slate-600 bg-slate-50 px-4 py-3 rounded-lg border border-slate-100"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    {ben}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+
+        {/* RIGHT: SIDEBAR INFO */}
+        <div className="space-y-6">
+          {/* Job Overview Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h4 className="font-bold text-slate-900 mb-5">Job Overview</h4>
+            <div className="space-y-4">
+              <SidebarItem
+                icon={<CalendarDays />}
+                label="Posted date"
+                value={new Date(createdAt).toLocaleDateString("en-GB")}
+              />
+              <SidebarItem
+                icon={<Clock />}
+                label="Deadline"
+                value={new Date(applicationDeadline).toLocaleDateString(
+                  "en-GB"
+                )}
+                highlight={isExpired}
+              />
+              <SidebarItem
+                icon={<Users />}
+                label="Applicants"
+                value={`${applications?.length || 0} people`}
+              />
+            </div>
+          </div>
+
+          {/* Company Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar className="h-12 w-12 rounded-lg bg-white border">
+                <AvatarImage src={company?.logo} />
+                <AvatarFallback>
+                  <Building2 />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h4
+                  className="font-bold text-slate-900 hover:text-[#6A38C2] cursor-pointer"
+                  onClick={() => navigate(`/company/${company?._id}`)}
+                >
+                  {company?.name}
+                </h4>
+                <p className="text-xs text-slate-500">Software & Technology</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              {company?.website && (
+                <a
+                  href={company.website}
+                  target="_blank"
+                  className="flex items-center gap-2 text-slate-600 hover:text-[#6A38C2]"
+                >
+                  <Globe size={16} /> Website
+                </a>
+              )}
+              {company?.email && (
+                <a
+                  href={`mailto:${company.email}`}
+                  className="flex items-center gap-2 text-slate-600 hover:text-[#6A38C2]"
+                >
+                  <Mail size={16} /> Email
+                </a>
+              )}
+              {company?.location && (
+                <div className="flex items-center gap-2 text-slate-600">
+                  <MapPin size={16} /> {company.location}
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full mt-6 bg-white hover:bg-slate-100"
+              onClick={() => navigate(`/company/${company?._id}`)}
+            >
+              View Company Profile
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <ResumeSelectionDialog
         open={openResumeDialog}
         setOpen={setOpenResumeDialog}
         resumes={cvs}
-        onSelectResume={(resumeId) => applyJobWithCV(resumeId)}
-        onSelectProfile={() => applyJobWithCV(null)}
+        onSelectResume={handleApply}
+        onSelectProfile={() => handleApply(null)}
       />
     </div>
   );
 };
-const InfoTag = ({ icon, label }) => (
-  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-full">
-    <span className="text-[#6A38C2]">{icon}</span>
-    <span>{label}</span>
-  </div>
+
+// --- SUB COMPONENTS ---
+const StatBadge = ({ icon, label }) => (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-700 shadow-sm">
+    <span className="text-[#6A38C2]">{icon}</span> {label}
+  </span>
 );
 
-const Section = ({ title, text, list, icon }) => (
-  <div>
-    <h2 className="text-2xl font-semibold text-gray-800 mb-3">{title}</h2>
-    {text && <p className="text-gray-700 whitespace-pre-line">{text}</p>}
-    {list && (
-      <ul className="list-disc list-inside text-gray-700 space-y-2">
-        {list.map((item, idx) => (
-          <li key={idx}>
-            {icon && <span className="mr-1 text-[#6A38C2]">{icon}</span>}
-            {item}
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-);
-
-const InfoLine = ({ icon, text, link }) => (
-  <div className="flex items-center gap-2">
-    <span className="text-[#6A38C2]">{icon}</span>
-    {link ? (
-      <a
-        href={link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:underline text-[#6A38C2] truncate"
+const SidebarItem = ({ icon, label, value, highlight }) => (
+  <div className="flex items-start gap-3">
+    <div className="mt-0.5 text-slate-400">{icon}</div>
+    <div>
+      <p className="text-xs text-slate-500 uppercase font-semibold">{label}</p>
+      <p
+        className={`text-sm font-medium ${
+          highlight ? "text-red-600" : "text-slate-900"
+        }`}
       >
-        {text}
-      </a>
-    ) : (
-      <span>{text}</span>
-    )}
+        {value}
+      </p>
+    </div>
   </div>
 );
-const formatLocation = (loc) => {
-  if (!loc) return "No location info";
-  if (typeof loc === "string") return loc;
 
-  const { address, district, province } = loc;
-  return [address, district, province].filter(Boolean).join(", ");
+const JobSkeleton = () => (
+  <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+    <div className="flex gap-4">
+      <Skeleton className="h-20 w-20 rounded-xl" />
+      <div className="space-y-3 w-full">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-4 w-1/4" />
+      </div>
+    </div>
+    <div className="grid grid-cols-3 gap-10">
+      <div className="col-span-2 space-y-4">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+      <div className="col-span-1 space-y-4">
+        <Skeleton className="h-60 w-full" />
+      </div>
+    </div>
+  </div>
+);
+
+// --- HELPERS ---
+const formatLocation = (loc) => {
+  if (!loc) return "Remote";
+  if (typeof loc === "string") return loc;
+  return [loc.address, loc.district, loc.province].filter(Boolean).join(", ");
 };
 
 const formatSalary = (salary) => {
-  if (!salary) return "Not specified";
+  if (!salary) return "Negotiable";
   if (typeof salary === "string") return salary;
-
   const { min, max, currency, isNegotiable } = salary;
-
   if (isNegotiable) return "Negotiable";
-  if (min && max)
-    return `${min.toLocaleString()} - ${max.toLocaleString()} ${
-      currency || "VND"
-    }`;
+  const fmt = (n) => (n >= 1000000 ? `${n / 1000000}M` : `${n / 1000}K`);
+  if (min && max) return `${fmt(min)} - ${fmt(max)} ${currency || "VND"}`;
+  if (min) return `From ${fmt(min)} ${currency || "VND"}`;
+  return "Negotiable";
+};
 
-  if (min) return `From ${min.toLocaleString()} ${currency || "VND"}`;
-  if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
-
-  return "Not specified";
+const daysAgo = (date) => {
+  const diff = Math.floor(
+    (new Date() - new Date(date)) / (1000 * 60 * 60 * 24)
+  );
+  return diff === 0 ? "Today" : `${diff}d ago`;
 };
 
 export default JobDescription;

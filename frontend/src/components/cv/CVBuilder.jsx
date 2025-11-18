@@ -1,13 +1,19 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import useCV from "@/hooks/useCV";
-import { useSelector } from "react-redux";
 
+// Redux Actions
+import { updateLocalCVState, updateMeta, clearCVState } from "@/redux/cvSlice";
+
+// Components
 import TopBar from "@/components/cv/builder/TopBar";
 import Sidebar from "@/components/cv/builder/Sidebar";
 import LivePreview from "@/components/cv/builder/LivePreview";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-// Debounce function
+// Debounce helper
 const debounce = (func, delay) => {
   let timer;
   return (...args) => {
@@ -17,139 +23,140 @@ const debounce = (func, delay) => {
 };
 
 const CVBuilder = () => {
-  const {
-    meta,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    styleConfig,
-  } = useSelector((state) => state.cv);
-
+  const dispatch = useDispatch();
   const { createCV, getCV, updateCV } = useCV();
-
   const [searchParams] = useSearchParams();
-  const templateParam = searchParams.get("template");
-  const cvId = searchParams.get("id");
 
-  const [cvData, setCvData] = useState(null);
-  const hasInitialized = useRef(false);
-  const debouncedUpdateCV = useMemo(
-    () =>
-      debounce((id, data) => {
-        updateCV(id, data);
-      }, 400),
-    []
+  const cvState = useSelector((state) => state.cv);
+  const cvData = useMemo(
+    () => ({
+      ...cvState.meta, // _id, title, template...
+      personalInfo: cvState.personalInfo,
+      education: cvState.education,
+      workExperience: cvState.workExperience,
+      skills: cvState.skills,
+      certifications: cvState.certifications,
+      languages: cvState.languages,
+      achievements: cvState.achievements,
+      projects: cvState.projects,
+      styleConfig: cvState.styleConfig,
+    }),
+    [
+      cvState.meta,
+      cvState.personalInfo,
+      cvState.education,
+      cvState.workExperience,
+      cvState.skills,
+      cvState.certifications,
+      cvState.languages,
+      cvState.achievements,
+      cvState.projects,
+      cvState.styleConfig,
+    ]
   );
 
-  // Load CV or create CV only once
+  const hasInitialized = useRef(false);
+  const isSaving = useRef(false);
+  const debouncedSave = useMemo(
+    () =>
+      debounce((id, data) => {
+        isSaving.current = true;
+        updateCV(id, data).finally(() => {
+          isSaving.current = false;
+        });
+      }, 800), // Delay 800ms
+    []
+  );
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    if (cvId) {
-      getCV(cvId);
-    } else if (templateParam) {
-      createCV({ template: templateParam }).then((newCV) => {
-        if (newCV) {
-          getCV(newCV._id);
+    const templateParam = searchParams.get("template");
+    const cvId = searchParams.get("id");
+
+    const init = async () => {
+      if (cvId) {
+        await getCV(cvId);
+      } else if (templateParam) {
+        const newCV = await createCV({ template: templateParam });
+        if (newCV?._id) {
+          await getCV(newCV._id);
         }
-      });
-    }
-  }, []);
-
-  // Sync Redux -> Local cvData
-  useEffect(() => {
-    if (!meta._id) return;
-
-    setCvData({
-      _id: meta._id,
-      title: meta.title,
-      template: meta.template,
-      isPublic: meta.isPublic,
-      shareUrl: meta.shareUrl,
-      createdAt: meta.createdAt,
-      updatedAt: meta.updatedAt,
-      user: meta.user,
-
-      personalInfo,
-      education,
-      workExperience,
-      skills,
-      certifications,
-      languages,
-      achievements,
-      projects,
-      styleConfig,
-    });
-  }, [
-    meta,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    styleConfig,
-  ]);
-
-  // 🔥 Update field with debounced save
-  const updateField = (path, value) => {
-    setCvData((prev) => {
-      const updated = structuredClone(prev);
-
-      if (!path.includes(".")) {
-        updated[path] = value;
-      } else {
-        const keys = path.split(".");
-        let ref = updated;
-
-        keys.slice(0, -1).forEach((k) => {
-          ref = ref[k];
-        });
-
-        ref[keys[keys.length - 1]] = value;
       }
+    };
 
-      // 🔥 chỉ gọi API sau khi user dừng gõ 400ms
-      debouncedUpdateCV(updated._id, updated);
+    init();
+    return () => {
+      dispatch(clearCVState());
+    };
+  }, []);
+  const updateField = useCallback(
+    (path, value) => {
+      dispatch(updateLocalCVState({ path, value }));
 
-      return updated;
-    });
-  };
+      if (cvData._id) {
+        const dataToSave = JSON.parse(JSON.stringify(cvData));
 
-  // Template change (không cần debounce)
+        // Helper set value by path (vd: personalInfo.fullName)
+        const keys = path.split(".");
+        let ref = dataToSave;
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!ref[keys[i]]) ref[keys[i]] = {};
+          ref = ref[keys[i]];
+        }
+        ref[keys[keys.length - 1]] = value;
+
+        // Gọi debounce save
+        debouncedSave(cvData._id, dataToSave);
+      }
+    },
+    [cvData, dispatch, debouncedSave]
+  );
+
+  // 6. Đổi Template
   const handleTemplateChange = (newTemplate) => {
-    const updated = { ...cvData, template: newTemplate };
-    setCvData(updated);
+    // Update UI
+    dispatch(updateMeta({ template: newTemplate }));
 
-    updateCV(updated._id, { template: newTemplate });
+    // Gọi API ngay lập tức (không cần debounce)
+    if (cvData._id) {
+      updateCV(cvData._id, { ...cvData, template: newTemplate });
+      toast.success("Template updated!");
+    }
   };
 
-  if (!cvData)
+  // --- RENDER ---
+
+  // Show loading khi chưa có ID
+  if (cvState.loading || !cvData._id) {
     return (
-      <div className="p-10 text-center text-gray-500">
-        Loading CV Builder...
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-gray-50 text-gray-500">
+        <Loader2 className="h-10 w-10 animate-spin text-[#6A38C2] mb-2" />
+        <p>Preparing your CV workspace...</p>
       </div>
     );
+  }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
+      {/* Top Navigation & Tools */}
       <TopBar
         cvData={cvData}
         onTemplateChange={handleTemplateChange}
         updateField={updateField}
+        isSaving={isSaving.current} // Truyền trạng thái save để hiển thị icon loading nhỏ
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar cvData={cvData} updateField={updateField} />
-        <LivePreview cvData={cvData} />
+        {/* Sidebar: Form nhập liệu */}
+        <div className="w-full md:w-[400px] lg:w-[450px] bg-white border-r border-gray-200 h-full overflow-y-auto z-10 shadow-lg">
+          <Sidebar cvData={cvData} updateField={updateField} />
+        </div>
+
+        {/* Live Preview Area */}
+        <div className="flex-1 h-full bg-gray-100 overflow-y-auto p-4 md:p-8 flex justify-center">
+          <LivePreview cvData={cvData} />
+        </div>
       </div>
     </div>
   );

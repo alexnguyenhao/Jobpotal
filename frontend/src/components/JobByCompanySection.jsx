@@ -1,240 +1,312 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { getJobByCompany } from "@/hooks/useGetJobs";
+import { getJobByCompany } from "@/hooks/useGetJobs"; // Đảm bảo hook này gọi đúng API
 import { useNavigate } from "react-router-dom";
-import { MapPin, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Icons
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  DollarSign,
+  Building2,
+  ArrowRight,
+  Briefcase,
+} from "lucide-react";
+
+const ITEMS_PER_GROUP = 3;
 
 const JobByCompanySection = () => {
   const navigate = useNavigate();
+  // Lấy danh sách công ty từ Redux (đã được fetch ở trang Home)
   const { companies } = useSelector((store) => store.company);
 
   const [jobsByCompany, setJobsByCompany] = useState({});
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [isManual, setIsManual] = useState(false);
+  const [direction, setDirection] = useState(0);
+  const [loadingJobs, setLoadingJobs] = useState(false); // Trạng thái loading cục bộ
 
-  const ITEMS_PER_GROUP = 3;
-  const INTERVAL = 10000;
-
-  // Gom nhóm công ty theo 3 item / nhóm
+  // 1. Gom nhóm công ty (Chunking array)
   const groupedCompanies = [];
-  for (let i = 0; i < companies.length; i += ITEMS_PER_GROUP) {
-    groupedCompanies.push(companies.slice(i, i + ITEMS_PER_GROUP));
+  if (companies && companies.length > 0) {
+    for (let i = 0; i < companies.length; i += ITEMS_PER_GROUP) {
+      groupedCompanies.push(companies.slice(i, i + ITEMS_PER_GROUP));
+    }
   }
 
-  // Auto slide
+  // 2. Fetch Jobs khi chuyển slide (Lazy loading jobs)
   useEffect(() => {
-    if (groupedCompanies.length === 0 || isManual) return;
-    const timer = setInterval(() => {
-      setDirection(1);
-      setIndex((prev) => (prev + 1) % groupedCompanies.length);
-    }, INTERVAL);
-    return () => clearInterval(timer);
-  }, [groupedCompanies.length, isManual]);
-
-  // Fetch job cho nhóm hiện tại (có cache)
-  useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchJobsForCurrentSlide = async () => {
       const currentGroup = groupedCompanies[index];
       if (!currentGroup) return;
 
-      const hasCache = currentGroup.every((com) => jobsByCompany[com._id]);
-      if (hasCache) return;
+      // Lọc ra những công ty chưa có data jobs trong cache (jobsByCompany)
+      const companiesNeedFetch = currentGroup.filter(
+        (com) => !jobsByCompany[com._id]
+      );
 
-      const result = { ...jobsByCompany };
-      for (const com of currentGroup) {
-        try {
-          const jobs = await getJobByCompany(com._id);
-          result[com._id] = Array.isArray(jobs) ? jobs.slice(0, 3) : [];
-        } catch (err) {
-          console.error(`❌ Error fetching jobs for ${com.name}`, err);
-          result[com._id] = [];
-        }
+      if (companiesNeedFetch.length > 0) {
+        setLoadingJobs(true);
+
+        // Fetch song song cho các công ty cần thiết
+        const results = await Promise.all(
+          companiesNeedFetch.map(async (com) => {
+            try {
+              const jobs = await getJobByCompany(com._id);
+              return {
+                companyId: com._id,
+                jobs: Array.isArray(jobs) ? jobs.slice(0, 3) : [],
+              };
+            } catch (error) {
+              console.error(`Error fetching jobs for ${com.name}:`, error);
+              return { companyId: com._id, jobs: [] };
+            }
+          })
+        );
+
+        // Cập nhật state 1 lần duy nhất để tránh re-render nhiều lần
+        setJobsByCompany((prev) => {
+          const newData = { ...prev };
+          results.forEach((item) => {
+            newData[item.companyId] = item.jobs;
+          });
+          return newData;
+        });
+
+        setLoadingJobs(false);
       }
-      setJobsByCompany(result);
     };
 
-    if (groupedCompanies.length) fetchJobs();
-  }, [index, groupedCompanies]);
+    if (groupedCompanies.length > 0) {
+      fetchJobsForCurrentSlide();
+    }
+  }, [index, companies]); // Dependency: index thay đổi hoặc danh sách công ty thay đổi
 
+  // Nếu chưa có công ty nào thì không hiển thị section này
   if (!groupedCompanies.length) return null;
 
-  // Điều hướng nhóm
+  // --- HANDLERS ---
   const handleNext = () => {
-    setIsManual(true);
     setDirection(1);
     setIndex((prev) => (prev + 1) % groupedCompanies.length);
   };
 
   const handlePrev = () => {
-    setIsManual(true);
     setDirection(-1);
     setIndex((prev) => (prev === 0 ? groupedCompanies.length - 1 : prev - 1));
   };
 
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 200 : -200,
-      opacity: 0,
-    }),
-    center: { x: 0, opacity: 1 },
+  // --- ANIMATION ---
+  const variants = {
+    enter: (direction) => ({ x: direction > 0 ? 50 : -50, opacity: 0 }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeOut" },
+    },
     exit: (direction) => ({
-      x: direction > 0 ? -200 : 200,
+      x: direction > 0 ? -50 : 50,
       opacity: 0,
+      transition: { duration: 0.3, ease: "easeIn" },
     }),
   };
 
   return (
-    <section className="relative my-16 w-full max-w-7xl mx-auto px-4 overflow-hidden">
-      <h2 className="text-2xl font-bold mb-8 text-center">
-        Jobs by <span className="text-[#6A38C2]">Company</span>
-      </h2>
+    <section className="py-20 bg-white relative overflow-hidden border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+              Top Hiring <span className="text-[#6A38C2]">Companies</span>
+            </h2>
+            <p className="text-gray-500 text-lg">
+              Discover opportunities from industry leaders.
+            </p>
+          </div>
 
-      {/* Nút điều hướng hai bên */}
-      <button
-        onClick={handlePrev}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-gray-300 rounded-full p-3 shadow-md hover:bg-gray-100 hover:scale-105 transition"
-      >
-        <ChevronLeft className="w-6 h-6 text-gray-700" />
-      </button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handlePrev}
+              variant="outline"
+              size="icon"
+              className="rounded-full h-10 w-10 border-gray-300 hover:border-[#6A38C2] hover:text-[#6A38C2]"
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            <Button
+              onClick={handleNext}
+              variant="outline"
+              size="icon"
+              className="rounded-full h-10 w-10 border-gray-300 hover:border-[#6A38C2] hover:text-[#6A38C2]"
+            >
+              <ChevronRight size={20} />
+            </Button>
+          </div>
+        </div>
 
-      <button
-        onClick={handleNext}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-gray-300 rounded-full p-3 shadow-md hover:bg-gray-100 hover:scale-105 transition"
-      >
-        <ChevronRight className="w-6 h-6 text-gray-700" />
-      </button>
+        {/* SLIDER CONTENT */}
+        <div className="relative min-h-[400px]">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={index}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {groupedCompanies[index].map((com) => {
+                // Lấy danh sách job của công ty này từ state cache
+                const companyJobs = jobsByCompany[com._id];
+                // Kiểm tra xem có đang loading data cho công ty này không
+                const isFetching = loadingJobs && companyJobs === undefined;
 
-      {/* Slide animation */}
-      <div className="relative">
-        <AnimatePresence custom={direction} mode="wait">
-          <motion.div
-            key={index}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 200, damping: 25 },
-              opacity: { duration: 0.2 },
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {groupedCompanies[index].map((com) => (
-              <div
-                key={com._id}
-                className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              >
-                {/* Header company */}
-                <div className="flex items-center gap-3 py-4 px-5 bg-gray-50 border-b border-gray-100">
-                  <img
-                    src={com.logo || "https://via.placeholder.com/40"}
-                    alt={com.name}
-                    className="w-10 h-10 object-contain border rounded-md bg-white"
-                  />
-                  <div>
-                    <p className="font-semibold text-gray-800">{com.name}</p>
-                    <p className="text-sm text-gray-500">
-                      Top reputable company
-                    </p>
-                  </div>
-                </div>
-
-                {/* Job list */}
-                <div className="p-5 space-y-3">
-                  {jobsByCompany[com._id]?.length ? (
-                    jobsByCompany[com._id].map((job) => (
-                      <div
-                        key={job._id}
-                        onClick={() => navigate(`/description/${job._id}`)}
-                        className="flex items-start gap-3 p-3 border border-gray-100 rounded-lg hover:border-[#6A38C2] hover:shadow-sm transition cursor-pointer"
-                      >
-                        <img
-                          src={
-                            job.company?.logo ||
-                            "https://via.placeholder.com/50"
-                          }
-                          alt="logo"
-                          className="w-12 h-12 object-contain rounded-md border bg-white"
+                return (
+                  <div
+                    key={com._id}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group"
+                  >
+                    {/* Company Header */}
+                    <div className="p-6 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100 flex items-center gap-4">
+                      <Avatar className="h-14 w-14 rounded-xl border bg-white shadow-sm">
+                        <AvatarImage
+                          src={com.logo}
+                          objectFit="object-contain"
                         />
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-800 text-sm line-clamp-1">
-                            {job.title}
-                          </p>
-                          <div className="text-xs text-gray-500 line-clamp-1 flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />{" "}
-                            {formatLocation(job.location) || "Unknown"}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <DollarSign className="w-3 h-3 text-green-500" />{" "}
-                            {formatSalary(job.salary) || "Negotiable"}
-                          </div>
+                        <AvatarFallback className="rounded-xl bg-gray-100">
+                          <Building2 className="text-gray-400" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className="font-bold text-lg text-gray-900 truncate cursor-pointer hover:text-[#6A38C2] transition-colors"
+                          onClick={() => navigate(`/company/${com._id}`)}
+                        >
+                          {com.name}
+                        </h3>
+                        <div className="flex items-center text-xs text-gray-500 mt-1">
+                          <MapPin size={12} className="mr-1" />
+                          <span className="truncate">
+                            {com.location || "Headquarters"}
+                          </span>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm text-center py-4">
-                      No jobs found
-                    </p>
-                  )}
-                </div>
+                    </div>
 
-                {/* Footer */}
-                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 text-center">
-                  <button
-                    onClick={() => navigate(`/company/${com._id}`)}
-                    className="text-sm text-[#6A38C2] font-medium hover:underline"
-                  >
-                    View all jobs at {com.name}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+                    {/* Job List */}
+                    <div className="p-4 space-y-2 flex-1 bg-white">
+                      {isFetching ? (
+                        // Skeleton Loading
+                        [1, 2, 3].map((i) => (
+                          <div key={i} className="flex gap-3 p-2">
+                            <Skeleton className="w-10 h-10 rounded-md" />
+                            <div className="space-y-2 flex-1">
+                              <Skeleton className="h-4 w-3/4" />
+                              <Skeleton className="h-3 w-1/2" />
+                            </div>
+                          </div>
+                        ))
+                      ) : companyJobs && companyJobs.length > 0 ? (
+                        // Job Items
+                        companyJobs.map((job) => (
+                          <div
+                            key={job._id}
+                            onClick={() => navigate(`/description/${job._id}`)}
+                            className="flex items-center justify-between p-3 rounded-xl hover:bg-purple-50 cursor-pointer transition-colors group/item border border-transparent hover:border-purple-100"
+                          >
+                            <div className="min-w-0">
+                              <h4 className="font-semibold text-sm text-gray-800 truncate group-hover/item:text-[#6A38C2]">
+                                {job.title}
+                              </h4>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                <span className="flex items-center gap-1">
+                                  <MapPin size={10} />{" "}
+                                  {job.location?.province || "Remote"}
+                                </span>
+                                <span className="flex items-center gap-1 text-green-600 font-medium">
+                                  <DollarSign size={10} />{" "}
+                                  {formatSalary(job.salary)}
+                                </span>
+                              </div>
+                            </div>
+                            <ArrowRight
+                              size={16}
+                              className="text-gray-300 group-hover/item:text-[#6A38C2] transition-colors opacity-0 group-hover/item:opacity-100 transform translate-x-[-5px] group-hover/item:translate-x-0 duration-300"
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        // Empty State
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 py-6 opacity-60">
+                          <Briefcase size={28} className="mb-2" />
+                          <p className="text-sm">No open positions</p>
+                        </div>
+                      )}
+                    </div>
 
-      {/* Chỉ báo nhóm */}
-      <div className="flex justify-center gap-2 mt-6">
-        {groupedCompanies.map((_, i) => (
-          <span
-            key={i}
-            onClick={() => {
-              setIndex(i);
-              setIsManual(true);
-            }}
-            className={`h-2 w-2 rounded-full cursor-pointer transition ${
-              i === index ? "bg-[#6A38C2]" : "bg-gray-300"
-            }`}
-          />
-        ))}
+                    {/* Card Footer */}
+                    <div className="p-4 border-t border-gray-50 bg-gray-50/50">
+                      <Button
+                        variant="ghost"
+                        className="w-full text-sm font-medium text-[#6A38C2] hover:text-[#5a2ea6] hover:bg-purple-50 h-9"
+                        onClick={() => navigate(`/company/${com._id}`)}
+                      >
+                        View Company Profile
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Pagination Dots */}
+        <div className="flex justify-center gap-2 mt-10">
+          {groupedCompanies.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setDirection(i > index ? 1 : -1);
+                setIndex(i);
+              }}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === index
+                  ? "w-8 bg-[#6A38C2]"
+                  : "w-2 bg-gray-300 hover:bg-gray-400"
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
 };
 
-export default JobByCompanySection;
-
-// Helpers
-const formatLocation = (loc) => {
-  if (!loc) return "No location info";
-  if (typeof loc === "string") return loc;
-  const { address, district, province } = loc || {};
-  return [address, district, province].filter(Boolean).join(", ") || "N/A";
-};
-
+// Helper Format Salary
 const formatSalary = (salary) => {
-  if (!salary) return "Not specified";
-  if (typeof salary === "string") return salary;
-  const { min, max, currency, isNegotiable } = salary;
-  if (isNegotiable) return "Negotiable";
-  if (min && max)
-    return `${min.toLocaleString()} - ${max.toLocaleString()} ${
-      currency || "VND"
-    }`;
-  if (min) return `From ${min.toLocaleString()} ${currency || "VND"}`;
-  if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
-  return "Not specified";
+  if (!salary || salary.isNegotiable) return "Negotiable";
+  const { min, max, currency } = salary;
+
+  // Format số tiền gọn (VD: 10M, 500K)
+  const formatNum = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toString()}M`;
+    if (n >= 1000) return `${(n / 1000).toString()}K`;
+    return n.toString();
+  };
+
+  const currencySymbol = currency === "USD" ? "$" : ""; // Thêm ký hiệu tiền tệ nếu cần
+
+  if (min && max) return `${currencySymbol}${formatNum(min)}-${formatNum(max)}`;
+  return "Negotiable";
 };
+
+export default JobByCompanySection;

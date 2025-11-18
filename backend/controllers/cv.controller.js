@@ -2,9 +2,20 @@ import { CV } from "../models/cv.model.js";
 import { Profile } from "../models/profile.model.js";
 import { User } from "../models/user.model.js";
 import crypto from "crypto";
+
+/* ============================================================
+   CREATE CV
+   ============================================================ */
 export const createCV = async (req, res) => {
   try {
     const userId = req.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     const user = await User.findById(userId).select("-password");
     const profile = await Profile.findOne({ user: userId });
@@ -59,17 +70,29 @@ export const createCV = async (req, res) => {
   }
 };
 
+/* ============================================================
+   GET ALL CVs FOR CURRENT USER
+   ============================================================ */
 export const getMyCVs = async (req, res) => {
-  const cvs = await CV.find({ user: req.id }).sort({ createdAt: -1 });
+  const userId = req.id;
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const cvs = await CV.find({ user: userId }).sort({ createdAt: -1 });
   res.status(200).json({ success: true, cvs });
 };
 
+/* ============================================================
+   GET CV BY ID — Allow owner or public view
+   ============================================================ */
 export const getCVById = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
 
+  // If not public, only owner can view
   if (!cv.isPublic && cv.user.toString() !== req.id) {
     return res
       .status(403)
@@ -79,9 +102,29 @@ export const getCVById = async (req, res) => {
   res.status(200).json({ success: true, cv });
 };
 
+/* ============================================================
+   UPDATE CV — Only owner can update
+   ============================================================ */
 export const updateCV = async (req, res) => {
   try {
     const cvId = req.params.id;
+    const userId = req.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const cv = await CV.findById(cvId);
+    if (!cv)
+      return res.status(404).json({ success: false, message: "CV not found" });
+
+    // ❗ MUST check permission
+    if (cv.user.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Permission denied",
+      });
+    }
 
     const updatedCV = await CV.findByIdAndUpdate(
       cvId,
@@ -96,11 +139,15 @@ export const updateCV = async (req, res) => {
   }
 };
 
+/* ============================================================
+   DELETE CV — Only owner
+   ============================================================ */
 export const deleteCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
+
   if (cv.user.toString() !== req.id)
     return res
       .status(403)
@@ -111,11 +158,15 @@ export const deleteCV = async (req, res) => {
   res.status(200).json({ success: true, message: "CV deleted" });
 };
 
+/* ============================================================
+   MAKE PUBLIC — Only owner
+   ============================================================ */
 export const makePublic = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
+
   if (cv.user.toString() !== req.id)
     return res
       .status(403)
@@ -125,7 +176,6 @@ export const makePublic = async (req, res) => {
 
   cv.isPublic = true;
   cv.shareUrl = shareUrl;
-
   await cv.save();
 
   res.status(200).json({
@@ -134,17 +184,9 @@ export const makePublic = async (req, res) => {
   });
 };
 
-export const getPublicCV = async (req, res) => {
-  const cv = await CV.findOne({ shareUrl: req.params.url, isPublic: true });
-
-  if (!cv)
-    return res
-      .status(404)
-      .json({ success: false, message: "Public CV not found" });
-
-  res.status(200).json({ success: true, cv });
-};
-
+/* ============================================================
+   UN-SHARE CV — Only owner
+   ============================================================ */
 export const unShareCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -163,6 +205,24 @@ export const unShareCV = async (req, res) => {
 
   res.status(200).json({ success: true, message: "CV unshared" });
 };
+
+/* ============================================================
+   PUBLIC CV VIEW
+   ============================================================ */
+export const getPublicCV = async (req, res) => {
+  const cv = await CV.findOne({ shareUrl: req.params.url, isPublic: true });
+
+  if (!cv)
+    return res
+      .status(404)
+      .json({ success: false, message: "Public CV not found" });
+
+  res.status(200).json({ success: true, cv });
+};
+
+/* ============================================================
+   RECRUITER CV VIEW (Job Application)
+   ============================================================ */
 export const getCVForRecruiter = async (req, res) => {
   try {
     const cv = await CV.findById(req.params.id);
@@ -174,7 +234,9 @@ export const getCVForRecruiter = async (req, res) => {
       });
     }
 
-    // ❗ Không check: cv.user === req.id
+    // Optional: thêm rule recruiter
+    // if (!req.isRecruiter) return res.status(403)
+
     return res.status(200).json({
       success: true,
       cv,

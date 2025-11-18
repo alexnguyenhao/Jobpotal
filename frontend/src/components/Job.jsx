@@ -1,30 +1,47 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button.js";
-import { Bookmark, BookmarkCheck } from "lucide-react";
-import { Avatar, AvatarImage } from "@/components/ui/avatar.js";
-import { Badge } from "@/components/ui/badge.js";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, DollarSign } from "lucide-react";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
 import { toast } from "sonner";
 
-const Jobs = ({ job }) => {
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Icons
+import {
+  Bookmark,
+  BookmarkCheck,
+  MapPin,
+  Clock,
+  Briefcase,
+  DollarSign,
+  Building2,
+} from "lucide-react";
+
+const Job = ({ job }) => {
   const navigate = useNavigate();
   const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
   const [isSaved, setIsSaved] = useState(false);
 
+  // Check if job is saved
   useEffect(() => {
     const saved = savedJobs?.some((j) => (j._id || j).toString() === job?._id);
     setIsSaved(saved);
   }, [savedJobs, job?._id]);
 
-  const handleCardClick = () => navigate(`/description/${job._id}`);
-
-  const handleSaveClick = async () => {
+  const handleSaveClick = async (e) => {
+    e.stopPropagation(); // Prevent card click
     if (isSaved) {
       await unsaveJob(job._id);
       setIsSaved(false);
-      toast.info("Removed from saved jobs");
+      toast.info("Job removed from saved list");
     } else {
       await saveJob(job._id);
       setIsSaved(true);
@@ -32,120 +49,139 @@ const Jobs = ({ job }) => {
     }
   };
 
-  const daysAgoFunction = (mongodbTime) => {
-    const createdAt = new Date(mongodbTime);
-    const currentAt = new Date();
-    const timeDifference = currentAt - createdAt;
-    const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-    return days === 0 ? "Today" : `${days} day${days > 1 ? "s" : ""} ago`;
+  const daysAgo = (dateString) => {
+    if (!dateString) return "Recently";
+    const days = Math.floor(
+      (new Date() - new Date(dateString)) / (1000 * 60 * 60 * 24)
+    );
+    return days === 0 ? "Today" : `${days}d ago`;
   };
 
   return (
-    <div className="p-6 rounded-xl bg-white border border-gray-100 shadow-md hover:shadow-lg transition duration-300 flex flex-col justify-between h-full">
-      {/* Top Row */}
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-        <p>{daysAgoFunction(job?.createdAt)}</p>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`hover:text-[#7209B7] transition-all ${
-            isSaved ? "text-[#7209B7]" : "text-gray-400"
-          }`}
-          onClick={handleSaveClick}
-        >
-          {isSaved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-        </Button>
-      </div>
+    <div
+      onClick={() => navigate(`/description/${job._id}`)}
+      className="group relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-[#6A38C2]/30 transition-all duration-300 cursor-pointer flex flex-col h-full"
+    >
+      {/* --- HEADER: Logo & Title --- */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex gap-4">
+          <Avatar className="h-14 w-14 rounded-xl border bg-white shadow-sm group-hover:scale-105 transition-transform">
+            <AvatarImage src={job?.company?.logo} objectFit="object-contain" />
+            <AvatarFallback className="rounded-xl bg-gray-50 text-gray-400">
+              <Building2 size={24} />
+            </AvatarFallback>
+          </Avatar>
 
-      {/* Company Info */}
-      <div className="flex items-center gap-4 mb-4">
-        <Avatar className="h-12 w-12 hover:shadow-md transition duration-300">
-          <AvatarImage src={job?.company?.logo} />
-        </Avatar>
-        <div>
-          <h2
-            onClick={() => navigate(`/company/${job.company?._id}`)}
-            className="font-semibold text-gray-800 text-base truncate hover:underline cursor-pointer"
-          >
-            {job?.company?.name}
-          </h2>
-          <p className="text-sm text-gray-500 hover:underline cursor-pointer">
-            {job?.location?.province || "N/A"}
-          </p>
+          <div className="space-y-1">
+            <h3 className="font-bold text-lg text-gray-900 leading-tight line-clamp-1 group-hover:text-[#6A38C2] transition-colors">
+              {job?.title}
+            </h3>
+            <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
+              {job?.company?.name}
+              {/* Verified Badge (Optional) */}
+              {/* <span className="text-blue-500"><BadgeCheck size={14}/></span> */}
+            </p>
+          </div>
         </div>
+
+        {/* Save Button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 rounded-full -mr-2 -mt-2 ${
+                  isSaved
+                    ? "text-[#6A38C2] bg-purple-50"
+                    : "text-gray-400 hover:text-[#6A38C2] hover:bg-purple-50"
+                }`}
+                onClick={handleSaveClick}
+              >
+                {isSaved ? (
+                  <BookmarkCheck size={20} fill="#6A38C2" />
+                ) : (
+                  <Bookmark size={20} />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isSaved ? "Unsave Job" : "Save Job"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
-      {/* Job Title */}
-      <div className="mb-3">
-        <h1
-          onClick={handleCardClick}
-          className="font-bold text-lg text-[#7209B7] line-clamp-1 hover:underline cursor-pointer"
-        >
-          {job?.title}
-        </h1>
-        <p className="text-sm text-gray-600 line-clamp-2">{job?.description}</p>
-      </div>
-
-      {/* Salary & Deadline */}
-      <div className="flex flex-wrap items-center gap-3 mt-2 mb-5">
+      {/* --- TAGS ROW --- */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {/* Location */}
         <Badge
-          className="text-[#7209B7] font-medium flex items-center gap-1"
-          variant="outline"
+          variant="secondary"
+          className="bg-gray-100 text-gray-600 font-normal px-2.5 py-1 rounded-md"
         >
-          <DollarSign className="w-4 h-4" />
-          {formatSalary(job?.salary)}
+          <MapPin size={13} className="mr-1" /> {formatLocation(job?.location)}
         </Badge>
 
-        {job?.applicationDeadline && (
-          <Badge
-            className="text-green-700 font-medium flex items-center gap-1"
-            variant="outline"
-          >
-            <CalendarDays className="w-4 h-4" />
-            Deadline:{" "}
-            {new Date(job?.applicationDeadline).toLocaleDateString("en-GB")}
-          </Badge>
-        )}
+        {/* Job Type */}
+        <Badge
+          variant="secondary"
+          className="bg-blue-50 text-blue-700 font-normal px-2.5 py-1 rounded-md"
+        >
+          <Briefcase size={13} className="mr-1" /> {job?.jobType || "Full-time"}
+        </Badge>
+
+        {/* Salary */}
+        <Badge
+          variant="secondary"
+          className="bg-green-50 text-green-700 font-normal px-2.5 py-1 rounded-md"
+        >
+          <DollarSign size={13} className="mr-1" /> {formatSalary(job?.salary)}
+        </Badge>
       </div>
 
-      {/* Buttons */}
-      <div className="flex justify-between gap-2 mt-auto">
-        <Button
-          variant="outline"
-          className="w-1/2 text-sm"
-          onClick={handleCardClick}
-        >
-          View
-        </Button>
+      {/* --- DESCRIPTION (Excerpt) --- */}
+      <p className="text-sm text-gray-500 line-clamp-2 mb-6 flex-grow leading-relaxed">
+        {job?.description || "No description provided. Click to view details."}
+      </p>
 
-        <Button
-          onClick={handleSaveClick}
-          className={`w-1/2 text-sm transition-all ${
-            isSaved
-              ? "bg-[#6A38C2] text-white hover:bg-[#5e0994]"
-              : "bg-gray-100 text-[#7209B7] border border-[#7209B7] hover:bg-[#f7edff]"
-          }`}
-        >
-          {isSaved ? "Saved" : "Save Job"}
+      {/* --- FOOTER: Time & Action --- */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+        <div className="text-xs text-gray-400 font-medium flex items-center gap-1">
+          <Clock size={13} /> Posted {daysAgo(job?.createdAt)}
+        </div>
+
+        <Button className="bg-[#6A38C2] hover:bg-[#582bb6] text-white h-9 px-5 rounded-lg text-xs font-semibold shadow-md group-hover:shadow-lg transition-all">
+          Apply Now
         </Button>
       </div>
     </div>
   );
 };
 
-// ✅ Helper: Format Salary
-const formatSalary = (salary) => {
-  if (!salary) return "Not specified";
-  if (typeof salary === "string") return salary;
-  const { min, max, currency, isNegotiable } = salary;
-  if (isNegotiable) return "Negotiable";
-  if (min && max)
-    return `${min.toLocaleString()} - ${max.toLocaleString()} ${
-      currency || "VND"
-    }`;
-  if (min) return `From ${min.toLocaleString()} ${currency || "VND"}`;
-  if (max) return `Up to ${max.toLocaleString()} ${currency || "VND"}`;
-  return "Not specified";
+// --- Helpers ---
+const formatLocation = (loc) => {
+  if (!loc) return "Remote";
+  if (typeof loc === "string") return loc;
+  return loc.province || loc.address || "Remote";
 };
 
-export default Jobs;
+const formatSalary = (salary) => {
+  if (!salary) return "Negotiable";
+  if (typeof salary === "string") return salary;
+  if (salary.isNegotiable) return "Negotiable";
+
+  // Format số tiền gọn (ví dụ: 10,000,000 -> 10M)
+  const formatNum = (num) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num;
+  };
+
+  if (salary.min && salary.max)
+    return `${formatNum(salary.min)} - ${formatNum(salary.max)}`;
+  if (salary.min) return `From ${formatNum(salary.min)}`;
+  if (salary.max) return `Up to ${formatNum(salary.max)}`;
+  return "Negotiable";
+};
+
+export default Job;

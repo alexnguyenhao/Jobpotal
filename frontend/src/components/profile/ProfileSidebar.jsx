@@ -1,7 +1,15 @@
-import React from "react";
-import { User, Briefcase, Settings, Save, ChevronRight } from "lucide-react";
+import React, { useEffect } from "react";
+import {
+  User,
+  Briefcase,
+  Settings,
+  Save,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 
 const ProfileSidebar = ({ tab, setTab, openJobsMenu, setOpenJobsMenu }) => {
+  // Danh sách menu
   const items = [
     { id: "personal", icon: User, label: "Profile Overview" },
     {
@@ -16,55 +24,91 @@ const ProfileSidebar = ({ tab, setTab, openJobsMenu, setOpenJobsMenu }) => {
     { id: "settings", icon: Settings, label: "Settings" },
   ];
 
-  return (
-    <aside className="w-full lg:w-72 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-2">
-      {items.map((item) => (
-        <div key={item.id}>
-          <button
-            onClick={() =>
-              item.sub ? setOpenJobsMenu(!openJobsMenu) : setTab(item.id)
-            }
-            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl font-semibold transition-all ${
-              tab === item.id ||
-              (item.id === "jobs" && ["applied", "saved"].includes(tab))
-                ? "bg-[#6A38C2]/10 text-[#6A38C2]"
-                : "hover:bg-gray-50 text-gray-700"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon size={18} />
-              {item.label}
-            </div>
-            {item.sub && (
-              <ChevronRight
-                size={18}
-                className={`transition-transform ${
-                  openJobsMenu ? "rotate-90 text-[#6A38C2]" : "text-gray-400"
-                }`}
-              />
-            )}
-          </button>
+  // 🔥 UX Improvement: Tự động mở menu "My Jobs" nếu đang ở tab con của nó
+  useEffect(() => {
+    if (["applied", "saved"].includes(tab)) {
+      setOpenJobsMenu(true);
+    }
+  }, [tab, setOpenJobsMenu]);
 
-          {item.sub && openJobsMenu && (
-            <div className="ml-8 mt-2 border-l border-gray-200 pl-3 space-y-1">
-              {item.sub.map((sub) => (
-                <button
-                  key={sub.id}
-                  onClick={() => setTab(sub.id)}
-                  className={`flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                    tab === sub.id
-                      ? "bg-[#6A38C2]/10 text-[#6A38C2]"
-                      : "hover:bg-gray-100 text-gray-600"
+  return (
+    <aside className="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-2 h-fit">
+      {items.map((item) => {
+        // Kiểm tra xem item cha có đang active không (hoặc con của nó active)
+        const isParentActive =
+          item.id === tab ||
+          (item.sub && item.sub.some((sub) => sub.id === tab));
+
+        return (
+          <div key={item.id} className="space-y-1">
+            {/* Parent Button */}
+            <button
+              onClick={() =>
+                item.sub ? setOpenJobsMenu(!openJobsMenu) : setTab(item.id)
+              }
+              className={`flex items-center justify-between w-full px-4 py-3 rounded-xl font-semibold transition-all duration-200 group ${
+                isParentActive
+                  ? "bg-[#6A38C2]/10 text-[#6A38C2]"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {/* Icon đổi màu khi active */}
+                <item.icon
+                  size={20}
+                  className={`${
+                    isParentActive
+                      ? "text-[#6A38C2]"
+                      : "text-gray-400 group-hover:text-gray-600"
+                  }`}
+                />
+                {item.label}
+              </div>
+
+              {item.sub && (
+                <div
+                  className={`text-gray-400 transition-transform duration-300 ${
+                    openJobsMenu ? "rotate-90" : ""
                   }`}
                 >
-                  <sub.icon size={16} />
-                  {sub.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+                  <ChevronRight size={18} />
+                </div>
+              )}
+            </button>
+
+            {/* Sub Menu */}
+            {item.sub && openJobsMenu && (
+              <div className="flex flex-col gap-1 pl-4 relative animate-in slide-in-from-top-2 duration-300">
+                {/* Đường kẻ dọc trang trí */}
+                <div className="absolute left-8 top-0 bottom-0 w-[2px] bg-gray-100 rounded-full"></div>
+
+                {item.sub.map((sub) => {
+                  const isSubActive = tab === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => setTab(sub.id)}
+                      className={`relative flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-all ml-4 ${
+                        isSubActive
+                          ? "text-[#6A38C2] bg-purple-50"
+                          : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                    >
+                      {/* Dot indicator cho menu con */}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                          isSubActive ? "bg-[#6A38C2]" : "bg-gray-300"
+                        }`}
+                      ></span>
+                      {sub.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </aside>
   );
 };

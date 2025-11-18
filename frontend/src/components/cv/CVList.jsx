@@ -24,7 +24,7 @@ const CVList = () => {
 
   useEffect(() => {
     fetchMyCVs();
-  }, []); // 🔥 chỉ chạy 1 lần khi mount
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (!deleteId) return;

@@ -30,6 +30,12 @@ import CVBuilder from "@/components/cv/CVBuilder.jsx";
 import CVList from "@/components/cv/CVList.jsx";
 import CVView from "@/components/cv/CVView.jsx";
 import ApplicantCVView from "@/components/admin/ApplicantCVView.jsx";
+import CareerGuideHome from "@/components/admin/careerGuides/CareerGuideHome.jsx";
+import CareerGuide from "@/components/careerguide/CareerGuide.jsx";
+import CareerGuideCreate from "@/components/admin/careerGuides/CareerGuideCreate.jsx";
+import CareerGuideEdit from "@/components/admin/careerGuides/CareerGuideEdit.jsx";
+import CareerGuideDetail from "@/components/admin/careerGuides/CareerGuideDetail.jsx";
+import GuideDetail from "./components/careerguide/GuideDetail";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -56,6 +62,16 @@ const appRouter = createBrowserRouter([
       { path: "/cv/list", element: <CVList /> },
       { path: "/cv/:id", element: <CVView /> },
       { path: "/cv/view/:id", element: <ApplicantCVView /> },
+      { path: "/admin/career-guides", element: <CareerGuideHome /> },
+      { path: "/admin/career-guides/create", element: <CareerGuideCreate /> },
+      { path: "/admin/career-guides/edit/:id", element: <CareerGuideEdit /> },
+      {
+        path: "/admin/career-guides/detail/:id",
+        element: <CareerGuideDetail />,
+      },
+      { path: "/career-guides", element: <CareerGuide /> },
+      //<Link to={`/career-guide/detail/${guide.slug || guide._id}`}>
+      { path: "/career-guide/detail/:id", element: <GuideDetail /> }, //slug
     ],
   },
 

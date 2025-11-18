@@ -1,4 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useGetAllCategories from "../hooks/useGetAllCategoris";
+
+// UI Components
 import {
   Carousel,
   CarouselContent,
@@ -6,10 +11,33 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import useGetAllCategories from "../hooks/useGetAllCategoris";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Icons
+import {
+  Code,
+  Megaphone,
+  BarChart3,
+  Briefcase,
+  Palette,
+  Wallet,
+  Users,
+  Globe,
+  ChevronRight,
+} from "lucide-react";
+
+// --- ICON MAPPING ---
+const getCategoryIcon = (name) => {
+  const n = name.toLowerCase();
+  if (n.includes("developer") || n.includes("it") || n.includes("software"))
+    return <Code />;
+  if (n.includes("marketing") || n.includes("social")) return <Megaphone />;
+  if (n.includes("business") || n.includes("analysis")) return <BarChart3 />;
+  if (n.includes("design") || n.includes("creative")) return <Palette />;
+  if (n.includes("finance") || n.includes("account")) return <Wallet />;
+  if (n.includes("hr") || n.includes("human")) return <Users />;
+  return <Briefcase />; // Default icon
+};
 
 const CategoryCarousel = () => {
   const navigate = useNavigate();
@@ -18,56 +46,78 @@ const CategoryCarousel = () => {
 
   if (loading) {
     return (
-      <div className="w-full text-center py-10 text-gray-500 font-medium">
-        Loading categories...
+      <div className="w-full max-w-7xl mx-auto my-16 px-6">
+        <div className="flex justify-center gap-4 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-24 w-48 rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="w-full text-center py-10 text-red-500 font-medium">
-        ⚠️ {error}
-      </div>
-    );
-  }
-
-  if (!categories?.length) {
-    return (
-      <div className="w-full text-center py-10 text-gray-500 font-medium">
-        No categories available.
-      </div>
-    );
-  }
+  if (error || !categories?.length) return null;
 
   return (
-    <section className="w-full max-w-6xl mx-auto my-10 px-4">
-      <h2 className="text-2xl font-bold text-center mb-6">
-        Explore by <span className="text-[#6A38C2]">Category</span>
-      </h2>
+    <section className="w-full bg-white py-12 border-b border-gray-50">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Title */}
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Popular <span className="text-[#6A38C2]">Categories</span>
+          </h2>
+          <p className="text-gray-500 mt-2">
+            Find the job that fits your skills and interests.
+          </p>
+        </div>
 
-      <div className="relative">
-        <Carousel className="w-full">
-          <CarouselContent className="-ml-2">
-            {categories.map((cat) => (
-              <CarouselItem
-                key={cat._id}
-                className="pl-2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-              >
-                <Button
-                  variant="outline"
-                  className="w-full rounded-full py-3 text-sm font-medium hover:bg-[#6A38C2] hover:text-white transition-colors duration-300"
-                  onClick={() => navigate(`/jobs?category=${cat._id}`)}
+        {/* Carousel */}
+        <div className="relative px-4">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {categories.map((cat) => (
+                <CarouselItem
+                  key={cat._id}
+                  className="pl-4 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                 >
-                  {cat.name}
-                </Button>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
+                  <div
+                    onClick={() => navigate(`/jobs?category=${cat._id}`)}
+                    className="group cursor-pointer bg-white border border-gray-100 rounded-2xl p-6 
+                        shadow-sm hover:shadow-md hover:border-[#6A38C2]/30 
+                        transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center gap-4 h-full"
+                  >
+                    {/* Icon Box */}
+                    <div className="w-14 h-14 rounded-full bg-purple-50 text-[#6A38C2] flex items-center justify-center group-hover:bg-[#6A38C2] group-hover:text-white transition-colors duration-300">
+                      {React.cloneElement(getCategoryIcon(cat.name), {
+                        size: 24,
+                      })}
+                    </div>
 
-          <CarouselPrevious className="absolute -left-8 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
-          <CarouselNext className="absolute -right-8 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
-        </Carousel>
+                    {/* Text */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-[#6A38C2] transition-colors line-clamp-1">
+                        {cat.name}
+                      </h3>
+                      <div className="flex items-center justify-center gap-1 text-xs text-gray-400 mt-1 group-hover:text-[#6A38C2]/70">
+                        <span>Explore</span> <ChevronRight size={12} />
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+
+            {/* Navigation Buttons */}
+            <CarouselPrevious className="absolute -left-4 md:-left-12 h-10 w-10 border-gray-200 hover:border-[#6A38C2] hover:text-[#6A38C2]" />
+            <CarouselNext className="absolute -right-4 md:-right-12 h-10 w-10 border-gray-200 hover:border-[#6A38C2] hover:text-[#6A38C2]" />
+          </Carousel>
+        </div>
       </div>
     </section>
   );

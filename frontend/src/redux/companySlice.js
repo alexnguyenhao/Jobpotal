@@ -2,6 +2,10 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { COMPANY_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
+
+// --- ASYNC THUNKS ---
+
+// 1. Tạo công ty mới (Recruiter)
 export const createCompany = createAsyncThunk(
   "company/createCompany",
   async (formData, { rejectWithValue }) => {
@@ -20,6 +24,8 @@ export const createCompany = createAsyncThunk(
     }
   }
 );
+
+// 2. Cập nhật công ty (Recruiter)
 export const updateCompany = createAsyncThunk(
   "company/updateCompany",
   async ({ id, data }, { rejectWithValue }) => {
@@ -39,6 +45,7 @@ export const updateCompany = createAsyncThunk(
   }
 );
 
+// 3. Lấy danh sách công ty CỦA RECRUITER (Private)
 export const fetchCompanies = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
@@ -55,6 +62,25 @@ export const fetchCompanies = createAsyncThunk(
     }
   }
 );
+
+// 4. Lấy danh sách TẤT CẢ công ty (Public - Cho trang Home)
+export const fetchPublicCompanies = createAsyncThunk(
+  "company/fetchPublicCompanies",
+  async (_, { rejectWithValue }) => {
+    try {
+      // Route public mới tạo
+      const res = await axios.get(`${COMPANY_API_END_POINT}/public`);
+      return res.data.companies || [];
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || "Failed to fetch public companies";
+      console.error("❌ Error fetching public companies:", msg);
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+// 5. Lấy chi tiết công ty (Public View)
 export const getCompanyById = createAsyncThunk(
   "company/getCompanyById",
   async (companyId, { rejectWithValue }) => {
@@ -69,11 +95,12 @@ export const getCompanyById = createAsyncThunk(
     }
   }
 );
+
+// 6. Lấy chi tiết công ty để Edit (Admin/Recruiter View)
 export const getCompanyByIdAdmin = createAsyncThunk(
   "company/getCompanyByIdAdmin",
   async (companyId, { rejectWithValue }) => {
     try {
-      // ✅ recruiter route (có auth)
       const res = await axios.get(
         `${COMPANY_API_END_POINT}/admin/${companyId}`,
         { withCredentials: true }
@@ -88,6 +115,8 @@ export const getCompanyByIdAdmin = createAsyncThunk(
     }
   }
 );
+
+// 7. Xóa công ty (Recruiter)
 export const deleteCompany = createAsyncThunk(
   "company/deleteCompany",
   async (companyId, { rejectWithValue }) => {
@@ -95,18 +124,21 @@ export const deleteCompany = createAsyncThunk(
       await axios.delete(`${COMPANY_API_END_POINT}/delete/${companyId}`, {
         withCredentials: true,
       });
-      return companyId;
+      return companyId; // Trả về ID để xóa khỏi state
     } catch (error) {
       const msg = error.response?.data?.message || "Failed to delete company";
+      toast.error(msg);
       return rejectWithValue(msg);
     }
   }
 );
+
+// --- SLICE ---
 const companySlice = createSlice({
   name: "company",
   initialState: {
     singleCompany: null,
-    companies: [],
+    companies: [], // Dùng chung state này cho cả danh sách Public và Private (tùy ngữ cảnh sử dụng)
     searchCompanyByText: "",
     loading: false,
     error: null,
@@ -129,6 +161,7 @@ const companySlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    // fetchCompanies (Private)
     builder
       .addCase(fetchCompanies.pending, (state) => {
         state.loading = true;
@@ -142,15 +175,43 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
+
+    // fetchPublicCompanies (Public) - Thêm xử lý loading cho cái này
+    builder
+      .addCase(fetchPublicCompanies.pending, (state) => {
+        state.loading = true; // Có thể tạo state loading riêng nếu muốn tách biệt UI
+        state.error = null;
+      })
+      .addCase(fetchPublicCompanies.fulfilled, (state, action) => {
+        state.loading = false;
+        state.companies = action.payload; // Ghi đè vào companies chung
+      })
+      .addCase(fetchPublicCompanies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // createCompany
     builder.addCase(createCompany.fulfilled, (state, action) => {
       state.companies.push(action.payload);
     });
+
+    // updateCompany
     builder.addCase(updateCompany.fulfilled, (state, action) => {
+      // Cập nhật trong danh sách
       const index = state.companies.findIndex(
         (c) => c._id === action.payload._id
       );
-      if (index !== -1) state.companies[index] = action.payload;
+      if (index !== -1) {
+        state.companies[index] = action.payload;
+      }
+      // Nếu đang xem chi tiết công ty này thì cập nhật luôn singleCompany
+      if (state.singleCompany?._id === action.payload._id) {
+        state.singleCompany = action.payload;
+      }
     });
+
+    // getCompanyById (Public View)
     builder
       .addCase(getCompanyById.pending, (state) => {
         state.loading = true;
@@ -164,9 +225,23 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-    builder.addCase(getCompanyByIdAdmin.fulfilled, (state, action) => {
-      state.singleCompany = action.payload;
-    });
+
+    // getCompanyByIdAdmin (Private View)
+    builder
+      .addCase(getCompanyByIdAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCompanyByIdAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.singleCompany = action.payload;
+      })
+      .addCase(getCompanyByIdAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // deleteCompany
     builder.addCase(deleteCompany.fulfilled, (state, action) => {
       state.companies = state.companies.filter((c) => c._id !== action.payload);
     });
