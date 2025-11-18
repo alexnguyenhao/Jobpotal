@@ -216,7 +216,7 @@ const AdminJobsTable = () => {
                           </Avatar>
                           <div className="space-y-1">
                             <Link
-                              to={`/admin/jobs/${job._id}`}
+                              to={`/admin/jobs/descriptions/${job._id}`}
                               className="font-semibold text-gray-900 hover:text-blue-600 line-clamp-1 transition-colors"
                             >
                               {job?.title}
@@ -272,7 +272,7 @@ const AdminJobsTable = () => {
                                   size="icon"
                                   className="h-8 w-8 hover:text-blue-600"
                                 >
-                                  <Link to={`/admin/jobs/${job._id}`}>
+                                  <Link to={`/admin/jobs/edit/${job._id}`}>
                                     <Edit size={16} />
                                   </Link>
                                 </Button>

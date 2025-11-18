@@ -36,6 +36,8 @@ import CareerGuideCreate from "@/components/admin/careerGuides/CareerGuideCreate
 import CareerGuideEdit from "@/components/admin/careerGuides/CareerGuideEdit.jsx";
 import CareerGuideDetail from "@/components/admin/careerGuides/CareerGuideDetail.jsx";
 import GuideDetail from "./components/careerguide/GuideDetail";
+import JobDescriptionRecruiter from "@/components/admin/JobDescriptionRecruiter.jsx";
+import UpdateJob from "@/components/admin/UpdateJob.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -53,6 +55,11 @@ const appRouter = createBrowserRouter([
       { path: "/admin/jobs", element: <AdminJobs /> },
       { path: "/admin/jobs/create", element: <PostJob /> },
       { path: "/admin/jobs/:id/applicants", element: <Applicants /> },
+      { path: "/admin/jobs/edit/:id", element: <UpdateJob /> },
+      {
+        path: "/admin/jobs/descriptions/:id",
+        element: <JobDescriptionRecruiter />,
+      },
       { path: "/company/:id", element: <ProfileCompany /> },
       { path: "/company/update/:id", element: <CompanySetup /> },
       { path: "/resume", element: <Resume /> },
