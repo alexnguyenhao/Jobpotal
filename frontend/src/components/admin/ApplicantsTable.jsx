@@ -49,7 +49,6 @@ const ApplicantsTable = () => {
       );
       if (res.data.success) {
         toast.success(res.data.message);
-        // Note: You might need to dispatch an action to update the local state if not using socket.io
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Update failed");
@@ -116,8 +115,9 @@ const ApplicantsTable = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
+                    {/* Link tới trang chi tiết User Profile */}
                     <Link
-                      to={`/resume/${item?.applicant?._id}`}
+                      to={`/admin/applicants/resume/${item?.applicant?._id}`}
                       className="font-semibold text-gray-900 hover:text-blue-600 transition-colors block"
                     >
                       {item?.applicant?.fullName || "Unknown"}
@@ -134,7 +134,12 @@ const ApplicantsTable = () => {
                 <div className="flex flex-col gap-1 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <Mail size={14} className="text-gray-400" />
-                    <span>{item?.applicant?.email || "N/A"}</span>
+                    <span
+                      className="truncate max-w-[150px]"
+                      title={item?.applicant?.email}
+                    >
+                      {item?.applicant?.email || "N/A"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone size={14} className="text-gray-400" />
@@ -142,28 +147,8 @@ const ApplicantsTable = () => {
                   </div>
                 </div>
               </TableCell>
-
-              {/* 3. RESUME / CV */}
               <TableCell>
-                {item.usedProfile ? (
-                  // Case 1: Uploaded Resume
-                  item?.applicant?.resume ? (
-                    <a
-                      href={item?.applicant?.resume}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
-                    >
-                      <FileText size={16} />
-                      {item.applicant.resumeOriginalName || "Download Resume"}
-                    </a>
-                  ) : (
-                    <span className="text-gray-400 text-sm italic">
-                      No Resume
-                    </span>
-                  )
-                ) : item.cv ? (
-                  // Case 2: Online CV
+                {item.cv ? (
                   <Link
                     to={`/cv/view/${item.cv._id}`}
                     className="inline-flex items-center gap-2 text-[#6A38C2] hover:text-[#5a2ea6] hover:underline font-medium text-sm"
@@ -171,6 +156,18 @@ const ApplicantsTable = () => {
                     <FileText size={16} />
                     View Online CV
                   </Link>
+                ) : item?.applicant?.resume ? (
+                  <a
+                    href={item?.applicant?.resume}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
+                  >
+                    <FileText size={16} />
+                    <span className="truncate max-w-[150px]">
+                      {item.applicant.resumeOriginalName || "Download Resume"}
+                    </span>
+                  </a>
                 ) : (
                   <span className="text-gray-400 text-sm italic">
                     No CV provided
@@ -186,19 +183,21 @@ const ApplicantsTable = () => {
                 </div>
               </TableCell>
 
-              {/* 5. STATUS (New) */}
+              {/* 5. STATUS */}
               <TableCell>
                 <Badge
                   variant="secondary"
                   className={`font-normal px-2.5 py-0.5 ${
-                    item.status === "Accepted"
+                    item.status === "accepted" // Lưu ý: check chữ thường
                       ? "bg-green-100 text-green-700 hover:bg-green-200"
-                      : item.status === "Rejected"
+                      : item.status === "rejected"
                       ? "bg-red-100 text-red-700 hover:bg-red-200"
                       : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                   }`}
                 >
-                  {item.status || "Pending"}
+                  {item.status
+                    ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
+                    : "Pending"}
                 </Badge>
               </TableCell>
 

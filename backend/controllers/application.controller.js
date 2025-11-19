@@ -1,11 +1,12 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { CV } from "../models/cv.model.js";
+import { User } from "../models/user.model.js"; // Import thêm nếu cần check profile
+
+// 1. APPLY JOB
 export const applyJob = async (req, res) => {
   try {
     const userId = req.id;
-
-    // ❗ Nếu user chưa login → req.id không tồn tại
     if (!userId) {
       return res.status(401).json({
         message: "You must login to apply for a job",
@@ -16,17 +17,7 @@ export const applyJob = async (req, res) => {
     const jobId = req.params.id;
     const { cvId } = req.body;
 
-    // ❗ Chỉ null mới là apply bằng profile
-    const usingProfile = cvId === null;
-
-    // ❗ Bắt lỗi FE gửi sai format
-    if (cvId === undefined || cvId === "") {
-      return res.status(400).json({
-        message: "cvId must be null (profile) or a valid CV ID",
-        success: false,
-      });
-    }
-
+    // Validate Input
     if (!jobId) {
       return res.status(400).json({
         message: "Job ID is required",
@@ -34,7 +25,25 @@ export const applyJob = async (req, res) => {
       });
     }
 
-    // ❗ Kiểm tra đã apply trước đó chưa
+    // Kiểm tra Job có tồn tại không
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({
+        message: "Job not found",
+        success: false,
+      });
+    }
+
+    const usingProfile = cvId === null;
+
+    if (!usingProfile && !cvId) {
+      return res.status(400).json({
+        message: "Please select a CV or choose to apply with Profile",
+        success: false,
+      });
+    }
+
+    // Kiểm tra đã apply chưa
     const existing = await Application.findOne({
       job: jobId,
       applicant: userId,
@@ -46,21 +55,26 @@ export const applyJob = async (req, res) => {
         success: false,
       });
     }
-
-    let cv = null;
-
-    // Nếu apply bằng CV → xác thực CV có thuộc user
     if (!usingProfile) {
-      cv = await CV.findById(cvId);
+      const cv = await CV.findById(cvId);
       if (!cv || cv.user.toString() !== userId) {
         return res.status(403).json({
-          message: "Invalid CV selected.",
+          message: "Invalid CV selected or access denied.",
+          success: false,
+        });
+      }
+    } else {
+      const user = await User.findById(userId);
+      if (!user.resume) {
+        return res.status(400).json({
+          message:
+            "Your profile does not have a resume yet. Please upload one in settings.",
           success: false,
         });
       }
     }
 
-    // Tạo application
+    // Tạo Application
     const application = await Application.create({
       job: jobId,
       applicant: userId,
@@ -68,29 +82,29 @@ export const applyJob = async (req, res) => {
       usedProfile: usingProfile,
     });
 
-    await Job.findByIdAndUpdate(jobId, {
-      $push: { applications: application._id },
-    });
+    // Push application vào Job
+    job.applications.push(application._id);
+    await job.save();
 
     return res.status(201).json({
-      message: usingProfile
-        ? "Applied using your profile!"
-        : "Applied using selected CV!",
+      message: "Application submitted successfully!",
       success: true,
       application,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
-      message: "Server error",
+      message: "Internal Server Error",
       success: false,
     });
   }
 };
 
+// 2. GET APPLIED JOBS (Student xem lịch sử)
 export const getAppliedJobs = async (req, res) => {
   try {
     const userId = req.id;
+
     const application = await Application.find({ applicant: userId })
       .sort({ createdAt: -1 })
       .populate({
@@ -101,21 +115,32 @@ export const getAppliedJobs = async (req, res) => {
           options: { sort: { createdAt: -1 } },
         },
       });
-    if (!application) {
-      res.status(404).json({
-        message: "No Application",
-        success: false,
+
+    // Note: .find() trả về mảng rỗng [] nếu ko có, chứ ko phải null/undefined
+    if (!application || application.length === 0) {
+      return res.status(200).json({
+        // Trả về 200 OK với mảng rỗng là chuẩn hơn 404
+        message: "You haven't applied to any jobs yet.",
+        application: [],
+        success: true,
       });
     }
+
     return res.status(200).json({
       application,
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res.status(500).json({
+      // ❗ Phải return response lỗi
+      message: "Failed to fetch applied jobs",
+      success: false,
+    });
   }
 };
-//admin get application for user
+
+// 3. GET APPLICANTS (Recruiter xem ứng viên của 1 Job)
 export const getApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -126,11 +151,11 @@ export const getApplicants = async (req, res) => {
       populate: [
         {
           path: "applicant",
-          select: "-password -__v",
+          select: "-password", // Bỏ field password
           populate: { path: "profile" },
         },
         {
-          path: "cv",
+          path: "cv", // Populate thêm CV nếu user dùng custom CV
         },
       ],
     });
@@ -147,7 +172,7 @@ export const getApplicants = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       message: "Server error",
       success: false,
@@ -155,34 +180,44 @@ export const getApplicants = async (req, res) => {
   }
 };
 
+// 4. UPDATE STATUS (Recruiter duyệt/loại)
 export const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const applicationId = req.params.id;
+
     if (!status) {
-      res.status(400).json({
+      return res.status(400).json({
+        // ❗ Thêm return
         message: "Status is required",
         success: false,
       });
     }
-    //find the application by applicant id
+
     const application = await Application.findOne({ _id: applicationId });
+
     if (!application) {
-      res.status(400).json({
+      return res.status(404).json({
+        // ❗ Thêm return, sửa 400 thành 404
         message: "Application not found",
         success: false,
       });
     }
 
-    //update the status
+    // Cập nhật status
     application.status = status.toLowerCase();
     await application.save();
 
-    res.status(200).json({
-      message: "Status update successfully",
+    return res.status(200).json({
+      message: "Status updated successfully",
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res.status(500).json({
+      // ❗ Phải return response lỗi
+      message: "Failed to update status",
+      success: false,
+    });
   }
 };

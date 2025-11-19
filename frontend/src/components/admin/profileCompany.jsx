@@ -1,4 +1,21 @@
 import React, { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getCompanyById,
+  getCompanyByIdAdmin,
+  resetCompanyState,
+} from "@/redux/companySlice";
+import { toast } from "sonner";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Icons
 import {
   MapPin,
   Globe,
@@ -9,33 +26,93 @@ import {
   Calendar,
   Facebook,
   ArrowLeft,
+  Edit,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  getCompanyById,
-  getCompanyByIdAdmin,
-  resetCompanyState,
-} from "@/redux/companySlice";
-import { toast } from "sonner";
 
+// --- HELPER COMPONENTS ---
+const SectionHeader = ({ title, icon: Icon }) => (
+  <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3 mt-8 first:mt-0">
+    <div className="p-2 bg-purple-50 rounded-lg text-[#6A38C2]">
+      <Icon size={18} strokeWidth={2.5} />
+    </div>
+    <h2 className="text-base font-bold text-gray-900 uppercase tracking-wider">
+      {title}
+    </h2>
+  </div>
+);
+
+const ContactItem = ({ icon: Icon, label, value, type }) => {
+  if (!value) return null;
+
+  let href = "#";
+  let displayValue = value;
+
+  if (type === "url") {
+    href = value.startsWith("http") ? value : `https://${value}`;
+    // Cắt ngắn URL nếu quá dài để hiển thị đẹp hơn
+    displayValue = value.replace(/^https?:\/\/(www\.)?/, "");
+  } else if (type === "email") {
+    href = `mailto:${value}`;
+  } else if (type === "phone") {
+    href = `tel:${value}`;
+  }
+
+  const isLink = type === "url" || type === "email" || type === "phone";
+
+  return (
+    <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-purple-50/50 hover:border-purple-100 transition-colors">
+      <div className="p-2 bg-white rounded-full shadow-sm text-gray-500">
+        <Icon size={18} />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+          {label}
+        </p>
+        {isLink ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-gray-900 hover:text-[#6A38C2] truncate block transition-colors"
+          >
+            {displayValue}
+          </a>
+        ) : (
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {displayValue}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const OverviewRow = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+    <div className="flex items-center gap-3 text-gray-600">
+      <Icon size={16} />
+      <span className="text-sm">{label}</span>
+    </div>
+    <span className="text-sm font-medium text-gray-900">{value}</span>
+  </div>
+);
+
+// --- MAIN COMPONENT ---
 const ProfileCompany = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const dispatch = useDispatch();
 
-  // ✅ Lấy user từ Redux
   const { user } = useSelector((state) => state.auth);
-
-  // ✅ Lấy dữ liệu công ty từ Redux
   const {
     singleCompany: company,
     loading,
     error,
   } = useSelector((state) => state.company);
 
-  // 🟢 Fetch data khi component mount
   useEffect(() => {
     if (id) {
       if (user?.role === "recruiter") {
@@ -47,179 +124,247 @@ const ProfileCompany = () => {
     return () => dispatch(resetCompanyState());
   }, [dispatch, id, user?.role]);
 
-  // 🔴 Hiển thị lỗi
   useEffect(() => {
     if (error) toast.error(error);
   }, [error]);
 
-  // 🟡 Loading
-  if (loading)
+  // Loading State
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-500 text-lg">
-        Loading company profile...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500 bg-gray-50/50">
+        <Loader2 className="h-10 w-10 animate-spin text-[#6A38C2]" />
+        <p className="font-medium text-sm">Loading Company Profile...</p>
       </div>
     );
+  }
 
-  if (!company)
+  // Not Found State
+  if (!company) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-500 text-lg">
-        Company not found
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
+        <Building2 size={48} className="mb-4 opacity-20" />
+        <p className="text-lg font-semibold">Company Not Found</p>
+        <Button variant="outline" onClick={() => navigate(-1)} className="mt-4">
+          Go Back
+        </Button>
       </div>
     );
+  }
 
-  // 🟢 Kiểm tra quyền hiển thị thông tin nội bộ
   const canViewPrivateInfo = user?.role === "recruiter";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <div className="flex items-center gap-3 mb-4 sm:mb-0">
-            <Button
-              onClick={() => navigate(-1)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </Button>
-            <h1 className="text-2xl font-bold text-gray-800">
+    <div className="min-h-screen bg-gray-50/50 pb-20">
+      {/* --- STICKY HEADER --- */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full hover:bg-gray-100"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               Company Profile
             </h1>
+            <p className="text-xs text-gray-500">View organization details</p>
           </div>
         </div>
 
-        {/* Logo + Name */}
-        <div className="flex flex-col md:flex-row items-center gap-8 border-b pb-8">
-          <img
-            src={company.logo || "/placeholder-company.png"}
-            alt={`${company.name} Logo`}
-            className="w-32 h-32 object-contain rounded-lg border shadow-sm"
-          />
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
-            <p className="text-gray-500 mt-2">
-              {company.industry || "No industry info"}
-            </p>
+        {canViewPrivateInfo && (
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/admin/companies/${id}/edit`)} // Giả sử có route edit
+            className="hidden sm:flex"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Profile
+          </Button>
+        )}
+      </header>
 
-            {canViewPrivateInfo && (
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-                {company.isVerified && (
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                    ✅ Verified
+      {/* --- MAIN CONTENT --- */}
+      <div className="max-w-5xl mx-auto mt-8 px-4 md:px-0">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
+          {/* 1. HERO SECTION (Dark) */}
+          <div className="bg-slate-900 text-white p-8 md:p-12">
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <Avatar className="h-24 w-24 rounded-2xl border-4 border-white/10 bg-white shadow-xl">
+                <AvatarImage
+                  src={company.logo}
+                  className="object-contain p-1"
+                />
+                <AvatarFallback className="rounded-2xl bg-slate-800 text-white font-bold text-3xl">
+                  {company.name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    {company.name}
+                  </h1>
+                  {company.isVerified && (
+                    <Badge className="bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 border-0 backdrop-blur-md">
+                      <CheckCircle2 size={12} className="mr-1" /> Verified
+                    </Badge>
+                  )}
+                  {canViewPrivateInfo && (
+                    <Badge
+                      className={`border-0 backdrop-blur-md ${
+                        company.status === "active"
+                          ? "bg-green-500/20 text-green-200"
+                          : "bg-red-500/20 text-red-200"
+                      }`}
+                    >
+                      {company.status}
+                    </Badge>
+                  )}
+                </div>
+
+                <p className="text-slate-400 text-lg font-medium">
+                  {company.industry || "Industry Not Specified"}
+                </p>
+
+                <div className="flex items-center gap-4 text-sm text-slate-400 pt-2">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin size={14} /> {company.location || "N/A"}
                   </span>
-                )}
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    company.status === "active"
-                      ? "bg-blue-100 text-blue-700"
-                      : company.status === "inactive"
-                      ? "bg-gray-100 text-gray-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {company.status}
-                </span>
+                  {company.website && (
+                    <a
+                      href={company.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 hover:text-white transition-colors"
+                    >
+                      <Globe size={14} /> Website
+                    </a>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-3">About Us</h2>
-          <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-            {company.description || "No description available."}
-          </p>
-        </div>
-
-        {/* Info Grid */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <InfoRow
-              icon={<Building2 />}
-              label="Location"
-              value={company.location}
-            />
-            <InfoRow
-              icon={<Globe />}
-              label="Website"
-              value={company.website}
-              link="url"
-            />
-            <InfoRow
-              icon={<Facebook />}
-              label="Facebook"
-              value={company.socials?.facebook}
-              link="url"
-            />
-            <InfoRow
-              icon={<Phone />}
-              label="Phone"
-              value={company.phone}
-              link="whatsapp"
-            />
-            <InfoRow
-              icon={<Mail />}
-              label="Email"
-              value={company.email}
-              link="email"
-            />
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <InfoRow
-              icon={<Calendar />}
-              label="Founded"
-              value={company.foundedYear}
-            />
-            <InfoRow
-              icon={<Users />}
-              label="Employee Count"
-              value={company.employeeCount || "N/A"}
-            />
-            <InfoRow
-              icon={<MapPin />}
-              label="Tags"
-              value={company.tags?.join(", ") || "No tags"}
-            />
+          {/* 2. BODY CONTENT */}
+          <div className="p-8 md:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              {/* LEFT COLUMN (Main Info) - 2/3 */}
+              <div className="lg:col-span-2 space-y-10">
+                {/* About Us */}
+                <section>
+                  <SectionHeader title="About Us" icon={Building2} />
+                  <div className="text-gray-600 leading-relaxed whitespace-pre-line text-sm text-justify">
+                    {company.description ||
+                      "No description available regarding this company."}
+                  </div>
+                </section>
+
+                {/* Contact Information (Grid Layout) */}
+                <section>
+                  <SectionHeader title="Contact Information" icon={Phone} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ContactItem
+                      icon={Globe}
+                      label="Website"
+                      value={company.website}
+                      type="url"
+                    />
+                    <ContactItem
+                      icon={Mail}
+                      label="Email Address"
+                      value={company.email}
+                      type="email"
+                    />
+                    <ContactItem
+                      icon={Phone}
+                      label="Phone Number"
+                      value={company.phone}
+                      type="phone"
+                    />
+                    <ContactItem
+                      icon={Facebook}
+                      label="Facebook"
+                      value={company.socials?.facebook}
+                      type="url"
+                    />
+                  </div>
+                </section>
+              </div>
+
+              {/* RIGHT COLUMN (Sidebar) - 1/3 */}
+              <div className="space-y-8">
+                {/* Company Details Card */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <AlertCircle size={16} className="text-[#6A38C2]" />
+                    Overview
+                  </h4>
+                  <div className="space-y-1">
+                    <OverviewRow
+                      icon={Calendar}
+                      label="Founded"
+                      value={company.foundedYear || "N/A"}
+                    />
+                    <OverviewRow
+                      icon={Users}
+                      label="Employees"
+                      value={
+                        company.employeeCount
+                          ? `${company.employeeCount}+`
+                          : "N/A"
+                      }
+                    />
+                    <OverviewRow
+                      icon={MapPin}
+                      label="Location"
+                      value={company.location || "N/A"}
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Cloud */}
+                {company.tags && company.tags.length > 0 && (
+                  <div className="bg-gray-50/50 rounded-xl border border-gray-200 p-6">
+                    <h4 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">
+                      Specialties
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {company.tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-white text-gray-600 border-gray-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Helper Action */}
+                {canViewPrivateInfo && (
+                  <div className="text-center pt-4">
+                    <p className="text-xs text-gray-400 mb-2">
+                      Information incorrect?
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full border-dashed"
+                      onClick={() => navigate(`/admin/companies/${id}/edit`)}
+                    >
+                      Update Company Details
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-const InfoRow = ({ icon, label, value, link }) => {
-  if (!value) return null;
-
-  let href = "#";
-  if (link === "url") {
-    href = value.startsWith("http") ? value : `https://${value}`;
-  } else if (link === "whatsapp") {
-    const phoneNumber = value.replace(/\D/g, ""); // chỉ giữ số
-    href = `https://wa.me/${phoneNumber}`;
-  } else if (link === "email") {
-    href = `mailto:${value}`;
-  }
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="text-gray-400">{icon}</div>
-      <p className="text-gray-700">
-        <span className="font-medium text-gray-900">{label}: </span>
-        {link ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            {value}
-          </a>
-        ) : (
-          value
-        )}
-      </p>
     </div>
   );
 };

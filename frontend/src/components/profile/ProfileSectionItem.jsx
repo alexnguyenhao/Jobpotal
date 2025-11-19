@@ -12,11 +12,12 @@ import {
 
 /* ============================================================
    MAIN COMPONENT
+   Renders a profile section item based on available props.
 ============================================================ */
 const ProfileSectionItem = ({ item }) => {
   if (!item) return null;
 
-  // destructure
+  // destructure properties from the item object
   const {
     company,
     position,
@@ -36,6 +37,7 @@ const ProfileSectionItem = ({ item }) => {
   } = item;
 
   /* ---------- Work Experience ---------- */
+  // If company and position exist, render as Work Experience
   if (company && position) {
     return (
       <SectionCard>
@@ -52,6 +54,7 @@ const ProfileSectionItem = ({ item }) => {
   }
 
   /* ---------- Education ---------- */
+  // If school and degree exist, render as Education
   if (school && degree) {
     return (
       <SectionCard>
@@ -67,6 +70,7 @@ const ProfileSectionItem = ({ item }) => {
   }
 
   /* ---------- Certifications ---------- */
+  // If name and organization exist, render as Certification
   if (name && organization) {
     return (
       <SectionCard>
@@ -94,6 +98,7 @@ const ProfileSectionItem = ({ item }) => {
   }
 
   /* ---------- Projects ---------- */
+  // If title exists (and not caught by previous checks), render as Project
   if (title) {
     return (
       <SectionCard>
@@ -118,6 +123,7 @@ const ProfileSectionItem = ({ item }) => {
   }
 
   /* ---------- Languages ---------- */
+  // If language exists, render as Language
   if (language) {
     return (
       <SectionCard compact>
@@ -133,6 +139,7 @@ const ProfileSectionItem = ({ item }) => {
   }
 
   /* ---------- Achievements ---------- */
+  // If item is a string or has a title (and falls through previous checks), render as Achievement
   if (typeof item === "string" || item.title) {
     return (
       <SectionCard compact>

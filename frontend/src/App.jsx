@@ -63,7 +63,10 @@ const appRouter = createBrowserRouter([
       { path: "/company/:id", element: <ProfileCompany /> },
       { path: "/company/update/:id", element: <CompanySetup /> },
       { path: "/resume", element: <Resume /> },
-      { path: "/resume/:userId", element: <RecruiterResume /> },
+      {
+        path: "/admin/applicants/resume/:userId",
+        element: <RecruiterResume />,
+      },
       { path: "/cv/home", element: <CVHome /> },
       { path: "/cv/builder", element: <CVBuilder /> },
       { path: "/cv/list", element: <CVList /> },

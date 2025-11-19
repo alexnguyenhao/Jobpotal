@@ -13,6 +13,7 @@ import {
   saveJob,
   unsaveJob,
   getSavedJobs,
+  getUserById,
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { singleUpload } from "../middlewares/mutler.js";
@@ -33,4 +34,6 @@ router.route("/profile").get(isAuthenticated, getMyProfile);
 router.post("/save/:jobId", isAuthenticated, saveJob);
 router.delete("/unsave/:jobId", isAuthenticated, unsaveJob);
 router.get("/saved", isAuthenticated, getSavedJobs);
+router.get("/user/:id", isAuthenticated, getUserById);
+
 export default router;
