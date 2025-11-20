@@ -16,28 +16,28 @@ import Profile from "@/components/Profile.jsx";
 import JobDescription from "@/components/JobDescription.jsx";
 
 // Admin pages
-import Companies from "@/components/admin/Companies.jsx";
-import CompanyCreate from "@/components/admin/CompanyCreate.jsx";
-import CompanySetup from "@/components/admin/CompanySetup.jsx";
-import AdminJobs from "@/components/admin/AdminJobs.jsx";
-import PostJob from "@/components/admin/PostJob.jsx";
-import Applicants from "@/components/admin/Applicants.jsx";
-import ProfileCompany from "@/components/admin/ProfileCompany.jsx";
+import Companies from "@/components/admin/company/Companies.jsx";
+import CompanyCreate from "@/components/admin/company/CompanyCreate.jsx";
+import CompanySetup from "@/components/admin/company/CompanySetup.jsx";
+import AdminJobs from "@/components/admin/job/AdminJobs.jsx";
+import PostJob from "@/components/admin/job/PostJob.jsx";
+import Applicants from "@/components/admin/applicant/Applicants.jsx";
+import ProfileCompany from "@/components/admin/company/ProfileCompany.jsx";
 import Resume from "@/components/profile/Resume.jsx";
-import RecruiterResume from "./components/admin/RecruiterResume";
+import RecruiterResume from "./components/admin/applicant/RecruiterResume.jsx";
 import CVHome from "@/components/cv/CVHome.jsx";
 import CVBuilder from "@/components/cv/CVBuilder.jsx";
 import CVList from "@/components/cv/CVList.jsx";
 import CVView from "@/components/cv/CVView.jsx";
-import ApplicantCVView from "@/components/admin/ApplicantCVView.jsx";
+import ApplicantCVView from "@/components/admin/applicant/ApplicantCVView.jsx";
 import CareerGuideHome from "@/components/admin/careerGuides/CareerGuideHome.jsx";
 import CareerGuide from "@/components/careerguide/CareerGuide.jsx";
 import CareerGuideCreate from "@/components/admin/careerGuides/CareerGuideCreate.jsx";
 import CareerGuideEdit from "@/components/admin/careerGuides/CareerGuideEdit.jsx";
 import CareerGuideDetail from "@/components/admin/careerGuides/CareerGuideDetail.jsx";
 import GuideDetail from "./components/careerguide/GuideDetail";
-import JobDescriptionRecruiter from "@/components/admin/JobDescriptionRecruiter.jsx";
-import UpdateJob from "@/components/admin/UpdateJob.jsx";
+import JobDescriptionRecruiter from "@/components/admin/job/JobDescriptionRecruiter.jsx";
+import UpdateJob from "@/components/admin/job/UpdateJob.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)

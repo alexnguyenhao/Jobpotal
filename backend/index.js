@@ -1,4 +1,4 @@
-import express from "express";
+import express from "express"; // Vẫn giữ để dùng các type nếu cần, nhưng app lấy từ socket.js
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -10,8 +10,14 @@ import applicationRoute from "./routes/application.route.js";
 import categoryRoute from "./routes/jobcategory.route.js";
 import cvRoute from "./routes/cv.route.js";
 import careerGuideRoute from "./routes/careerGuide.route.js";
+import notificationRoute from "./routes/notification.route.js";
+
+// --- THAY ĐỔI 1: Import từ socket.js ---
+import { app, server } from "./socket.js";
+
 dotenv.config();
-const app = express();
+
+// (Đoạn này app = express() đã bị xóa vì app được import ở trên)
 
 //middleware
 app.use(express.json());
@@ -35,7 +41,10 @@ app.use("/api/v1/application", applicationRoute);
 app.use("/api/v1/category", categoryRoute);
 app.use("/api/v1/cv", cvRoute);
 app.use("/api/v1/career-guides", careerGuideRoute);
-app.listen(PORT, () => {
+app.use("/api/v1/notification", notificationRoute);
+
+// --- THAY ĐỔI 2: Dùng server.listen thay vì app.listen ---
+server.listen(PORT, () => {
   connectDB();
   console.log(`Server running at port ${PORT}`);
 });

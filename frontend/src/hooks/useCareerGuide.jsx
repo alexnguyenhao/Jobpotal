@@ -24,19 +24,15 @@ export default function useCareerGuide() {
   const startLoading = () => dispatch(setCareerGuideLoading(true));
   const endLoading = () => dispatch(setCareerGuideLoading(false));
 
-  // Route: GET /
   const fetchPublicGuides = async (params = {}) => {
     try {
       startLoading();
-      // Axios sẽ tự ghép params thành: ?keyword=abc&category=xyz
       const res = await axios.get(API, { params });
 
       if (!res.data.success) {
         dispatch(setCareerGuideError("Failed to load guides"));
         return;
       }
-
-      // Lưu danh sách vào Redux
       dispatch(setPublicGuides(res.data.guides || []));
     } catch (err) {
       dispatch(setCareerGuideError("Cannot load guides"));
@@ -44,8 +40,6 @@ export default function useCareerGuide() {
       endLoading();
     }
   };
-
-  // Route: GET /:id
   const fetchGuideDetail = async (idOrSlug) => {
     if (!idOrSlug) return;
     try {
@@ -115,7 +109,6 @@ export default function useCareerGuide() {
 
     try {
       startLoading();
-      // URL khớp với route cũ của bạn
       const res = await axios.post(`${API}/create`, payload, {
         withCredentials: true,
       });
@@ -141,7 +134,6 @@ export default function useCareerGuide() {
 
     try {
       startLoading();
-      // URL khớp với route cũ của bạn
       const res = await axios.put(`${API}/update/${id}`, payload, {
         withCredentials: true,
       });

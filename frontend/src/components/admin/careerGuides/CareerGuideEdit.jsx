@@ -38,8 +38,6 @@ import {
 // --- QUILL EDITOR ---
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
-
-// --- REUSABLE QUILL COMPONENT ---
 const QuillEditor = ({ value, onChange }) => {
   const editorRef = useRef(null);
   const quillInstance = useRef(null);
@@ -75,8 +73,6 @@ const QuillEditor = ({ value, onChange }) => {
 
   return <div ref={editorRef} className="bg-white min-h-[400px] rounded-md" />;
 };
-
-// --- MAIN COMPONENT ---
 const CareerGuideEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,7 +97,6 @@ const CareerGuideEdit = () => {
   const thumbnailValue = form.watch("thumbnail");
   const isPublished = form.watch("isPublished");
 
-  // 2. Load Data & Fill Form
   useEffect(() => {
     const loadGuide = async () => {
       const data = await fetchMyGuideById(id);
@@ -123,7 +118,7 @@ const CareerGuideEdit = () => {
       setLoadingData(false);
     };
     loadGuide();
-  }, [id, fetchMyGuideById, form, navigate]);
+  }, [id]);
 
   // 3. Handle Submit
   const onSubmit = async (values) => {

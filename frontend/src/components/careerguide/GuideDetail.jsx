@@ -53,8 +53,7 @@ const StudentGuideDetail = () => {
     if (id) {
       loadData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]); // <--- CHỈ ĐỂ ID Ở ĐÂY ĐỂ TRÁNH LOOP
+  }, [id]);
 
   // --- HANDLERS ---
   const handleShare = () => {

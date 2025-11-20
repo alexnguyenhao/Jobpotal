@@ -2,6 +2,10 @@ import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { CV } from "../models/cv.model.js";
 import { User } from "../models/user.model.js"; // Import thêm nếu cần check profile
+import { Notification } from "../models/notification.model.js";
+import { sendEmail } from "../libs/send-email.js";
+import { applicantJobTemplate } from "../templates/applicantJobTemplate.js";
+import { getReceiverSocketId } from "../socket.js";
 
 // 1. APPLY JOB
 export const applyJob = async (req, res) => {
@@ -180,7 +184,6 @@ export const getApplicants = async (req, res) => {
   }
 };
 
-// 4. UPDATE STATUS (Recruiter duyệt/loại)
 export const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -188,25 +191,62 @@ export const updateStatus = async (req, res) => {
 
     if (!status) {
       return res.status(400).json({
-        // ❗ Thêm return
         message: "Status is required",
         success: false,
       });
     }
-
-    const application = await Application.findOne({ _id: applicationId });
+    const application = await Application.findOne({ _id: applicationId })
+      .populate("applicant")
+      .populate({
+        path: "job",
+        populate: {
+          path: "company",
+        },
+      });
 
     if (!application) {
       return res.status(404).json({
-        // ❗ Thêm return, sửa 400 thành 404
         message: "Application not found",
         success: false,
       });
     }
-
-    // Cập nhật status
     application.status = status.toLowerCase();
     await application.save();
+    if (application.applicant) {
+      const student = application.applicant;
+      const jobData = application.job;
+      const jobTitle = jobData?.title || "Unknown Job";
+      const companyName = jobData?.company?.name || "Career Support";
+
+      // A. Tạo Notification (DB)
+      const notiMessage = `Your application for ${jobTitle} has been ${status.toLowerCase()}.`;
+
+      const notification = await Notification.create({
+        recipient: student._id,
+        sender: req.id,
+        type: "application_status",
+        message: notiMessage,
+        relatedId: application._id,
+        isRead: false,
+      });
+
+      // B. Gửi Socket Real-time
+      const receiverSocketId = getReceiverSocketId(student._id.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newNotification", notification);
+      }
+      if (["accepted", "rejected"].includes(status.toLowerCase())) {
+        const emailHtml = applicantJobTemplate(
+          student.fullName,
+          jobTitle,
+          status,
+          companyName
+        );
+
+        const emailSubject = `Update on your application for ${jobTitle}`;
+        sendEmail(student.email, emailSubject, emailHtml);
+      }
+    }
 
     return res.status(200).json({
       message: "Status updated successfully",
@@ -215,7 +255,6 @@ export const updateStatus = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      // ❗ Phải return response lỗi
       message: "Failed to update status",
       success: false,
     });

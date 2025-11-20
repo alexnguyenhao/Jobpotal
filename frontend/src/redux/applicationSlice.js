@@ -6,10 +6,10 @@ const applicationSlice = createSlice({
     applicants: [],
   },
   reducers: {
-    setAllApplication: (state, action) => {
+    setAllApplicants: (state, action) => {
       state.applicants = action.payload;
     },
   },
 });
-export const { setAllApplication } = applicationSlice.actions;
+export const { setAllApplicants } = applicationSlice.actions;
 export default applicationSlice.reducer;
