@@ -2,10 +2,6 @@ import { CV } from "../models/cv.model.js";
 import { Profile } from "../models/profile.model.js";
 import { User } from "../models/user.model.js";
 import crypto from "crypto";
-
-/* ============================================================
-   CREATE CV
-   ============================================================ */
 export const createCV = async (req, res) => {
   try {
     const userId = req.id;
@@ -70,9 +66,6 @@ export const createCV = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET ALL CVs FOR CURRENT USER
-   ============================================================ */
 export const getMyCVs = async (req, res) => {
   const userId = req.id;
   if (!userId) {
@@ -83,9 +76,6 @@ export const getMyCVs = async (req, res) => {
   res.status(200).json({ success: true, cvs });
 };
 
-/* ============================================================
-   GET CV BY ID — Allow owner or public view
-   ============================================================ */
 export const getCVById = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -102,9 +92,6 @@ export const getCVById = async (req, res) => {
   res.status(200).json({ success: true, cv });
 };
 
-/* ============================================================
-   UPDATE CV — Only owner can update
-   ============================================================ */
 export const updateCV = async (req, res) => {
   try {
     const cvId = req.params.id;
@@ -139,9 +126,6 @@ export const updateCV = async (req, res) => {
   }
 };
 
-/* ============================================================
-   DELETE CV — Only owner
-   ============================================================ */
 export const deleteCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -158,9 +142,6 @@ export const deleteCV = async (req, res) => {
   res.status(200).json({ success: true, message: "CV deleted" });
 };
 
-/* ============================================================
-   MAKE PUBLIC — Only owner
-   ============================================================ */
 export const makePublic = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -184,9 +165,6 @@ export const makePublic = async (req, res) => {
   });
 };
 
-/* ============================================================
-   UN-SHARE CV — Only owner
-   ============================================================ */
 export const unShareCV = async (req, res) => {
   const cv = await CV.findById(req.params.id);
 
@@ -206,9 +184,6 @@ export const unShareCV = async (req, res) => {
   res.status(200).json({ success: true, message: "CV unshared" });
 };
 
-/* ============================================================
-   PUBLIC CV VIEW
-   ============================================================ */
 export const getPublicCV = async (req, res) => {
   const cv = await CV.findOne({ shareUrl: req.params.url, isPublic: true });
 
@@ -220,9 +195,6 @@ export const getPublicCV = async (req, res) => {
   res.status(200).json({ success: true, cv });
 };
 
-/* ============================================================
-   RECRUITER CV VIEW (Job Application)
-   ============================================================ */
 export const getCVForRecruiter = async (req, res) => {
   try {
     const cv = await CV.findById(req.params.id);
@@ -233,9 +205,6 @@ export const getCVForRecruiter = async (req, res) => {
         message: "CV not found",
       });
     }
-
-    // Optional: thêm rule recruiter
-    // if (!req.isRecruiter) return res.status(403)
 
     return res.status(200).json({
       success: true,

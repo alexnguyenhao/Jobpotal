@@ -5,7 +5,7 @@ import { User } from "../models/user.model.js"; // Import thêm nếu cần chec
 import { Notification } from "../models/notification.model.js";
 import { sendEmail } from "../libs/send-email.js";
 import { applicantJobTemplate } from "../templates/applicantJobTemplate.js";
-import { getReceiverSocketId } from "../socket.js";
+import { getReceiverSocketId, io } from "../socket.js";
 
 // 1. APPLY JOB
 export const applyJob = async (req, res) => {

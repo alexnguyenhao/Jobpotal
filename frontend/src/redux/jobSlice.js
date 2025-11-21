@@ -9,7 +9,7 @@ const jobSlice = createSlice({
     loading: false,
     searchJobByText: "",
     allAppliedJobs: [],
-    savedJobs: [], // 💾 Thêm mới
+    savedJobs: [],
   },
   reducers: {
     setAllJobs(state, action) {
@@ -27,23 +27,21 @@ const jobSlice = createSlice({
     setAllAppliedJobs(state, action) {
       state.allAppliedJobs = action.payload;
     },
-
-    // 💾 Saved Jobs
     setSavedJobs(state, action) {
       state.savedJobs = action.payload;
     },
     addSavedJob(state, action) {
-      // tránh thêm trùng job
-      const jobId = action.payload;
-      if (!state.savedJobs.some((j) => j._id === jobId || j === jobId)) {
-        state.savedJobs.push(jobId);
+      const job = action.payload;
+      // Kiểm tra chỉ dựa trên _id
+      const exists = state.savedJobs.some((j) => j._id === job._id);
+      if (!exists) {
+        state.savedJobs.push(job);
       }
     },
     removeSavedJob(state, action) {
+      // payload là ID
       const jobId = action.payload;
-      state.savedJobs = state.savedJobs.filter(
-        (j) => (j._id || j).toString() !== jobId.toString()
-      );
+      state.savedJobs = state.savedJobs.filter((j) => j._id !== jobId);
     },
   },
 });

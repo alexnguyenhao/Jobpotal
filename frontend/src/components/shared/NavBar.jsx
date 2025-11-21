@@ -108,7 +108,7 @@ const NavBar = () => {
     });
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
+      // if (socketRef.current) socketRef.current.disconnect();
     };
   }, [user, notifications, dispatch]);
 

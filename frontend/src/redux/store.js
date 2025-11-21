@@ -25,7 +25,7 @@ const persistConfig = {
   key: "root",
   storage,
   version: 1,
-  whitelist: ["auth", "cv", "application"],
+  whitelist: ["auth"],
 };
 const rootReducer = combineReducers({
   auth: authSlice,
@@ -43,7 +43,7 @@ const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      immutableCheck: false, // Tăng performance
+      immutableCheck: true,
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },

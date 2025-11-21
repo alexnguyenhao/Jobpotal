@@ -93,8 +93,6 @@ const JobSchema = new mongoose.Schema(
         default: "",
       },
     },
-
-    // ===================== SALARY =====================
     salary: {
       min: { type: Number, required: true },
       max: { type: Number, required: true },
