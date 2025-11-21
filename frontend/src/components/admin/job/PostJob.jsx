@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 // Store & Utils
 import { JOB_API_END_POINT, provinces } from "@/utils/constant";
@@ -30,97 +29,22 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 // Icons
-import { Loader2, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
-
-/**
- * REUSABLE SEARCHABLE SELECT COMPONENT
- */
-const SearchSelect = ({ value, onChange, options, placeholder }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <FormControl>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full justify-between bg-white px-3 font-normal",
-              !value && "text-muted-foreground"
-            )}
-          >
-            {value
-              ? options.find((item) => item.value === value)?.label
-              : placeholder}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </FormControl>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
-        align="start"
-      >
-        <Command>
-          <CommandInput
-            placeholder={`Search ${placeholder.toLowerCase()}...`}
-          />
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((item) => (
-                <CommandItem
-                  key={item.value}
-                  value={item.label}
-                  onSelect={() => {
-                    onChange(item.value);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === item.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {item.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-};
-
-// --- HELPER SECTION COMPONENT (Matching CompanySetup style) ---
-const Section = ({ title, children, isLast }) => (
-  <div className={`${!isLast ? "border-b border-gray-100 pb-8" : ""}`}>
-    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
-      {title}
-    </h3>
-    {children}
-  </div>
-);
+import {
+  Loader2,
+  ArrowLeft,
+  FileText,
+  MapPin,
+  DollarSign,
+  Building2,
+  Layers,
+} from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -155,13 +79,30 @@ const PostJob = () => {
     },
   });
 
+  // --- HANDLE SUBMIT ---
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
+
+      // 1. Format Requirements & Benefits (Split by new line)
+      const formattedRequirements = data.requirements
+        ? data.requirements.split("\n").filter((line) => line.trim() !== "")
+        : [];
+
+      const formattedBenefits = data.benefits
+        ? data.benefits.split("\n").filter((line) => line.trim() !== "")
+        : [];
+
+      // 2. Create Payload
       const payload = {
         ...data,
+        salaryMin: Number(data.salaryMin),
+        salaryMax: Number(data.salaryMax),
+        position: Number(data.position),
         company: data.companyId,
         category: data.categoryId,
+        requirements: formattedRequirements,
+        benefits: formattedBenefits,
       };
 
       const res = await axios.post(`${JOB_API_END_POINT}/post`, payload, {
@@ -170,7 +111,7 @@ const PostJob = () => {
       });
 
       if (res.data.success) {
-        toast.success("✅ Job posted successfully!");
+        toast.success("Job posted successfully!");
         navigate("/admin/jobs");
       }
     } catch (error) {
@@ -181,46 +122,46 @@ const PostJob = () => {
     }
   };
 
-  // Prepare options
-  const provinceOptions = provinces.map((p) => ({ label: p, value: p }));
-  const companyOptions = companies.map((c) => ({
-    label: c.name,
-    value: c._id,
-  }));
-  const categoryOptions = categories.map((c) => ({
-    label: c.name,
-    value: c._id,
-  }));
-
   return (
-    <div className="min-h-screen bg-gray-50/50 py-10 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* --- HEADER --- */}
-        <div className="flex items-center gap-4 mb-8">
+    <div className="min-h-screen bg-gray-50/50 flex flex-col">
+      {/* --- HEADER --- */}
+      <header className="bg-white border-b border-gray-200 py-4 px-6 md:px-8 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto flex items-center gap-4">
           <Button
-            onClick={() => navigate("/admin/jobs")}
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full border-gray-200"
+            className="rounded-full hover:bg-gray-100"
+            onClick={() => navigate("/admin/jobs")}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Post New Job</h1>
-            <p className="text-sm text-gray-500">
-              Create a new job opportunity for candidates.
+            <h1 className="text-xl font-bold text-gray-900">Post New Job</h1>
+            <p className="text-xs text-gray-500 hidden md:block">
+              Create a new opportunity for candidates.
             </p>
           </div>
         </div>
+      </header>
 
-        {/* --- MAIN CARD --- */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* --- MAIN CONTENT --- */}
+      <div className="flex-1 overflow-y-auto py-8 px-4 md:px-8 pb-24">
+        <div className="max-w-7xl mx-auto">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="p-8 space-y-8">
-                {/* 1. JOB DETAILS */}
-                <Section title="Job Details">
-                  <div className="space-y-6">
+            <form className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* === LEFT COLUMN (2/3) === */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* 1. JOB DETAILS CARD */}
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b pb-4">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText size={18} className="text-[#6A38C2]" /> Job
+                      Details
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="pt-6 space-y-5">
+                    {/* Title */}
                     <FormField
                       control={form.control}
                       name="title"
@@ -232,6 +173,7 @@ const PostJob = () => {
                           <FormControl>
                             <Input
                               placeholder="e.g. Senior Frontend Developer"
+                              className="h-11"
                               {...field}
                             />
                           </FormControl>
@@ -239,6 +181,8 @@ const PostJob = () => {
                         </FormItem>
                       )}
                     />
+
+                    {/* Description */}
                     <FormField
                       control={form.control}
                       name="description"
@@ -250,7 +194,7 @@ const PostJob = () => {
                           <FormControl>
                             <Textarea
                               placeholder="Describe the role and responsibilities..."
-                              className="min-h-[120px]"
+                              className="min-h-[150px]"
                               {...field}
                             />
                           </FormControl>
@@ -258,7 +202,9 @@ const PostJob = () => {
                         </FormItem>
                       )}
                     />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    {/* Requirements & Benefits */}
+                    <div className="grid md:grid-cols-2 gap-5">
                       <FormField
                         control={form.control}
                         name="requirements"
@@ -267,14 +213,18 @@ const PostJob = () => {
                             <FormLabel>Requirements</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="- ReactJS&#10;- Node.js"
+                                placeholder="- ReactJS\n- Node.js\n(One per line)"
                                 className="min-h-[120px]"
                                 {...field}
                               />
                             </FormControl>
+                            <FormDescription className="text-[10px] text-gray-500">
+                              Press <b>Enter</b> for new line
+                            </FormDescription>
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
                         name="benefits"
@@ -283,124 +233,58 @@ const PostJob = () => {
                             <FormLabel>Benefits</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="- Health Insurance&#10;- Remote work"
+                                placeholder="- Health Insurance\n- Remote\n(One per line)"
                                 className="min-h-[120px]"
                                 {...field}
                               />
                             </FormControl>
+                            <FormDescription className="text-[10px] text-gray-500">
+                              Press <b>Enter</b> for new line
+                            </FormDescription>
                           </FormItem>
                         )}
                       />
                     </div>
-                  </div>
-                </Section>
+                  </CardContent>
+                </Card>
 
-                {/* 2. ORGANIZATION INFO */}
-                <Section title="Organization & Category">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="companyId"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>
-                            Company <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <SearchSelect
-                            value={field.value}
-                            onChange={field.onChange}
-                            options={companyOptions}
-                            placeholder="Select Company"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>
-                            Category <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <SearchSelect
-                            value={field.value}
-                            onChange={field.onChange}
-                            options={categoryOptions}
-                            placeholder="Select Category"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </Section>
+                {/* 2. LOCATION CARD */}
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b pb-4">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <MapPin size={18} className="text-green-600" /> Location
+                    </CardTitle>
+                  </CardHeader>
 
-                {/* 3. JOB TYPE & LOCATION */}
-                <Section title="Type & Location">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <FormField
-                      control={form.control}
-                      name="jobType"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel className="mb-3 block">Job Type</FormLabel>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                              "Full-time",
-                              "Part-time",
-                              "Remote",
-                              "Contract",
-                              "Internship",
-                              "Hybrid",
-                            ].map((type) => (
-                              <FormItem
-                                key={type}
-                                className="flex items-center space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, type])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== type
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
-                                  {type}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CardContent className="pt-6 grid md:grid-cols-2 gap-5">
                     <FormField
                       control={form.control}
                       name="province"
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                           <FormLabel>City / Province</FormLabel>
-                          <SearchSelect
+                          <Select
                             value={field.value}
-                            onChange={field.onChange}
-                            options={provinceOptions}
-                            placeholder="Select City"
-                          />
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select City" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {provinces.map((p) => (
+                                <SelectItem key={p} value={p}>
+                                  {p}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="district"
@@ -408,11 +292,12 @@ const PostJob = () => {
                         <FormItem>
                           <FormLabel>District</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Quan 1" {...field} />
+                            <Input placeholder="e.g. District 1" {...field} />
                           </FormControl>
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="address"
@@ -428,18 +313,95 @@ const PostJob = () => {
                         </FormItem>
                       )}
                     />
-                  </div>
-                </Section>
+                  </CardContent>
+                </Card>
+              </div>
 
-                {/* 4. SALARY & CONDITIONS */}
-                <Section title="Salary & Conditions" isLast>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* === RIGHT COLUMN (1/3) === */}
+              <div className="space-y-6">
+                {/* 3. ORGANIZATION CARD */}
+                <Card className="p-5 border-gray-200 shadow-sm space-y-4">
+                  <h3 className="font-bold flex items-center gap-2 text-gray-800">
+                    <Building2 size={18} className="text-purple-600" />{" "}
+                    Organization
+                  </h3>
+
+                  {/* Company */}
+                  <FormField
+                    control={form.control}
+                    name="companyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Company <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select company" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {companies.map((c) => (
+                              <SelectItem key={c._id} value={c._id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Category */}
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Category <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((c) => (
+                              <SelectItem key={c._id} value={c._id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Card>
+
+                {/* 4. SALARY CARD */}
+                <Card className="p-5 border-gray-200 shadow-sm space-y-4">
+                  <h3 className="font-bold flex items-center gap-2 text-gray-800">
+                    <DollarSign size={18} className="text-yellow-600" /> Salary
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
                       name="salaryMin"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Min Salary</FormLabel>
+                          <FormLabel>Min</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} />
                           </FormControl>
@@ -451,159 +413,212 @@ const PostJob = () => {
                       name="salaryMax"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Max Salary</FormLabel>
+                          <FormLabel>Max</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} />
                           </FormControl>
                         </FormItem>
                       )}
                     />
-                    <div className="flex gap-3 items-end">
-                      <FormField
-                        control={form.control}
-                        name="currency"
-                        render={({ field }) => (
-                          <FormItem className="w-1/2">
-                            <FormLabel>Currency</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="VND">VND</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="isNegotiable"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 space-y-0 pb-3">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              Negotiable
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  </div>
 
+                  <div className="flex items-center justify-between">
                     <FormField
                       control={form.control}
-                      name="seniorityLevel"
+                      name="currency"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Seniority</FormLabel>
+                        <FormItem className="w-24">
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select" />
+                                <SelectValue />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {[
-                                "Intern",
-                                "Fresher",
-                                "Junior",
-                                "Mid-Level",
-                                "Senior",
-                                "Lead",
-                                "Manager",
-                              ].map((l) => (
-                                <SelectItem key={l} value={l}>
-                                  {l}
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="VND">VND</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
-                      name="experience"
+                      name="isNegotiable"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Experience (Years)</FormLabel>
+                        <FormItem className="flex gap-2 items-center">
                           <FormControl>
-                            <Input placeholder="e.g. 2" {...field} />
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="applicationDeadline"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deadline</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="position"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Hiring Count</FormLabel>
-                          <FormControl>
-                            <Input type="number" min="1" {...field} />
-                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer m-0">
+                            Negotiable
+                          </FormLabel>
                         </FormItem>
                       )}
                     />
                   </div>
-                </Section>
-              </div>
 
-              {/* --- FOOTER ACTION --- */}
-              <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/admin/jobs")}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="bg-[#6A38C2] hover:bg-[#5a2ea6] text-white min-w-[150px]"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                      Saving...
-                    </>
-                  ) : (
-                    "Post Job"
-                  )}
-                </Button>
+                  <Separator />
+
+                  {/* Job Type */}
+                  <FormField
+                    control={form.control}
+                    name="jobType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Job Type</FormLabel>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {[
+                            "Full-time",
+                            "Part-time",
+                            "Remote",
+                            "Contract",
+                            "Internship",
+                          ].map((type) => (
+                            <label
+                              key={type}
+                              className="flex items-center space-x-2 bg-gray-100 rounded-md px-3 py-2 cursor-pointer hover:bg-gray-200 transition"
+                            >
+                              <Checkbox
+                                checked={field.value?.includes(type)}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(
+                                    checked
+                                      ? [...(field.value || []), type]
+                                      : field.value?.filter((t) => t !== type)
+                                  );
+                                }}
+                              />
+                              <span className="text-xs font-medium">
+                                {type}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Card>
+
+                {/* 5. ATTRIBUTES CARD */}
+                <Card className="p-5 border-gray-200 shadow-sm space-y-4">
+                  <h3 className="font-bold flex items-center gap-2 text-gray-800">
+                    <Layers size={18} className="text-[#6A38C2]" /> Attributes
+                  </h3>
+
+                  <FormField
+                    control={form.control}
+                    name="experience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Experience (Years)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. 2" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="seniorityLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Seniority</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {[
+                              "Intern",
+                              "Fresher",
+                              "Junior",
+                              "Mid",
+                              "Senior",
+                              "Lead",
+                              "Manager",
+                            ].map((l) => (
+                              <SelectItem key={l} value={l}>
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="position"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hiring Count</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="applicationDeadline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deadline</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </Card>
               </div>
             </form>
           </Form>
+        </div>
+      </div>
+
+      {/* --- STICKY FOOTER --- */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+        <div className="max-w-7xl mx-auto flex justify-end gap-4 px-4 md:px-8">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-32 border-gray-300"
+            onClick={() => navigate("/admin/jobs")}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={isLoading}
+            className="w-40 bg-[#6A38C2] hover:bg-[#5a2ea6] text-white font-semibold"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              "Post Job"
+            )}
+          </Button>
         </div>
       </div>
     </div>

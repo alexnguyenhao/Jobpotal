@@ -22,6 +22,6 @@ router.get("/category/:categoryId", getJobsByCategory);
 router.get("/admin/get", isAuthenticated, getAdminJobs);
 router.post("/post", isAuthenticated, postJob);
 router.put("/update/:id", isAuthenticated, updateJob);
-router.delete("/delete/:id", isAuthenticated, deleteJob);
+router.delete("/:id", isAuthenticated, deleteJob);
 
 export default router;

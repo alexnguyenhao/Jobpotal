@@ -244,34 +244,38 @@ const JobDescriptionRecruiter = () => {
               {/* LEFT COLUMN (Content) */}
               <div className="lg:col-span-8 space-y-10">
                 {/* Description */}
+                {/* --- Description (Thêm whitespace-pre-wrap) --- */}
                 <section>
                   <SectionHeader title="Job Description" icon={Briefcase} />
-                  <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-line text-justify">
+                  <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap text-justify">
                     {description}
                   </div>
                 </section>
 
-                {/* Requirements */}
+                {/* --- Requirements (Sử dụng hàm parseStringToArray) --- */}
                 <section>
                   <SectionHeader title="Requirements" icon={CheckCircle2} />
                   <ul className="space-y-3">
-                    {requirements?.map((req, i) => (
+                    {parseStringToArray(requirements).map((req, i) => (
                       <li
                         key={i}
                         className="flex items-start gap-3 text-sm text-gray-700"
                       >
                         <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#6A38C2] shrink-0"></span>
-                        <span className="leading-relaxed">{req}</span>
+                        {/* Xóa ký tự gạch đầu dòng nếu người dùng tự nhập */}
+                        <span className="leading-relaxed">
+                          {req.replace(/^- /, "")}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </section>
 
-                {/* Benefits */}
+                {/* --- Benefits (Sử dụng hàm parseStringToArray) --- */}
                 <section>
                   <SectionHeader title="Benefits" icon={DollarSign} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {benefits?.map((ben, i) => (
+                    {parseStringToArray(benefits).map((ben, i) => (
                       <div
                         key={i}
                         className="flex items-center gap-2 p-3 rounded-lg border border-gray-100 bg-gray-50 text-sm text-gray-700"
@@ -280,7 +284,8 @@ const JobDescriptionRecruiter = () => {
                           size={16}
                           className="text-green-600 shrink-0"
                         />
-                        {ben}
+                        {/* Xóa ký tự gạch đầu dòng nếu có */}
+                        {ben.replace(/^- /, "")}
                       </div>
                     ))}
                   </div>
@@ -401,5 +406,9 @@ const formatSalary = (salary) => {
   if (max) return `Up to ${fmt(max)} ${currency || "VND"}`;
   return "Negotiable";
 };
-
+const parseStringToArray = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data; // Nếu đã là mảng thì trả về luôn
+  return data.split("\n").filter((item) => item.trim() !== "");
+};
 export default JobDescriptionRecruiter;

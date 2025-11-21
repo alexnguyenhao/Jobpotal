@@ -89,6 +89,28 @@ export const applyJob = async (req, res) => {
     // Push application vào Job
     job.applications.push(application._id);
     await job.save();
+    if (job.created_by) {
+      const recruiterId = job.created_by;
+
+      // 1. Tạo Notification trong Database
+      const notiMessage = `You received a new application for job: ${job.title}`;
+
+      const notification = await Notification.create({
+        recipient: recruiterId,
+        sender: userId,
+        type: "new_application",
+        message: notiMessage,
+        relatedId: application._id,
+        isRead: false,
+      });
+
+      // 2. Gửi Socket Real-time
+      const receiverSocketId = getReceiverSocketId(recruiterId.toString());
+      if (receiverSocketId) {
+        // Emit sự kiện tới client của Recruiter
+        io.to(receiverSocketId).emit("newNotification", notification);
+      }
+    }
 
     return res.status(201).json({
       message: "Application submitted successfully!",

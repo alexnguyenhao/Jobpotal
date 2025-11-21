@@ -38,6 +38,7 @@ import CareerGuideDetail from "@/components/admin/careerGuides/CareerGuideDetail
 import GuideDetail from "./components/careerguide/GuideDetail";
 import JobDescriptionRecruiter from "@/components/admin/job/JobDescriptionRecruiter.jsx";
 import UpdateJob from "@/components/admin/job/UpdateJob.jsx";
+import Notifications from "@/components/Notifications.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -47,6 +48,7 @@ const appRouter = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/jobs", element: <Jobs /> },
       { path: "/browse", element: <Browse /> },
+      { path: "/notifications", element: <Notifications /> },
       { path: "/description/:id", element: <JobDescription /> },
       { path: "/profile", element: <Profile /> },
       { path: "/admin/companies", element: <Companies /> },

@@ -52,15 +52,8 @@ const NavBar = () => {
   const hasFetched = useRef(false);
   const socketRef = useRef(null);
 
-  // --- 1. GỌI HOOK LẤY THÔNG BÁO ---
-  // Hook này sẽ tự chạy khi component mount và user đã login
-  // Nó thay thế hoàn toàn cho useEffect gọi API thủ công trước đây
   useGetAllNotification();
-
-  // Tính số lượng chưa đọc
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  // --- 2. AUTH CHECK LOGIC ---
   useEffect(() => {
     if (hasFetched.current || isAuthenticated) return;
     const hasSessionCookie = document.cookie.includes("token=");
@@ -90,8 +83,6 @@ const NavBar = () => {
     };
     checkUser();
   }, [dispatch, isAuthenticated]);
-
-  // --- 3. SOCKET REAL-TIME (Vẫn giữ để nhận tin mới tức thì) ---
   useEffect(() => {
     if (!user) return;
 
@@ -103,7 +94,6 @@ const NavBar = () => {
 
     socketRef.current.on("newNotification", (notification) => {
       toast.info(notification.message);
-      // Khi có tin mới qua socket, ta nối nó vào danh sách hiện có
       dispatch(setNotifications([notification, ...notifications]));
     });
 

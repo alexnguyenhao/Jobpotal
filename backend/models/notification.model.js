@@ -13,7 +13,12 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["application_status", "new_job", "system_alert"],
+      enum: [
+        "application_status",
+        "new_job",
+        "system_alert",
+        "new_application",
+      ],
       default: "application_status",
     },
     message: {
