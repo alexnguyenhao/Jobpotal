@@ -6,9 +6,8 @@ import { careerGuideSchema } from "@/lib/CareerGuideSchema.js";
 import useCareerGuide from "@/hooks/useCareerGuide";
 import { categories } from "@/utils/constant.js";
 
-// Shadcn UI Components
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+// UI Components
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,20 +17,23 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"; // Changed Checkbox to Switch for better UI
-import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
 import {
   Loader2,
   ArrowLeft,
-  Save,
-  Send,
   ImageIcon,
-  FileText,
-  Tag,
-  LayoutGrid,
+  X,
 } from "lucide-react";
 
 // Rich Text Editor
@@ -42,7 +44,6 @@ const CareerGuideCreate = () => {
   const navigate = useNavigate();
   const { createGuide, loading } = useCareerGuide();
 
-  // 1. Setup Form
   const form = useForm({
     resolver: zodResolver(careerGuideSchema),
     defaultValues: {
@@ -57,9 +58,8 @@ const CareerGuideCreate = () => {
   });
 
   const thumbnailValue = form.watch("thumbnail");
-  const isPublished = form.watch("isPublished");
 
-  // 2. Handle Submit
+  // --- SUBMIT HANDLER ---
   const onSubmit = async (values) => {
     const formattedTags = values.tags
       ? values.tags
@@ -75,272 +75,265 @@ const CareerGuideCreate = () => {
     };
 
     const res = await createGuide(payload);
-
     if (res) {
       navigate("/admin/career-guides");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {/* --- TOP NAVIGATION BAR --- */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="rounded-full hover:bg-gray-100"
-              onClick={() => navigate("/admin/career-guides")}
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Create Guide
-              </h1>
-              <p className="text-xs text-gray-500">New article for students</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              type="submit"
-              variant="outline"
-              disabled={loading}
-              onClick={() => form.setValue("isPublished", false)}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Draft
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-[#6A38C2] hover:bg-[#5a2ea6]"
-              onClick={() => form.setValue("isPublished", true)}
-            >
-              {loading ? (
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
-              ) : (
-                <Send className="w-4 h-4 mr-2" />
-              )}
-              Publish
-            </Button>
-          </div>
-        </header>
-
-        {/* --- MAIN CONTENT GRID --- */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* === LEFT COLUMN (CONTENT) === */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* 1. MAIN WRITING AREA */}
-              <Card className="border-none shadow-md overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600" /> Article
-                    Content
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-base font-semibold">Title</Label>
-                    <Input
-                      placeholder="e.g., 10 Tips to Ace Your Technical Interview"
-                      className="text-lg font-medium py-6"
-                      {...form.register("title")}
-                    />
-                    {form.formState.errors.title && (
-                      <p className="text-sm text-red-500">
-                        {form.formState.errors.title.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Content</Label>
-                    <div className="border rounded-md focus-within:ring-2 focus-within:ring-ring overflow-hidden">
-                      <Controller
-                        name="content"
-                        control={form.control}
-                        render={({ field }) => (
-                          <QuillEditor
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        )}
-                      />
-                    </div>
-                    {form.formState.errors.content && (
-                      <p className="text-sm text-red-500">
-                        {form.formState.errors.content.message}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 2. EXCERPT */}
-              <Card className="border-none shadow-md">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <LayoutGrid className="w-4 h-4 text-orange-600" /> Search
-                    Preview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-2">
-                    <Label>Excerpt / Summary</Label>
-                    <Textarea
-                      placeholder="A short description shown in search results (SEO)..."
-                      className="h-24 resize-none"
-                      {...form.register("excerpt")}
-                    />
-                    <p className="text-xs text-gray-400 text-right">
-                      {form.watch("excerpt")?.length || 0} / 300 characters
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* === RIGHT COLUMN (METADATA) === */}
-            <div className="space-y-6">
-              {/* 3. PUBLISH SETTINGS */}
-              <Card className="border-none shadow-md">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                  <CardTitle className="text-base">Visibility</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-base">
-                        {isPublished ? "Published" : "Draft"}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {isPublished
-                          ? "Visible to all students"
-                          : "Only visible to admins"}
-                      </p>
-                    </div>
-                    <Controller
-                      name="isPublished"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 4. ORGANIZATION */}
-              <Card className="border-none shadow-md">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-purple-600" /> Organization
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-5">
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Controller
-                      name="category"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((c) => (
-                              <SelectItem key={c.value} value={c.value}>
-                                {c.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Tags</Label>
-                    <Input
-                      placeholder="interview, resume, tips"
-                      {...form.register("tags")}
-                    />
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {form
-                        .watch("tags")
-                        ?.split(",")
-                        .filter(Boolean)
-                        .map((tag, i) => (
-                          <Badge
-                            key={i}
-                            variant="secondary"
-                            className="text-xs font-normal"
-                          >
-                            {tag.trim()}
-                          </Badge>
-                        ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 5. THUMBNAIL */}
-              <Card className="border-none shadow-md">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-green-600" /> Thumbnail
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden relative group">
-                    {thumbnailValue ? (
-                      <img
-                        src={thumbnailValue}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/300?text=Invalid+URL";
-                        }}
-                      />
-                    ) : (
-                      <div className="text-center p-4">
-                        <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <span className="text-xs text-gray-400">
-                          No image provided
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Image URL</Label>
-                    <Input
-                      placeholder="https://..."
-                      {...form.register("thumbnail")}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+    <div className="min-h-screen bg-gray-50/50 py-10 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* --- HEADER --- */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            onClick={() => navigate("/admin/career-guides")}
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full border-gray-200"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Create Guide</h1>
+            <p className="text-sm text-gray-500">
+              Write a new article for students.
+            </p>
           </div>
         </div>
-      </form>
+
+        {/* --- MAIN FORM CONTAINER --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="p-8 space-y-8">
+                
+                {/* --- 1. BASIC INFORMATION --- */}
+                <Section title="Article Details">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>
+                            Title <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g. 10 Tips for Interview"
+                              className="text-lg font-medium"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((c) => (
+                                <SelectItem key={c.value} value={c.value}>
+                                  {c.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="excerpt"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Excerpt (SEO Description)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="A short summary shown in search results..."
+                              className="min-h-[80px] resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </Section>
+
+                {/* --- 2. MAIN CONTENT (QUILL) --- */}
+                <Section title="Content">
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                           <div className="border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                            <QuillEditor
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Section>
+
+                {/* --- 3. MEDIA & METADATA --- */}
+                <Section title="Media & Tags">
+                  <div className="grid grid-cols-1 gap-6">
+                    {/* Thumbnail Preview & Input */}
+                    <div className="flex flex-col md:flex-row gap-6">
+                       <div className="w-full md:w-1/3 shrink-0">
+                          <FormLabel className="block mb-2">Thumbnail Preview</FormLabel>
+                          <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                            {thumbnailValue ? (
+                              <img
+                                src={thumbnailValue}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = "https://via.placeholder.com/300?text=Invalid+URL";
+                                }}
+                              />
+                            ) : (
+                              <div className="text-center p-4">
+                                <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                <span className="text-xs text-gray-400">No image</span>
+                              </div>
+                            )}
+                          </div>
+                       </div>
+
+                       <div className="flex-1 space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="thumbnail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Thumbnail URL</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="tags"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tags (Comma separated)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="resume, tips, interview" {...field} />
+                                </FormControl>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {field.value?.split(",").filter(Boolean).map((tag, i) => (
+                                    <Badge key={i} variant="secondary" className="font-normal">
+                                      {tag.trim()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                       </div>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* --- 4. SETTINGS --- */}
+                <Section title="Settings" isLast>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="isPublished"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Publish Immediately</FormLabel>
+                            <div className="text-sm text-gray-500">
+                              {field.value ? "Visible to students" : "Saved as Draft"}
+                            </div>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </Section>
+              </div>
+
+              {/* --- FOOTER ACTION --- */}
+              <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/admin/career-guides")}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-[#6A38C2] hover:bg-[#5a2ea6] text-white min-w-[150px]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Guide"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 };
 
-// --- ISOLATED QUILL COMPONENT FOR CLEANER CODE ---
+// --- HELPER COMPONENTS ---
+const Section = ({ title, children, isLast }) => (
+  <div className={`${!isLast ? "border-b border-gray-100 pb-8" : ""}`}>
+    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
 const QuillEditor = ({ value, onChange }) => {
   const quillRef = useRef(null);
   const editorRef = useRef(null);
@@ -356,18 +349,16 @@ const QuillEditor = ({ value, onChange }) => {
             ["bold", "italic", "underline", "strike"],
             [{ list: "ordered" }, { list: "bullet" }],
             ["blockquote", "code-block"],
-            ["link"], // Removed 'image' for security/simplicity unless handled
+            ["link"],
             ["clean"],
           ],
         },
       });
 
-      // Initial Value
       if (value) {
         editorRef.current.root.innerHTML = value;
       }
 
-      // Change Handler
       editorRef.current.on("text-change", () => {
         onChange(editorRef.current.root.innerHTML);
       });

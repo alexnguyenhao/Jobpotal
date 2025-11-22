@@ -309,16 +309,12 @@ export const deleteJob = async (req, res) => {
 export const getJobsByCompany = async (req, res) => {
   try {
     const companyId = req.params.companyId;
-
-    // --- Tối ưu: Lấy giới hạn Job (Mặc định 100) ---
-    // Hoặc lấy từ query: req.query.limit
     const limit = 100;
 
     const jobs = await Job.find({ company: companyId })
-      // Chỉ populate những field cần thiết (ví dụ: chỉ cần logo và tên công ty)
       .populate("company category", "name logo _id")
       .sort({ createdAt: -1 })
-      .limit(limit); // Giới hạn số lượng trả về
+      .limit(limit); 
 
     return res.status(200).json({
       success: true,

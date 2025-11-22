@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { formatLocation } from "../utils/formatLocation.js";
+import { formatSalary } from "../utils/formatSalary.js";
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +25,7 @@ import {
   Briefcase,
   DollarSign,
   Building2,
+  BadgeCheck,
 } from "lucide-react";
 
 const Job = ({ job }) => {
@@ -48,7 +51,6 @@ const Job = ({ job }) => {
       toast.success("Job saved successfully!");
     }
   };
-
   const daysAgo = (dateString) => {
     if (!dateString) return "Recently";
     const days = Math.floor(
@@ -79,7 +81,7 @@ const Job = ({ job }) => {
             <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
               {job?.company?.name}
               {/* Verified Badge (Optional) */}
-              {/* <span className="text-blue-500"><BadgeCheck size={14}/></span> */}
+              <span className="text-blue-500"><BadgeCheck size={14}/></span>
             </p>
           </div>
         </div>
@@ -127,7 +129,7 @@ const Job = ({ job }) => {
           variant="secondary"
           className="bg-blue-50 text-blue-700 font-normal px-2.5 py-1 rounded-md"
         >
-          <Briefcase size={13} className="mr-1" /> {job?.jobType || "Full-time"}
+          <Briefcase size={13} className="mr-1" /> {job?.jobType.join(" ") || "Full-time"}
         </Badge>
 
         {/* Salary */}
@@ -157,31 +159,4 @@ const Job = ({ job }) => {
     </div>
   );
 };
-
-// --- Helpers ---
-const formatLocation = (loc) => {
-  if (!loc) return "Remote";
-  if (typeof loc === "string") return loc;
-  return loc.province || loc.address || "Remote";
-};
-
-const formatSalary = (salary) => {
-  if (!salary) return "Negotiable";
-  if (typeof salary === "string") return salary;
-  if (salary.isNegotiable) return "Negotiable";
-
-  // Format số tiền gọn (ví dụ: 10,000,000 -> 10M)
-  const formatNum = (num) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-    return num;
-  };
-
-  if (salary.min && salary.max)
-    return `${formatNum(salary.min)} - ${formatNum(salary.max)}`;
-  if (salary.min) return `From ${formatNum(salary.min)}`;
-  if (salary.max) return `Up to ${formatNum(salary.max)}`;
-  return "Negotiable";
-};
-
 export default Job;

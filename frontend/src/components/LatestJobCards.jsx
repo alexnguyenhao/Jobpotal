@@ -68,9 +68,9 @@ const LatestJobCards = ({ job }) => {
         </Badge>
 
         {/* Deadline Badge (Optional) */}
-        {/* <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-normal px-2 py-1 rounded-md text-xs flex items-center gap-0.5">
+        <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-normal px-2 py-1 rounded-md text-xs flex items-center gap-0.5">
              <Clock size={12} /> {daysLeft(job?.applicationDeadline)}
-        </Badge> */}
+        </Badge>
       </div>
     </div>
   );
@@ -94,10 +94,10 @@ const formatSalary = (salary) => {
 };
 
 // Helper (Optional): Calculate Days Left
-// const daysLeft = (date) => {
-//     if(!date) return "No Deadline";
-//     const diff = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
-//     return diff > 0 ? `${diff} days left` : "Expired";
-// }
+const daysLeft = (date) => {
+    if(!date) return "No Deadline";
+    const diff = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? `${diff} days left` : "Expired";
+}
 
 export default LatestJobCards;

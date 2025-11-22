@@ -25,7 +25,6 @@ export const createCompany = createAsyncThunk(
   }
 );
 
-// 2. Cập nhật công ty (Recruiter)
 export const updateCompany = createAsyncThunk(
   "company/updateCompany",
   async ({ id, data }, { rejectWithValue }) => {
@@ -44,8 +43,6 @@ export const updateCompany = createAsyncThunk(
     }
   }
 );
-
-// 3. Lấy danh sách công ty CỦA RECRUITER (Private)
 export const fetchCompanies = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
@@ -138,7 +135,7 @@ const companySlice = createSlice({
   name: "company",
   initialState: {
     singleCompany: null,
-    companies: [], // Dùng chung state này cho cả danh sách Public và Private (tùy ngữ cảnh sử dụng)
+    companies: [], 
     searchCompanyByText: "",
     loading: false,
     error: null,

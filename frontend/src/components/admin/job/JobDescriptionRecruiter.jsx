@@ -138,59 +138,6 @@ const JobDescriptionRecruiter = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* --- STICKY HEADER --- */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full hover:bg-gray-100"
-            onClick={() => navigate("/admin/jobs")}
-          >
-            <ArrowLeft className="h-5 w-5 text-gray-600" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              Job Details
-              {isExpired ? (
-                <Badge
-                  variant="destructive"
-                  className="text-[10px] px-2 py-0.5 h-5"
-                >
-                  Closed
-                </Badge>
-              ) : (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 text-[10px] px-2 py-0.5 h-5 shadow-none">
-                  Active
-                </Badge>
-              )}
-            </h1>
-            <p className="text-xs text-gray-500">
-              Manage and review your job posting
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="hidden sm:flex"
-            onClick={() => navigate(`/admin/jobs/edit/${jobId}`)}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Job
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setOpenDelete(true)}
-            className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 shadow-none"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
-        </div>
-      </header>
-
       {/* --- MAIN CONTENT --- */}
       <div className="max-w-5xl mx-auto mt-8 px-4 md:px-0">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[800px]">

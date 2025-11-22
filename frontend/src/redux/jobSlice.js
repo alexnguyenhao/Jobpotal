@@ -32,14 +32,12 @@ const jobSlice = createSlice({
     },
     addSavedJob(state, action) {
       const job = action.payload;
-      // Kiểm tra chỉ dựa trên _id
       const exists = state.savedJobs.some((j) => j._id === job._id);
       if (!exists) {
         state.savedJobs.push(job);
       }
     },
     removeSavedJob(state, action) {
-      // payload là ID
       const jobId = action.payload;
       state.savedJobs = state.savedJobs.filter((j) => j._id !== jobId);
     },

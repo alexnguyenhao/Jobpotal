@@ -12,8 +12,6 @@ const JobSchema = new mongoose.Schema(
     },
     requirements: [String],
     benefits: [String],
-
-    // ===================== LOCATION =====================
     location: {
       province: {
         type: String,

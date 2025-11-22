@@ -14,13 +14,12 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectSearch } from "./shared/SelectSearch"; // Component SelectSearch của bạn
+import { SelectSearch } from "./shared/SelectSearch"; // Component của bạn
 
 // Icons
 import {
   Search,
   SlidersHorizontal,
-  X,
   MapPin,
   Briefcase,
   Banknote,
@@ -66,29 +65,26 @@ const JobFilterBar = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-2 transition-all duration-300"
-      >
-        {/* --- TOP SECTION: MAIN SEARCH --- */}
-        <div className="flex flex-col md:flex-row items-center gap-2 p-2">
+    <div className="w-full max-w-5xl mx-auto space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* --- MAIN SEARCH BAR (HERO STYLE) --- */}
+        {/* Container hình viên thuốc, đổ bóng tím */}
+        <div className="bg-white p-2 rounded-2xl md:rounded-full shadow-xl shadow-purple-100/50 border border-slate-200/60 flex flex-col md:flex-row items-center gap-2 md:gap-0 relative z-20 transition-all duration-300 hover:shadow-purple-200/60">
+          
           {/* 1. Keyword Input */}
-          <div className="relative flex-grow w-full md:w-auto group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#6A38C2] transition-colors" />
+          <div className="flex items-center px-4 w-full md:flex-1 h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
+            <Search className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <Input
               placeholder="Search job title, keyword, or company..."
-              className="h-12 pl-10 border-transparent bg-gray-50 focus:bg-white focus:border-[#6A38C2]/30 focus:ring-2 focus:ring-[#6A38C2]/20 rounded-xl text-base"
+              className="border-none shadow-none focus-visible:ring-0 px-0 text-slate-700 placeholder:text-slate-400 bg-transparent font-medium h-auto text-base"
               {...register("title")}
             />
           </div>
 
-          <div className="hidden md:block w-[1px] h-8 bg-gray-200 mx-1"></div>
-
           {/* 2. Location Select */}
-          <div className="w-full md:w-[220px] relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
-            <div className="pl-7">
+          <div className="flex items-center px-4 w-full md:w-[240px] h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
+            <MapPin className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
               <SelectSearch
                 items={provinces.map((p) => ({ _id: p, name: p }))}
                 value={watch("location")}
@@ -96,48 +92,51 @@ const JobFilterBar = () => {
                 placeholder="All Locations"
                 labelKey="name"
                 valueKey="_id"
-                className="h-12 border-none bg-transparent focus:ring-0 shadow-none text-gray-600 font-medium"
+                // Style đè để loại bỏ viền của SelectSearch
+                className="border-none shadow-none p-0 h-auto text-slate-700 font-medium bg-transparent focus:ring-0 w-full"
               />
             </div>
           </div>
 
           {/* 3. Action Buttons */}
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 p-1 w-full md:w-auto justify-end md:justify-start">
+            {/* Filter Toggle Button */}
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`h-12 px-4 border-gray-200 rounded-xl hover:bg-purple-50 hover:text-[#6A38C2] hover:border-purple-200 transition-all ${
+              className={`rounded-xl md:rounded-full px-4 h-12 font-medium transition-all ${
                 showAdvanced
-                  ? "bg-purple-50 text-[#6A38C2] border-purple-200"
-                  : "text-gray-600"
+                  ? "bg-purple-50 text-[#6A38C2]"
+                  : "text-slate-500 hover:bg-purple-50 hover:text-[#6A38C2]"
               }`}
             >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
             </Button>
 
+            {/* Search Button */}
             <Button
               type="submit"
-              className="h-12 px-8 bg-[#6A38C2] hover:bg-[#582bb6] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex-grow md:flex-grow-0"
+              className="w-full md:w-auto rounded-xl md:rounded-full bg-[#6A38C2] hover:bg-[#5a2ea6] text-white px-8 h-12 font-bold text-base shadow-lg shadow-purple-200 transition-all hover:scale-105"
             >
-              Search Jobs
+              Search
             </Button>
           </div>
         </div>
 
-        {/* --- BOTTOM SECTION: ADVANCED FILTERS --- */}
+        {/* --- ADVANCED FILTERS SECTION (Floating Below) --- */}
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="border-t border-gray-100 mt-2 p-4 md:p-6 bg-gray-50/50 rounded-b-xl">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Category */}
                   <FilterGroup
                     label="Category"
@@ -162,7 +161,7 @@ const JobFilterBar = () => {
                       onValueChange={(v) => setValue("jobType", v)}
                       value={watch("jobType")}
                     >
-                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200">
+                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200 focus:ring-[#6A38C2]/20">
                         <SelectValue placeholder="Any Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -190,7 +189,7 @@ const JobFilterBar = () => {
                       onValueChange={(v) => setValue("seniorityLevel", v)}
                       value={watch("seniorityLevel")}
                     >
-                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200">
+                      <SelectTrigger className="bg-white h-10 rounded-lg border-gray-200 focus:ring-[#6A38C2]/20">
                         <SelectValue placeholder="Any Level" />
                       </SelectTrigger>
                       <SelectContent>
@@ -219,14 +218,14 @@ const JobFilterBar = () => {
                       <Input
                         {...register("salaryMin")}
                         placeholder="Min"
-                        className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                        className="bg-white h-10 rounded-lg border-gray-200 text-sm focus-visible:ring-[#6A38C2]/20"
                         type="number"
                       />
                       <span className="text-gray-400">-</span>
                       <Input
                         {...register("salaryMax")}
                         placeholder="Max"
-                        className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                        className="bg-white h-10 rounded-lg border-gray-200 text-sm focus-visible:ring-[#6A38C2]/20"
                         type="number"
                       />
                     </div>
@@ -237,7 +236,7 @@ const JobFilterBar = () => {
                     <Input
                       {...register("experience")}
                       placeholder="e.g. 2"
-                      className="bg-white h-10 rounded-lg border-gray-200 text-sm"
+                      className="bg-white h-10 rounded-lg border-gray-200 text-sm focus-visible:ring-[#6A38C2]/20"
                       type="number"
                     />
                   </FilterGroup>
@@ -255,7 +254,7 @@ const JobFilterBar = () => {
                   </FilterGroup>
                 </div>
 
-                {/* Footer Actions */}
+                {/* Footer Actions for Advanced Filters */}
                 <div className="flex justify-end items-center mt-6 pt-4 border-t border-gray-200 border-dashed">
                   <Button
                     type="button"
@@ -267,7 +266,7 @@ const JobFilterBar = () => {
                   </Button>
                   <Button
                     type="submit"
-                    className="ml-3 bg-[#6A38C2] hover:bg-[#582bb6] text-white h-9 px-6 text-sm rounded-lg"
+                    className="ml-3 bg-[#6A38C2] hover:bg-[#582bb6] text-white h-9 px-6 text-sm rounded-lg shadow-sm"
                   >
                     Apply Filters
                   </Button>
