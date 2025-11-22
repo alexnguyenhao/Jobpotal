@@ -53,13 +53,13 @@ const Notifications = () => {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
 
-    if (seconds < 60) return "Vừa xong";
+    if (seconds < 60) return "Just now";
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} phút trước`;
+    if (minutes < 60) return `${minutes} minutes ago`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} giờ trước`;
+    if (hours < 24) return `${hours} hours ago`;
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} ngày trước`;
+    if (days < 7) return `${days} days ago`;
     return date.toLocaleDateString("vi-VN");
   };
 
@@ -72,15 +72,15 @@ const Notifications = () => {
           <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                Thông báo
+                Notifications
                 {unreadCount > 0 && (
                   <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
-                    {unreadCount} mới
+                    {unreadCount} new
                   </span>
                 )}
               </h1>
               <p className="text-gray-500 text-sm mt-1">
-                Quản lý tất cả cập nhật về hồ sơ và công việc của bạn.
+                Manage all updates about your resume and job.
               </p>
             </div>
 
@@ -92,7 +92,7 @@ const Notifications = () => {
                 className="text-[#6A38C2] border-purple-100 hover:bg-purple-50 hover:text-[#5b30a6]"
               >
                 <CheckCheck size={16} className="mr-2" />
-                Đánh dấu tất cả đã đọc
+                Mark all as read
               </Button>
             )}
           </div>
@@ -107,7 +107,7 @@ const Notifications = () => {
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
-              Tất cả
+              All
             </button>
             <button
               onClick={() => setFilter("unread")}
@@ -116,8 +116,8 @@ const Notifications = () => {
                   ? "bg-white text-[#6A38C2] shadow-sm ring-1 ring-purple-100"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
-            >
-              Chưa đọc
+              >
+                Unread
             </button>
           </div>
 
@@ -130,12 +130,12 @@ const Notifications = () => {
                   <Bell className="w-8 h-8 text-gray-300" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900">
-                  Không có thông báo nào
+                  Don't have notification
                 </h3>
                 <p className="text-gray-500 mt-1 max-w-sm">
                   {filter === "unread"
-                    ? "Tuyệt vời! Bạn đã đọc hết các thông báo quan trọng."
-                    : "Khi bạn ứng tuyển hoặc có cập nhật mới, thông báo sẽ xuất hiện ở đây."}
+                    ? "You have read all notifications"
+                    : "When you apply or have updates, notifications will appear here."}
                 </p>
               </div>
             ) : (
@@ -220,7 +220,7 @@ const Notifications = () => {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Xóa thông báo</p>
+                              <p>Delete notification</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -235,7 +235,7 @@ const Notifications = () => {
         
         {/* Footer Hint */}
         <div className="text-center mt-8 text-xs text-gray-400">
-          <p>Thông báo sẽ được lưu trữ trong vòng 30 ngày.</p>
+          <p>Notifications will be stored for 30 days.</p>
         </div>
       </div>
     </div>
