@@ -12,7 +12,6 @@ const useGetAllCategories = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // ✅ Nếu categories đã có → không fetch lại
     if (categories.length > 0) {
       setLoading(false);
       return;

@@ -35,16 +35,13 @@ const useApplyJob = () => {
 
       if (res.data.success) {
         toast.success(res.data.message || "Application submitted!");
-
-        // Cập nhật Redux ngay lập tức để nút bấm chuyển sang "Applied"
-        // Thêm user ID vào mảng applications của job hiện tại
         const updatedJob = {
           ...singleJob,
           applications: [...singleJob.applications, { applicant: user._id }],
         };
         dispatch(setSingleJob(updatedJob));
         
-        return true; // Đánh dấu thành công
+        return true; 
       }
     } catch (error) {
       console.error(error);
@@ -53,7 +50,7 @@ const useApplyJob = () => {
       } else {
         toast.error(error?.response?.data?.message || "Application failed");
       }
-      return false; // Đánh dấu thất bại
+      return false; 
     } finally {
       setIsApplying(false);
     }

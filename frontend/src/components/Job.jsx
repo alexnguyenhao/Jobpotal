@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
 import { toast } from "sonner";
-
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -33,82 +32,87 @@ const Job = ({ job }) => {
   const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
   const [isSaved, setIsSaved] = useState(false);
 
-  // Check if job is saved
   useEffect(() => {
     const saved = savedJobs?.some((j) => (j._id || j).toString() === job?._id);
     setIsSaved(saved);
   }, [savedJobs, job?._id]);
 
   const handleSaveClick = async (e) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation(); 
     if (isSaved) {
       await unsaveJob(job._id);
       setIsSaved(false);
-      toast.info("Job removed from saved list");
+      toast.info("Unsaved job successfully!");
     } else {
       await saveJob(job._id);
       setIsSaved(true);
-      toast.success("Job saved successfully!");
+      toast.success("Saved job successfully!");
     }
   };
+
   const daysAgo = (dateString) => {
-    if (!dateString) return "Recently";
+    if (!dateString) return "Just now";
     const days = Math.floor(
       (new Date() - new Date(dateString)) / (1000 * 60 * 60 * 24)
     );
-    return days === 0 ? "Today" : `${days}d ago`;
+    return days === 0 ? "Today" : `${days} days ago`;
   };
 
   return (
     <div
       onClick={() => navigate(`/description/${job._id}`)}
-      className="group relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-[#6A38C2]/30 transition-all duration-300 cursor-pointer flex flex-col h-full"
+      className="group relative bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-purple-100 transition-all duration-300 cursor-pointer flex flex-col h-full"
     >
-      {/* --- HEADER: Logo & Title --- */}
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div className="flex gap-4">
-          <Avatar className="h-14 w-14 rounded-xl border bg-white shadow-sm group-hover:scale-105 transition-transform">
-            <AvatarImage src={job?.company?.logo} objectFit="object-contain" />
-            <AvatarFallback className="rounded-xl bg-gray-50 text-gray-400">
-              <Building2 size={24} />
-            </AvatarFallback>
-          </Avatar>
+      {/* --- HEADER --- */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex gap-3 items-start overflow-hidden">
+          {/* Company Logo Container */}
+          <div className="h-12 w-12 flex-shrink-0 rounded-lg border border-gray-100 bg-white p-1 flex items-center justify-center shadow-sm">
+             <Avatar className="h-full w-full rounded-md bg-transparent">
+                <AvatarImage src={job?.company?.logo} className="object-contain" />
+                <AvatarFallback className="rounded-md bg-gray-50 text-gray-400">
+                  <Building2 size={20} />
+                </AvatarFallback>
+             </Avatar>
+          </div>
 
-          <div className="space-y-1">
-            <h3 className="font-bold text-lg text-gray-900 leading-tight line-clamp-1 group-hover:text-[#6A38C2] transition-colors">
+          {/* Job Title & Company Info */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-lg text-gray-900 leading-tight truncate group-hover:text-[#6A38C2] transition-colors">
               {job?.title}
             </h3>
-            <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
+            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1 truncate">
               {job?.company?.name}
-              {/* Verified Badge (Optional) */}
-              <span className="text-blue-500"><BadgeCheck size={14}/></span>
+              <span className="text-blue-500 inline-block" title="Đã xác minh">
+                <BadgeCheck size={14} />
+              </span>
             </p>
           </div>
         </div>
 
-        {/* Save Button */}
+        {/* Save Button (Top Right) */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-9 w-9 rounded-full -mr-2 -mt-2 ${
+                className={`h-8 w-8 rounded-full flex-shrink-0 transition-colors ${
                   isSaved
-                    ? "text-[#6A38C2] bg-purple-50"
-                    : "text-gray-400 hover:text-[#6A38C2] hover:bg-purple-50"
+                    ? "text-[#6A38C2] bg-purple-50 hover:bg-purple-100"
+                    : "text-gray-400 hover:text-[#6A38C2] hover:bg-gray-50"
                 }`}
                 onClick={handleSaveClick}
               >
                 {isSaved ? (
-                  <BookmarkCheck size={20} fill="#6A38C2" />
+                  <BookmarkCheck size={18} fill="#6A38C2" />
                 ) : (
-                  <Bookmark size={20} />
+                  <Bookmark size={18} />
                 )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {isSaved ? "Unsave Job" : "Save Job"}
+              <p>{isSaved ? "Unsave job" : "Save job"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -116,47 +120,49 @@ const Job = ({ job }) => {
 
       {/* --- TAGS ROW --- */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {/* Location */}
         <Badge
-          variant="secondary"
-          className="bg-gray-100 text-gray-600 font-normal px-2.5 py-1 rounded-md"
+          variant="outline"
+          className="bg-white text-gray-600 border-gray-200 font-medium px-2.5 py-0.5 text-xs rounded-md flex items-center gap-1"
         >
-          <MapPin size={13} className="mr-1" /> {formatLocation(job?.location)}
+          <MapPin size={12} className="text-gray-400" /> {formatLocation(job?.location)}
         </Badge>
 
-        {/* Job Type */}
         <Badge
-          variant="secondary"
-          className="bg-blue-50 text-blue-700 font-normal px-2.5 py-1 rounded-md"
+          variant="outline"
+          className="bg-white text-blue-600 border-blue-100 font-medium px-2.5 py-0.5 text-xs rounded-md flex items-center gap-1"
         >
-          <Briefcase size={13} className="mr-1" /> {job?.jobType.join(" ") || "Full-time"}
+          <Briefcase size={12} className="text-blue-400" /> {job?.jobType?.join(", ") || "Full-time"}
         </Badge>
 
-        {/* Salary */}
         <Badge
-          variant="secondary"
-          className="bg-green-50 text-green-700 font-normal px-2.5 py-1 rounded-md"
+          variant="outline"
+          className="bg-white text-green-600 border-green-100 font-medium px-2.5 py-0.5 text-xs rounded-md flex items-center gap-1"
         >
-          <DollarSign size={13} className="mr-1" /> {formatSalary(job?.salary)}
+          <DollarSign size={12} className="text-green-400" /> {formatSalary(job?.salary)}
         </Badge>
       </div>
 
-      {/* --- DESCRIPTION (Excerpt) --- */}
-      <p className="text-sm text-gray-500 line-clamp-2 mb-6 flex-grow leading-relaxed">
-        {job?.description || "No description provided. Click to view details."}
+      {/* --- DESCRIPTION --- */}
+      <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow leading-relaxed">
+        {job?.description || "No description provided."}
       </p>
 
-      {/* --- FOOTER: Time & Action --- */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-        <div className="text-xs text-gray-400 font-medium flex items-center gap-1">
-          <Clock size={13} /> Posted {daysAgo(job?.createdAt)}
+      {/* --- FOOTER --- */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-auto">
+        <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
+          <Clock size={14} /> 
+          <span>{daysAgo(job?.createdAt)}</span>
         </div>
 
-        <Button className="bg-[#6A38C2] hover:bg-[#582bb6] text-white h-9 px-5 rounded-lg text-xs font-semibold shadow-md group-hover:shadow-lg transition-all">
+        <Button 
+            variant="outline"
+            className="h-8 px-4 text-xs font-semibold border-[#6A38C2] text-[#6A38C2] hover:bg-[#6A38C2] hover:text-white transition-all rounded-md group-hover:bg-[#6A38C2] group-hover:text-white shadow-sm"
+        >
           Apply Now
         </Button>
       </div>
     </div>
   );
 };
+
 export default Job;

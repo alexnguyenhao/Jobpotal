@@ -1,13 +1,15 @@
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { USER_API_END_POINT } from "@/utils/constant.js";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { setSavedJobs, addSavedJob, removeSavedJob } from "@/redux/jobSlice.js";
 
 const useSavedJobs = (autoFetch = true) => {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { savedJobs } = useSelector((store) => store.job);
+
+  const hasFetched = useRef(false);
 
   const fetchSavedJobs = async () => {
     if (!user) return;
@@ -32,6 +34,7 @@ const useSavedJobs = (autoFetch = true) => {
       );
       if (res.data.success) {
         dispatch(addSavedJob(jobId));
+        await fetchSavedJobs(); // 🔥 sync lại với server
       }
     } catch (err) {
       console.error("❌ Save job error:", err);
@@ -40,11 +43,13 @@ const useSavedJobs = (autoFetch = true) => {
 
   const unsaveJob = async (jobId) => {
     try {
-      const res = await axios.delete(`${USER_API_END_POINT}/unsave/${jobId}`, {
-        withCredentials: true,
-      });
+      const res = await axios.delete(
+        `${USER_API_END_POINT}/unsave/${jobId}`,
+        { withCredentials: true }
+      );
       if (res.data.success) {
         dispatch(removeSavedJob(jobId));
+        await fetchSavedJobs(); // 🔥 sync lại với server
       }
     } catch (err) {
       console.error("❌ Unsave job error:", err);
@@ -52,8 +57,13 @@ const useSavedJobs = (autoFetch = true) => {
   };
 
   useEffect(() => {
-    if (autoFetch) fetchSavedJobs();
-  }, []);
+    if (!autoFetch) return;
+    if (!user) return;
+    if (hasFetched.current) return;
+
+    hasFetched.current = true;
+    fetchSavedJobs();
+  }, [user]);
 
   return { savedJobs, saveJob, unsaveJob, fetchSavedJobs };
 };

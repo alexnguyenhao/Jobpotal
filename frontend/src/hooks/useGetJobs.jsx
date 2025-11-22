@@ -4,17 +4,18 @@ import { JOB_API_END_POINT } from "@/utils/constant.js";
 import { useDispatch } from "react-redux";
 import { setAllJobs } from "@/redux/jobSlice.js";
 import { useLocation } from "react-router-dom";
+import { useRef } from "react";
 
 // --- 1. MAIN HOOK: useGetJobs ---
 // Automatically fetches jobs based on URL query params (for search/filter)
 export const useGetJobs = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        // Determine endpoint based on query params
         const endpoint =
           location.search && location.search.trim() !== ""
             ? `${JOB_API_END_POINT}/search${location.search}`
@@ -33,13 +34,14 @@ export const useGetJobs = () => {
       }
     };
 
-    fetchJobs();
+    // 🚀 FIX: tránh fetch lặp khi mount / redirect / login
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchJobs();
+    }
+
   }, [location.search, dispatch]);
 };
-
-// --- 2. UTILITY FUNCTIONS (API Services) ---
-
-// ✅ Get Jobs by Company ID
 export const getJobByCompany = async (companyId) => {
   if (!companyId) return []; // Safety check
   try {

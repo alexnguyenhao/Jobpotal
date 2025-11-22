@@ -25,23 +25,39 @@ import {
 } from "@/components/ui/form";
 
 // Icons
-import { Eye, EyeOff, Loader2, Briefcase, User, KeyRound } from "lucide-react";
+import { 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  User, 
+  KeyRound, 
+  ShieldCheck, 
+  ArrowLeft 
+} from "lucide-react";
 
 const Login = () => {
+  // --- STATE ---
   const [showPassword, setShowPassword] = useState(false);
   const { loading } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // State cho 2FA
+  const [requires2FA, setRequires2FA] = useState(false); // Có yêu cầu 2FA không?
+  const [tempUserId, setTempUserId] = useState(""); // Lưu tạm ID user để verify OTP
+  const [otp, setOtp] = useState(""); // Lưu mã OTP người dùng nhập
+
+  // React Hook Form cho Login cơ bản
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      role: "", // Bắt buộc chọn role để login
+      role: "", 
     },
   });
 
+  // --- XỬ LÝ LOGIN (BƯỚC 1) ---
   const onSubmit = async (data) => {
     try {
       dispatch(setLoading(true));
@@ -50,7 +66,14 @@ const Login = () => {
         withCredentials: true,
       });
 
-      if (res.data.success) {
+      // TRƯỜNG HỢP 1: Yêu cầu 2FA
+      if (res.data.require2FA) {
+        setRequires2FA(true);
+        setTempUserId(res.data.userId);
+        toast.info(res.data.message || "Please enter the OTP sent to your email.");
+      } 
+      // TRƯỜNG HỢP 2: Login thành công luôn (Không bật 2FA)
+      else if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(`Welcome back, ${res.data.user.fullName || "User"}!`);
         setTimeout(() => navigate("/"), 1000);
@@ -62,15 +85,44 @@ const Login = () => {
     }
   };
 
+  // --- XỬ LÝ VERIFY OTP (BƯỚC 2) ---
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!otp) return toast.error("Please enter the OTP code.");
+
+    try {
+      dispatch(setLoading(true));
+      const res = await axios.post(
+        `${USER_API_END_POINT}/verify-otp`, // Gọi route verify mà ta đã tạo ở backend
+        { userId: tempUserId, otp },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      if (res.data.success) {
+        dispatch(setUser(res.data.user)); // Lưu user vào Redux
+        toast.success(`Welcome back, ${res.data.user.fullName}!`);
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP");
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <NavBar />
 
       <main className="flex-grow flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 border border-gray-100">
-          {/* LEFT SIDE: BANNER */}
+          
+          {/* LEFT SIDE: BANNER (Giữ nguyên) */}
           <div className="hidden lg:flex flex-col justify-center items-start p-12 bg-[#6A38C2] text-white relative overflow-hidden">
-            {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
 
@@ -89,149 +141,192 @@ const Login = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE: LOGIN FORM */}
+          {/* RIGHT SIDE: LOGIN FORM HOẶC OTP FORM */}
           <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">
-                Login Account
-              </h2>
-              <p className="text-gray-500 mt-2">
-                Please login to continue to your dashboard.
-              </p>
-            </div>
+            
+            {/* --- FORM ĐĂNG NHẬP (Hiển thị khi chưa yêu cầu 2FA) --- */}
+            {!requires2FA ? (
+              <>
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    Login Account
+                  </h2>
+                  <p className="text-gray-500 mt-2">
+                    Please login to continue to your dashboard.
+                  </p>
+                </div>
 
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                {/* Email */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type="email"
-                            placeholder="name@example.com"
-                            className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10"
-                            {...field}
-                          />
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Password */}
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex justify-between items-center">
-                        <FormLabel>Password</FormLabel>
-                        <Link
-                          to="/forgot-password"
-                          className="text-xs font-medium text-[#6A38C2] hover:underline"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
-                      <FormControl>
-                        <div className="relative">
-                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10 pr-10"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          >
-                            {showPassword ? (
-                              <EyeOff size={18} />
-                            ) : (
-                              <Eye size={18} />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Role Selection */}
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Login as</FormLabel>
-                      <FormControl>
-                        <div className="grid grid-cols-2 gap-4">
-                          {["student", "recruiter"].map((r) => (
-                            <label
-                              key={r}
-                              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
-                                field.value === r
-                                  ? "border-[#6A38C2] bg-purple-50 text-[#6A38C2] font-semibold"
-                                  : "border-gray-200 text-gray-600 hover:border-purple-200 hover:bg-gray-50"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                value={r}
-                                checked={field.value === r}
-                                onChange={() => field.onChange(r)}
-                                className="hidden"
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Các field cũ giữ nguyên */}
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="email"
+                                placeholder="name@example.com"
+                                className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10"
+                                {...field}
                               />
-                              <span className="capitalize">{r}</span>
-                            </label>
-                          ))}
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                            <FormLabel>Password</FormLabel>
+                            <Link to="/forgot-password" className="text-xs font-medium text-[#6A38C2] hover:underline">
+                              Forgot password?
+                            </Link>
+                          </div>
+                          <FormControl>
+                            <div className="relative">
+                              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••"
+                                className="h-12 bg-gray-50 border-gray-200 focus:bg-white pl-10 pr-10"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Login as</FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-2 gap-4">
+                              {["student", "recruiter"].map((r) => (
+                                <label
+                                  key={r}
+                                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                                    field.value === r
+                                      ? "border-[#6A38C2] bg-purple-50 text-[#6A38C2] font-semibold"
+                                      : "border-gray-200 text-gray-600 hover:border-purple-200 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    value={r}
+                                    checked={field.value === r}
+                                    onChange={() => field.onChange(r)}
+                                    className="hidden"
+                                  />
+                                  <span className="capitalize">{r}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all mt-4"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging in...
+                        </>
+                      ) : (
+                        "Login"
+                      )}
+                    </Button>
+
+                    <p className="text-center text-sm text-gray-500">
+                      Don't have an account?{" "}
+                      <Link to="/signup" className="text-[#6A38C2] font-bold hover:underline">
+                        Sign up
+                      </Link>
+                    </p>
+                  </form>
+                </Form>
+              </>
+            ) : (
+              // --- FORM NHẬP OTP (Hiển thị khi cần 2FA) ---
+              <div className="fade-in animate-in slide-in-from-right-8 duration-500">
+                 <div className="mb-8 text-center">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <ShieldCheck className="w-8 h-8 text-[#6A38C2]" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900">
+                        Two-Factor Auth
+                    </h2>
+                    <p className="text-gray-500 mt-2">
+                        We sent a code to your email. Enter it below to access your account.
+                    </p>
+                </div>
+
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                    <div className="space-y-2">
+                         <div className="relative">
+                            <Input
+                                type="text"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                placeholder="Enter 6-digit OTP code"
+                                className="h-14 text-center text-2xl tracking-widest font-bold bg-gray-50 border-gray-200 focus:bg-white"
+                                maxLength={6}
+                            />
                         </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    </div>
 
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all mt-4"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging
-                      in...
-                    </>
-                  ) : (
-                    "Login"
-                  )}
-                </Button>
-
-                <p className="text-center text-sm text-gray-500">
-                  Don't have an account?{" "}
-                  <Link
-                    to="/signup"
-                    className="text-[#6A38C2] font-bold hover:underline"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-              </form>
-            </Form>
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...
+                        </>
+                      ) : (
+                        "Verify & Login"
+                      )}
+                    </Button>
+                    
+                    <div className="text-center">
+                        <button 
+                            type="button"
+                            onClick={() => setRequires2FA(false)}
+                            className="text-sm text-gray-500 hover:text-[#6A38C2] flex items-center justify-center gap-1 mx-auto"
+                        >
+                            <ArrowLeft size={16}/> Back to Login
+                        </button>
+                    </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </main>

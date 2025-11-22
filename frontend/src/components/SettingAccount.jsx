@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { toast } from "sonner";
 import { USER_API_END_POINT } from "@/utils/constant.js";
+import { setUser } from "@/redux/authSlice"; // ⚠️ Đảm bảo đường dẫn đúng tới file slice của bạn
 
 // Components
 import { Label } from "@/components/ui/label.js";
@@ -10,19 +11,30 @@ import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 
 // Icons
-import { Loader2, Lock, Eye, EyeOff, Save } from "lucide-react";
+import { 
+  Loader2, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Save, 
+  ShieldCheck, 
+  Smartphone 
+} from "lucide-react";
 
 const SettingAccount = () => {
   const { user } = useSelector((store) => store.auth);
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
+  const [loading2FA, setLoading2FA] = useState(false);
+  
+  // Password States
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-
-  // State hiển thị password riêng biệt cho từng ô
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  // --- XỬ LÝ ĐỔI PASSWORD ---
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
@@ -34,7 +46,7 @@ const SettingAccount = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${USER_API_END_POINT}/change-password`, // Route đổi pass
+        `${USER_API_END_POINT}/change-password`,
         { oldPassword, newPassword },
         { withCredentials: true }
       );
@@ -52,16 +64,91 @@ const SettingAccount = () => {
     }
   };
 
+  // --- XỬ LÝ BẬT/TẮT 2FA ---
+  const handleToggle2FA = async () => {
+    setLoading2FA(true);
+    // Xác định trạng thái muốn chuyển đổi (ngược lại với hiện tại)
+    const newStatus = !user?.is2FAEnabled;
+
+    try {
+      const res = await axios.post(
+        `${USER_API_END_POINT}/toggle-2fa`, // Route đã tạo ở bước trước
+        { enable: newStatus },
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        toast.success(res.data.message);
+        const updatedUser = { ...user, is2FAEnabled: newStatus };
+        dispatch(setUser(updatedUser));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update 2FA settings");
+    } finally {
+      setLoading2FA(false);
+    }
+  };
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-8">
       <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
-        {/* Header */}
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Lock className="text-[#6A38C2]" size={20} /> Security Settings
+            <ShieldCheck className="text-[#6A38C2]" size={24} /> 
+            Two-Factor Authentication
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Manage your password and account security preferences.
+            Add an extra layer of security to your account.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full ${user?.is2FAEnabled ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
+                    <Smartphone size={24} />
+                </div>
+                <div>
+                    <h3 className="font-semibold text-gray-900">
+                        Email Authentication
+                    </h3>
+                    <p className="text-xs text-gray-500 max-w-[250px] sm:max-w-sm">
+                        {user?.is2FAEnabled 
+                            ? "Your account is secured. We will send an OTP to your email when you login."
+                            : "Secure your account by requiring an OTP sent to your email during login."
+                        }
+                    </p>
+                </div>
+            </div>
+            <button 
+                onClick={handleToggle2FA}
+                disabled={loading2FA}
+                className={`
+                    relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                    transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 
+                    focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                    ${user?.is2FAEnabled ? 'bg-[#6A38C2]' : 'bg-gray-300'}
+                    ${loading2FA ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+            >
+                <span className="sr-only">Use setting</span>
+                <span
+                    className={`
+                        pointer-events-none block h-6 w-6 rounded-full bg-white shadow-lg ring-0 
+                        transition-transform duration-200 ease-in-out
+                        ${user?.is2FAEnabled ? 'translate-x-5' : 'translate-x-0'}
+                    `}
+                />
+            </button>
+        </div>
+      </div>
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Lock className="text-[#6A38C2]" size={20} /> 
+            Change Password
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your password to keep your account safe.
           </p>
         </div>
 
@@ -134,21 +221,6 @@ const SettingAccount = () => {
             </Button>
           </div>
         </form>
-      </div>
-
-      {/* Optional: Delete Account Zone */}
-      <div className="mt-8 bg-red-50 border border-red-100 rounded-2xl p-6">
-        <h3 className="text-red-700 font-bold text-lg mb-2">Danger Zone</h3>
-        <p className="text-red-600/80 text-sm mb-4">
-          Once you delete your account, there is no going back. Please be
-          certain.
-        </p>
-        <Button
-          variant="outline"
-          className="border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 hover:border-red-300"
-        >
-          Delete Account
-        </Button>
       </div>
     </div>
   );

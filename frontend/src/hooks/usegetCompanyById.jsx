@@ -17,7 +17,6 @@ const usegetCompanyById = (companyId, isRecruiter = false) => {
       if (!companyId) return;
 
       try {
-        // ✅ Xác định endpoint
         const endpoint = isRecruiter
           ? `${COMPANY_API_END_POINT}/admin/${companyId}`
           : `${COMPANY_API_END_POINT}/${companyId}`;

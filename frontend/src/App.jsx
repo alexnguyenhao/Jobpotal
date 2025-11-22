@@ -39,6 +39,9 @@ import GuideDetail from "./components/careerguide/GuideDetail";
 import JobDescriptionRecruiter from "@/components/admin/job/JobDescriptionRecruiter.jsx";
 import UpdateJob from "@/components/admin/job/UpdateJob.jsx";
 import Notifications from "@/components/Notifications.jsx";
+import AppliedJobTable from "@/components/AppliedJobTable.jsx";
+import SavedJobTable from "@/components/SavedJobTable.jsx";
+import SettingAccount from "@/components/SettingAccount.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -51,6 +54,9 @@ const appRouter = createBrowserRouter([
       { path: "/notifications", element: <Notifications /> },
       { path: "/description/:id", element: <JobDescription /> },
       { path: "/profile", element: <Profile /> },
+      {path: "/saved-jobs", element: <SavedJobTable />},
+      {path: "/applied-jobs", element: <AppliedJobTable />},
+      {path: "/setting-account", element: <SettingAccount />},
       { path: "/admin/companies", element: <Companies /> },
       { path: "/admin/companies/create", element: <CompanyCreate /> },
       { path: "/admin/companies/:id", element: <CompanySetup /> },

@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// --- ICONS ---
+import useGetAllCompanies from "@/hooks/useGetAllCompanies";
 import {
   PlusCircle,
   Search,
@@ -50,12 +50,9 @@ const CompaniesTable = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1. Fetch Data
-  useEffect(() => {
-    dispatch(fetchCompanies());
-  }, [dispatch]);
+  // ❗ CALL HOOK CORRECTLY (top-level)
+  useGetAllCompanies();
 
-  // 2. Filter Logic (Client-side)
   const filterCompanies =
     companies?.filter((company) =>
       searchTerm
@@ -63,7 +60,6 @@ const CompaniesTable = () => {
         : true
     ) || [];
 
-  // 3. Delete Handlers
   const handleDeleteClick = (company) => {
     setSelectedCompany(company);
     setOpenDialog(true);
@@ -74,7 +70,7 @@ const CompaniesTable = () => {
 
     dispatch(deleteCompany(selectedCompany._id))
       .then(() => {
-        dispatch(fetchCompanies()); // Refresh list
+        dispatch(fetchCompanies());   
         toast.success(`Deleted "${selectedCompany.name}" successfully!`);
       })
       .catch(() => {

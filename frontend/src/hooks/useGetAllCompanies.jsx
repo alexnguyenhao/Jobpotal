@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import axios from "axios";
 import { COMPANY_API_END_POINT } from "@/utils/constant.js";
 import { useDispatch } from "react-redux";
@@ -7,13 +7,18 @@ import { toast } from "sonner";
 
 const useGetAllCompanies = () => {
   const dispatch = useDispatch();
+  const fetchedRef = useRef(false); 
 
   useEffect(() => {
+    if (fetchedRef.current) return; 
+    fetchedRef.current = true;
+
     const fetchCompanies = async () => {
       try {
         const res = await axios.get(`${COMPANY_API_END_POINT}/get`, {
           withCredentials: true,
         });
+
         if (res.data.success) {
           dispatch(setCompanies(res.data.companies));
         } else {

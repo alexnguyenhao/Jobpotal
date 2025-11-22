@@ -12,8 +12,6 @@ import { setUser } from "@/redux/authSlice";
 // Icons
 import {
   Briefcase,
-  Save,
-  Settings,
   User,
   GraduationCap,
   Award,
@@ -21,18 +19,14 @@ import {
   Star,
   FolderGit2,
   FileText,
-  Eye,
-  Upload,
+  PenBox,
+  ExternalLink,
 } from "lucide-react";
 
 // Components
-import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSections from "@/components/profile/ProfileSections";
-import GlassCard from "@/components/common/GlassCard";
-import AppliedJobTable from "@/components/AppliedJobTable";
-import SettingAccount from "@/components/profile/SettingAccount";
-import SavedJobTable from "@/components/SavedJobTable";
+import { Button } from "@/components/ui/button";
 
 // Dialogs
 import UpdateProfileDialog from "@/components/profile/UpdateProfileDialog";
@@ -43,7 +37,6 @@ import UpdateCertificationDialog from "@/components/profile/UpdateCertificationD
 import UpdateLanguagesDialog from "@/components/profile/UpdateLanguagesDialog";
 import UpdateAchievementsDialog from "@/components/profile/UpdateAchievementsDialog";
 import UpdateProjectsDialog from "@/components/profile/UpdateProjectsDialog";
-import { Button } from "@/components/ui/button";
 
 const Profile = () => {
   useGetAppliedJobs(); // Fetch applied jobs on mount
@@ -54,10 +47,7 @@ const Profile = () => {
 
   const fileInputRef = useRef(null);
 
-  const [tab, setTab] = useState("personal");
-  const [openJobsMenu, setOpenJobsMenu] = useState(false);
-
-  // Dialog states grouped
+  // Dialog states
   const [open, setOpen] = useState({
     profile: false,
     title: false,
@@ -70,7 +60,6 @@ const Profile = () => {
   });
 
   // --- HANDLERS ---
-
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,8 +69,7 @@ const Profile = () => {
 
     try {
       const res = await axios.post(
-        // Thường là POST cho upload file
-        `${USER_API_END_POINT}/profile/update/photo`, // Kiểm tra lại route backend của bạn
+        `${USER_API_END_POINT}/profile/update/photo`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -91,7 +79,6 @@ const Profile = () => {
 
       if (res.data.success) {
         toast.success("Avatar updated successfully!");
-        // Cập nhật Redux với thông tin user mới từ server trả về
         dispatch(setUser(res.data.user));
       }
     } catch (error) {
@@ -100,15 +87,14 @@ const Profile = () => {
     }
   };
 
-  // Configuration for dynamic sections
+  // Config các section trong Profile
   const profileSections = [
     {
       title: "Professional Title",
       icon: User,
-      // Wrap title in array to match ProfileSections list logic if needed, or handle as string
       data: user?.profile?.title ? [{ title: user.profile.title }] : [],
       openSetter: (v) => setOpen((prev) => ({ ...prev, title: v })),
-      type: "single", // Đánh dấu đây là field đơn
+      type: "single",
     },
     {
       title: "Work Experience",
@@ -148,106 +134,58 @@ const Profile = () => {
     },
   ];
 
-  if (!user) return null; // Prevent render if not logged in
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col lg:flex-row gap-10">
-        {/* SIDEBAR */}
-        <ProfileSidebar
-          tab={tab}
-          setTab={setTab}
-          openJobsMenu={openJobsMenu}
-          setOpenJobsMenu={setOpenJobsMenu}
+    <div className="min-h-screen bg-gray-50/50 font-sans pb-20">
+      {/* Header Background Decoration */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10 space-y-6">
+        
+        {/* --- RESUME ACTION BANNER --- */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 bg-[#6A38C2] h-full"></div>
+          <div className="flex items-center gap-4 z-10">
+            <div className="bg-purple-50 p-3 rounded-full text-[#6A38C2]">
+               <FileText size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg">Resume & CV</h3>
+              <p className="text-gray-500 text-sm">Create or view your professional CV.</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-3 z-10">
+             <a 
+                href={`/resume`}
+                target="_blank" 
+                rel="noreferrer"
+             >
+                <Button variant="outline" className="gap-2">
+                   <ExternalLink size={16} /> Public View
+                </Button>
+             </a>
+             <Button 
+                onClick={() => navigate("/cv/home")}
+                className="bg-[#6A38C2] hover:bg-[#5b30a6] gap-2"
+             >
+                <PenBox size={16} /> CV Builder
+             </Button>
+          </div>
+        </div>
+
+        {/* --- PROFILE HEADER (INFO CHÍNH) --- */}
+        <ProfileHeader
+          user={user}
+          onEdit={() => setOpen((prev) => ({ ...prev, profile: true }))}
+          // Pass props để upload avatar trực tiếp tại đây
+          fileInputRef={fileInputRef}
+          onClickAvatar={() => fileInputRef.current?.click()}
+          onAvatarChange={handleAvatarChange}
         />
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 space-y-8">
-          {tab === "personal" && (
-            <>
-              {/* Header Info */}
-              <ProfileHeader
-                user={user}
-                onEdit={() => setOpen((prev) => ({ ...prev, profile: true }))}
-                // Avatar logic
-                fileInputRef={fileInputRef}
-                onClickAvatar={() => fileInputRef.current?.click()}
-                onAvatarChange={handleAvatarChange}
-              />
+        {/* --- PROFILE DETAIL SECTIONS --- */}
+        <ProfileSections sections={profileSections} />
 
-              {/* Resume Action Card */}
-              <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm relative overflow-hidden">
-                {/* Background decor */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-bl-full -z-0" />
-
-                <div className="relative z-10">
-                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <FileText className="text-[#6A38C2]" /> Resume & CV
-                  </h3>
-                  <p className="text-gray-500 text-sm mt-1 max-w-md">
-                    Manage your professional profile or create a custom CV using
-                    our builder.
-                  </p>
-                </div>
-
-                <div className="flex gap-3 relative z-10">
-                  {/* View Profile Resume */}
-                  <Button
-                    onClick={() => navigate(`/resume`)}
-                    variant="outline"
-                    className="rounded-full border-[#6A38C2] text-[#6A38C2] hover:bg-purple-50"
-                  >
-                    <Eye className="w-4 h-4 mr-2" /> View Profile
-                  </Button>
-
-                  {/* Go to CV Builder */}
-                  <Button
-                    onClick={() => navigate("/cv/home")}
-                    className="rounded-full bg-[#6A38C2] hover:bg-[#5b29a0] text-white"
-                  >
-                    <FileText className="w-4 h-4 mr-2" /> Create Custom CV
-                  </Button>
-                </div>
-              </div>
-
-              {/* Detail Sections */}
-              <ProfileSections sections={profileSections} />
-
-              {/* Public Link */}
-              <div className="text-center pt-4">
-                <p className="text-sm text-gray-400">
-                  Public Profile Link:{" "}
-                  <a
-                    href={`/resume/${user._id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#6A38C2] hover:underline font-medium"
-                  >
-                    {window.location.origin}/resume/{user._id}
-                  </a>
-                </p>
-              </div>
-            </>
-          )}
-
-          {tab === "applied" && (
-            <GlassCard title="Applied Jobs" icon={Briefcase}>
-              <AppliedJobTable />
-            </GlassCard>
-          )}
-
-          {tab === "saved" && (
-            <GlassCard title="Saved Jobs" icon={Save}>
-              <SavedJobTable />
-            </GlassCard>
-          )}
-
-          {tab === "settings" && (
-            <GlassCard title="Account Settings" icon={Settings}>
-              <SettingAccount />
-            </GlassCard>
-          )}
-        </main>
       </div>
 
       {/* --- MODALS / DIALOGS --- */}

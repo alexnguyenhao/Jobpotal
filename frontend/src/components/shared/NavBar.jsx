@@ -19,6 +19,10 @@ import {
   Bell,
   CheckCircle2,
   AlertCircle,
+  Heart,
+  Trash2,
+  CheckCheck,
+  Settings
 } from "lucide-react";
 
 // Components
@@ -29,6 +33,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Constants & Redux
 import { USER_API_END_POINT } from "@/utils/constant.js";
@@ -36,28 +41,36 @@ import { setUser, logout, setLoading } from "@/redux/authSlice.js";
 import { clearCVState } from "@/redux/cvSlice";
 import { setNotifications } from "@/redux/notificationSlice";
 
-// --- IMPORT HOOK CỦA BẠN ---
-import useGetAllNotification from "@/hooks/useGetAllNotification"; // Đảm bảo đường dẫn đúng file bạn vừa tạo
+// Hooks
+import useGetAllNotification from "@/hooks/useGetAllNotification";
+import useNotificationActions from "@/hooks/useNotificationActions";
 
 const NavBar = () => {
-  const { user, loading, isAuthenticated } = useSelector((store) => store.auth);
-  const { notifications = [] } = useSelector((store) => store.notification);
+  const { user, loading, isAuthenticated } = useSelector((s) => s.auth);
+  const { notifications = [] } = useSelector((s) => s.notification);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Custom hook actions
+  const { readAll, readById, deleteNotice } = useNotificationActions();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const hasFetched = useRef(false);
   const socketRef = useRef(null);
 
+  // Fetch initial notifications
   useGetAllNotification();
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // ----------- CHECK LOGIN SESSION ----------- //
   useEffect(() => {
     if (hasFetched.current || isAuthenticated) return;
-    const hasSessionCookie = document.cookie.includes("token=");
 
+    const hasSessionCookie = document.cookie.includes("token=");
     if (!hasSessionCookie) {
       dispatch(logout());
       return;
@@ -70,19 +83,20 @@ const NavBar = () => {
         const res = await axios.get(`${USER_API_END_POINT}/profile`, {
           withCredentials: true,
         });
-        if (res.data.success) {
-          dispatch(setUser(res.data.user));
-        } else {
-          dispatch(logout());
-        }
-      } catch (error) {
+
+        if (res.data.success) dispatch(setUser(res.data.user));
+        else dispatch(logout());
+      } catch {
         dispatch(logout());
       } finally {
         dispatch(setLoading(false));
       }
     };
+
     checkUser();
   }, [dispatch, isAuthenticated]);
+
+  // ----------- SOCKET.IO NOTIFICATIONS ----------- //
   useEffect(() => {
     if (!user) return;
 
@@ -94,26 +108,30 @@ const NavBar = () => {
 
     socketRef.current.on("newNotification", (notification) => {
       toast.info(notification.message);
-      dispatch(setNotifications([notification, ...notifications]));
+      dispatch(setNotifications((prev) => [notification, ...prev]));
     });
 
     return () => {
-      // if (socketRef.current) socketRef.current.disconnect();
+      socketRef.current?.disconnect();
     };
-  }, [user, notifications, dispatch]);
+  }, [user, dispatch]);
 
+  // ----------- LOGOUT ----------- //
   const logoutHandler = async () => {
     setIsLoggingOut(true);
+
     try {
       await axios.get(`${USER_API_END_POINT}/logout`, {
         withCredentials: true,
       });
+
+      socketRef.current?.disconnect();
       dispatch(logout());
       dispatch(clearCVState());
-      if (socketRef.current) socketRef.current.disconnect();
+
       toast.success("Logged out successfully");
       navigate("/login");
-    } catch (error) {
+    } catch {
       toast.error("Logout failed");
     } finally {
       setIsLoggingOut(false);
@@ -121,7 +139,7 @@ const NavBar = () => {
     }
   };
 
-  // Navigation Links Setup
+  // ----------- NAV LINKS ----------- //
   const recruiterLinks = [
     { path: "/admin/companies", label: "Companies", icon: Building2 },
     { path: "/admin/jobs", label: "Jobs", icon: Briefcase },
@@ -139,10 +157,12 @@ const NavBar = () => {
   const navLinks = user?.role === "recruiter" ? recruiterLinks : studentLinks;
   const homeRoute = user?.role === "recruiter" ? "/admin/companies" : "/";
 
+  // ----------- RETURN UI ----------- //
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* LOGO */}
           <Link
             to={homeRoute}
@@ -178,6 +198,7 @@ const NavBar = () => {
               </ul>
             )}
 
+            {/* AUTH BUTTONS */}
             {!isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <Link to="/login">
@@ -189,76 +210,116 @@ const NavBar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                {/* NOTIFICATION POPOVER */}
+
+                {/* NOTIFICATION BELL */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="relative text-gray-600 hover:text-[#6A38C2] rounded-full"
+                      className="relative text-gray-600 hover:text-[#6A38C2]"
                     >
                       <Bell size={22} />
                       {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                        </span>
+                        <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
                       )}
                     </Button>
                   </PopoverTrigger>
+
                   <PopoverContent
-                    className="w-80 p-0 bg-white shadow-lg rounded-xl border border-gray-100"
+                    className="w-80 p-0 bg-white shadow-xl rounded-xl border border-gray-100"
                     align="end"
                   >
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-xl">
-                      <h4 className="font-semibold text-gray-900">
-                        Notifications
-                      </h4>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/50 rounded-t-xl">
+                      <h4 className="font-semibold text-gray-900">Notifications</h4>
                       {unreadCount > 0 && (
-                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">
-                          {unreadCount} New
-                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 text-gray-500 hover:text-[#6A38C2]"
+                                onClick={readAll}
+                              >
+                                <CheckCheck size={16} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Mark all as read</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
-                    <div className="max-h-[320px] overflow-y-auto">
+
+                    {/* Notification List */}
+                    <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                       {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm flex flex-col items-center justify-center h-32">
-                          <Bell className="w-8 h-8 mb-2 text-gray-300" />
-                          <p>No notifications yet</p>
+                        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                          <div className="bg-gray-100 p-3 rounded-full mb-3">
+                            <Bell className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="text-sm text-gray-500">No notifications yet</p>
                         </div>
                       ) : (
-                        <div className="divide-y divide-gray-50">
-                          {notifications.map((noti, index) => (
-                            <div
-                              key={index}
-                              className={`p-3 hover:bg-gray-50 transition-colors cursor-pointer flex gap-3 ${
-                                !noti.isRead ? "bg-purple-50/40" : ""
-                              }`}
-                            >
-                              <div
-                                className={`mt-1 p-1.5 rounded-full h-fit shrink-0 ${
-                                  noti.type === "application_status"
-                                    ? "bg-blue-100 text-blue-600"
-                                    : "bg-gray-100 text-gray-600"
-                                }`}
-                              >
-                                {noti.type === "application_status" ? (
-                                  <CheckCircle2 size={16} />
-                                ) : (
-                                  <AlertCircle size={16} />
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-sm text-gray-800 leading-snug font-medium line-clamp-2">
-                                  {noti.message}
-                                </p>
-                                <span className="text-[10px] text-gray-400 block">
-                                  {new Date(noti.createdAt).toLocaleString()}
-                                </span>
-                              </div>
+                        notifications.map((noti) => (
+                          <div
+                            key={noti._id}
+                            onClick={() => !noti.isRead && readById(noti._id)}
+                            className={`group relative p-3 flex gap-3 border-b last:border-0 transition-colors cursor-pointer hover:bg-gray-50 ${
+                              !noti.isRead ? "bg-purple-50/60" : "bg-white"
+                            }`}
+                          >
+                            {/* Icon */}
+                            <div className="flex-shrink-0 mt-1">
+                                <div
+                                  className={`p-1.5 rounded-full ${
+                                    noti.type === "application_status"
+                                      ? "bg-blue-100 text-blue-600"
+                                      : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {noti.type === "application_status" ? (
+                                    <CheckCircle2 size={14} />
+                                  ) : (
+                                    <AlertCircle size={14} />
+                                  )}
+                                </div>
                             </div>
-                          ))}
-                        </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 pr-6">
+                              <p className={`text-sm ${!noti.isRead ? 'font-semibold text-gray-900' : 'text-gray-700'} leading-snug break-words`}>
+                                {noti.message}
+                              </p>
+                              <span className="text-[10px] text-gray-400 mt-1 block">
+                                {new Date(noti.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                              </span>
+                            </div>
+
+                            {/* Delete Button (Visible on Hover) */}
+                            <div className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-0 opacity-100">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent triggering "Read" click
+                                        deleteNotice(noti._id);
+                                    }}
+                                >
+                                    <Trash2 size={14} />
+                                </Button>
+                            </div>
+                            
+                            {/* Unread Indicator Dot */}
+                            {!noti.isRead && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#6A38C2] group-hover:opacity-0 transition-opacity" />
+                            )}
+                          </div>
+                        ))
                       )}
                     </div>
                   </PopoverContent>
@@ -267,34 +328,75 @@ const NavBar = () => {
                 {/* USER AVATAR */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Avatar className="cursor-pointer w-9 h-9 ring-2 ring-transparent hover:ring-[#6A38C2]/20 transition-all">
-                      <AvatarImage src={user?.profilePhoto} />
-                      <AvatarFallback className="bg-purple-100 text-[#6A38C2] font-bold">
-                        {user?.fullName?.[0]}
+                    <Avatar className="cursor-pointer w-9 h-9 ring-2 ring-offset-2 ring-transparent hover:ring-[#6A38C2]/20 transition-all">
+                      <AvatarImage src={user?.profilePhoto} objectFit="cover" />
+                      <AvatarFallback className="bg-[#6A38C2] text-white">
+                        {user?.fullName?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2">
-                    <div className="px-2 py-1.5 border-b border-gray-100 mb-1">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {user?.fullName}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate capitalize">
-                        {user?.role}
-                      </p>
+
+                  <PopoverContent className="w-60 p-2 mr-4" align="end">
+                    <div className="flex items-center gap-3 px-3 py-3 border-b border-gray-100 mb-1">
+                        <Avatar className="w-10 h-10">
+                            <AvatarImage src={user?.profilePhoto} />
+                            <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="font-semibold text-gray-900 truncate text-sm">{user?.fullName}</span>
+                            <span className="text-xs text-gray-500 capitalize">{user?.role}</span>
+                        </div>
                     </div>
-                    <div className="space-y-1">
+
+                    <div className="space-y-0.5 mt-2">
                       {user?.role === "student" && (
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
-                        >
-                          <User2 size={16} /> View Profile
-                        </Link>
+                        <>
+                         <div>
+                          <h1 className="font-semibold text-gray-900 text-sm">Manage Account</h1>
+                         <Link to="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <User2 size={16} /> Profile
+                          </Link>
+                          <Link to="/setting-account" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Settings size={16} /> Setting Account
+                          </Link>
+                          </div>
+                          <div>
+                            <h1 className="font-semibold text-gray-900 text-sm">Manage CV</h1>
+                            <Link to="/cv/list" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                              <FileText size={16} /> CV List
+                            </Link>
+                          </div>
+                          <div>
+                          <h1 className="font-semibold text-gray-900 text-sm">Manage Job</h1>
+                          <Link to="/saved-jobs" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Heart size={16} /> Saved Jobs
+                          </Link>
+                          <Link to="/applied-jobs" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Briefcase size={16} /> Applied Jobs
+                          </Link>
+                          </div>
+                          <div>
+                          <h1 className="font-semibold text-gray-900 text-sm">Notifications</h1>
+                          <Link to="/notifications" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Bell size={16} /> Notifications
+                          </Link>
+                          </div>
+                          
+                        </>
+                      )}
+                      {user?.role === "recruiter" && (
+                        <>                       
+                          <Link to="/notifications" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Bell size={16} /> Notifications
+                          </Link>
+                          <Link to="/setting-account" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <Settings size={16} /> Setting Account
+                          </Link>
+                        </>
                       )}
                       <button
                         onClick={logoutHandler}
-                        className="w-full flex items-center gap-2 px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors mt-1"
                       >
                         <LogOut size={16} /> Logout
                       </button>
@@ -308,13 +410,14 @@ const NavBar = () => {
           {/* MOBILE MENU BUTTON */}
           <div className="md:hidden flex items-center gap-3">
             {isAuthenticated && (
-              <Link to="/notifications" className="relative text-gray-600 p-1">
+              <Link to="/notifications" className="relative">
                 <Bell size={22} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
                 )}
               </Link>
             )}
+
             <Button
               variant="ghost"
               size="icon"
@@ -326,28 +429,27 @@ const NavBar = () => {
         </div>
       </div>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* MOBILE MENU */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full left-0 shadow-lg animate-in slide-in-from-top-5">
+        <div className="md:hidden bg-white border-t shadow-lg absolute w-full">
           <div className="px-4 py-6 space-y-4">
-            <div className="space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
-                    location.pathname === link.path
-                      ? "bg-purple-50 text-[#6A38C2]"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <link.icon size={18} />
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-            <div className="h-px bg-gray-100 my-2"></div>
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+                  location.pathname === link.path
+                    ? "bg-purple-50 text-[#6A38C2]"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <link.icon size={18} /> {link.label}
+              </Link>
+            ))}
+
+            <div className="h-px bg-gray-100"></div>
+
             {!isAuthenticated ? (
               <div className="grid grid-cols-2 gap-4">
                 <Button
@@ -359,6 +461,7 @@ const NavBar = () => {
                 >
                   Login
                 </Button>
+
                 <Button
                   className="bg-[#6A38C2]"
                   onClick={() => {
@@ -371,12 +474,12 @@ const NavBar = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {/* Mobile User Info */}
                 <div className="flex items-center gap-3 px-4 py-2">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={user?.profilePhoto} />
                     <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                   </Avatar>
+
                   <div>
                     <p className="font-semibold text-gray-900">
                       {user?.fullName}
@@ -386,18 +489,38 @@ const NavBar = () => {
                     </p>
                   </div>
                 </div>
+
                 {user?.role === "student" && (
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50"
-                  >
-                    <User2 size={18} /> Profile
-                  </Link>
+                  <>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                    >
+                      <User2 size={18} /> Profile
+                    </Link>
+
+                    <Link
+                      to="/saved-jobs"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                    >
+                      <Heart size={18} /> Saved Jobs
+                    </Link>
+
+                    <Link
+                      to="/applied-jobs"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                    >
+                      <Briefcase size={18} /> Applied Jobs
+                    </Link>
+                  </>
                 )}
+
                 <button
                   onClick={logoutHandler}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50"
                 >
                   <LogOut size={18} /> Logout
                 </button>

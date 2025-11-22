@@ -7,6 +7,7 @@ import { NOTIFICATION_API_END_POINT } from "@/utils/constant.js";
 const useGetAllNotification = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
+  const { notifications } = useSelector((store) => store.notification);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -22,11 +23,10 @@ const useGetAllNotification = () => {
       }
     };
 
-    // Chỉ gọi API khi user đã đăng nhập
     if (user) {
       fetchNotifications();
     }
-  }, [user, dispatch]);
+  }, [user, dispatch]); 
 };
 
 export default useGetAllNotification;

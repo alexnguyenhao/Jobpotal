@@ -121,7 +121,7 @@ export const deleteCompany = createAsyncThunk(
       await axios.delete(`${COMPANY_API_END_POINT}/delete/${companyId}`, {
         withCredentials: true,
       });
-      return companyId; // Trả về ID để xóa khỏi state
+      return companyId; 
     } catch (error) {
       const msg = error.response?.data?.message || "Failed to delete company";
       toast.error(msg);
@@ -158,7 +158,6 @@ const companySlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // fetchCompanies (Private)
     builder
       .addCase(fetchCompanies.pending, (state) => {
         state.loading = true;
@@ -172,43 +171,36 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-
-    // fetchPublicCompanies (Public) - Thêm xử lý loading cho cái này
     builder
       .addCase(fetchPublicCompanies.pending, (state) => {
-        state.loading = true; // Có thể tạo state loading riêng nếu muốn tách biệt UI
+        state.loading = true; 
         state.error = null;
       })
       .addCase(fetchPublicCompanies.fulfilled, (state, action) => {
         state.loading = false;
-        state.companies = action.payload; // Ghi đè vào companies chung
+        state.companies = action.payload; 
       })
       .addCase(fetchPublicCompanies.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
 
-    // createCompany
     builder.addCase(createCompany.fulfilled, (state, action) => {
       state.companies.push(action.payload);
     });
 
-    // updateCompany
     builder.addCase(updateCompany.fulfilled, (state, action) => {
-      // Cập nhật trong danh sách
       const index = state.companies.findIndex(
         (c) => c._id === action.payload._id
       );
       if (index !== -1) {
         state.companies[index] = action.payload;
       }
-      // Nếu đang xem chi tiết công ty này thì cập nhật luôn singleCompany
       if (state.singleCompany?._id === action.payload._id) {
         state.singleCompany = action.payload;
       }
     });
 
-    // getCompanyById (Public View)
     builder
       .addCase(getCompanyById.pending, (state) => {
         state.loading = true;
@@ -223,7 +215,6 @@ const companySlice = createSlice({
         state.error = action.payload;
       });
 
-    // getCompanyByIdAdmin (Private View)
     builder
       .addCase(getCompanyByIdAdmin.pending, (state) => {
         state.loading = true;
@@ -237,8 +228,6 @@ const companySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-
-    // deleteCompany
     builder.addCase(deleteCompany.fulfilled, (state, action) => {
       state.companies = state.companies.filter((c) => c._id !== action.payload);
     });

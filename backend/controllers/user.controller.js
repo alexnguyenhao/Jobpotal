@@ -11,6 +11,7 @@ import { verifyEmailTemplate } from "../templates/verifyEmailTemplate.js";
 import { resetPasswordTemplate } from "../templates/resetPasswordTemplate.js";
 import { aj } from "../libs/arcjet.js";
 import { Job } from "../models/job.model.js";
+import otpGenerator from "otp-generator";
 
 /* ==============================
    🧩 REGISTER USER
@@ -236,12 +237,42 @@ export const login = async (req, res) => {
         success: false,
       });
 
+    // ✅ LOGIC 2FA MỚI THÊM VÀO ĐÂY
+    if (user.is2FAEnabled) {
+      // 1. Tạo OTP
+      const otp = otpGenerator.generate(6, {
+        upperCaseAlphabets: false,
+        specialChars: false,
+        lowerCaseAlphabets: false,
+      });
+
+      // 2. Lưu OTP vào DB
+      user.twoFAOtp = otp;
+      user.twoFAOtpExpires = Date.now() + 5 * 60 * 1000; // 5 phút
+      await user.save();
+
+      // 3. Gửi OTP qua Email (Dùng lại hàm sendEmail của bạn)
+      await sendEmail(
+        user.email,
+        "Login Verification Code (2FA)",
+        `Your OTP code is: ${otp}. It expires in 5 minutes.`
+      );
+
+      // 4. Trả về response yêu cầu OTP (Chưa cấp Token)
+      return res.status(200).json({
+        message: "OTP sent to your email. Please verify to complete login.",
+        success: true,
+        require2FA: true, // Frontend dựa vào flag này để chuyển trang nhập OTP
+        userId: user._id,
+      });
+    }
+
+    // --- Nếu KHÔNG bật 2FA thì chạy logic cũ bên dưới ---
+
     const token = jwt.sign(
       { userId: user._id, role: user.role, company: user.company || null },
       process.env.SECRET_KEY,
-      {
-        expiresIn: "1d",
-      }
+      { expiresIn: "1d" }
     );
 
     return res
@@ -261,6 +292,89 @@ export const login = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
+  }
+};
+
+/* ==============================
+   🧩 VERIFY LOGIN OTP (Mới)
+   API này được gọi khi user nhấn "Xác nhận" ở màn hình nhập OTP
+============================== */
+export const verifyLoginOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: "Missing required fields", success: false });
+    }
+
+    const user = await User.findById(userId).populate("profile");
+    if (!user) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    // Kiểm tra OTP
+    if (!user.twoFAOtp || user.twoFAOtp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP", success: false });
+    }
+
+    // Kiểm tra hết hạn
+    if (user.twoFAOtpExpires < Date.now()) {
+      return res.status(400).json({ message: "OTP has expired", success: false });
+    }
+
+    // ✅ OTP Hợp lệ: Reset OTP và cấp Token
+    user.twoFAOtp = null;
+    user.twoFAOtpExpires = null;
+    await user.save();
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role, company: user.company || null },
+      process.env.SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+
+    return res
+      .status(200)
+      .cookie("token", token, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "strict",
+      })
+      .json({
+        message: `Welcome back, ${user.fullName}!`,
+        user,
+        success: true,
+      });
+
+  } catch (err) {
+    console.error("❌ Verify OTP error:", err);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+/* ==============================
+   🧩 TOGGLE 2FA (Mới - Bật/Tắt trong Setting)
+============================== */
+export const toggle2FA = async (req, res) => {
+  try {
+    const userId = req.id; // Lấy từ middleware verifyToken
+    const { enable } = req.body; // true hoặc false
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found", success: false });
+
+    user.is2FAEnabled = enable;
+    await user.save();
+
+    return res.status(200).json({
+      message: `Two-Factor Authentication is now ${enable ? "Enabled" : "Disabled"}`,
+      success: true,
+      is2FAEnabled: user.is2FAEnabled
+    });
+
+  } catch (err) {
+    console.error("❌ Toggle 2FA error:", err);
+    return res.status(500).json({ message: "Internal server error", success: false });
   }
 };
 
