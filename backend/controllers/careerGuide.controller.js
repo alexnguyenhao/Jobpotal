@@ -1,39 +1,30 @@
 import { CareerGuide } from "../models/careerGuide.model.js";
 import { User } from "../models/user.model.js";
-
-// --- HELPER FUNCTIONS (Tiện ích hỗ trợ) ---
-
-// 1. Chuyển Tiếng Việt có dấu thành Slug (VD: "Bí quyết xin việc" -> "bi-quyet-xin-viec")
 const createSlug = (text) => {
   return text
     .toString()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Bỏ dấu
+    .replace(/[\u0300-\u036f]/g, "") 
     .replace(/[đĐ]/g, "d")
-    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
-    .replace(/[^\w\-]+/g, "") // Bỏ ký tự đặc biệt
-    .replace(/\-\-+/g, "-") // Thay nhiều dấu gạch ngang bằng 1 dấu
-    .replace(/^-+/, "") // Cắt gạch ngang đầu
-    .replace(/-+$/, ""); // Cắt gạch ngang cuối
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "") 
+    .replace(/\-\-+/g, "-") 
+    .replace(/^-+/, "") 
+    .replace(/-+$/, ""); 
 };
 
-// 2. Tính thời gian đọc (giả định 200 từ/phút)
 const calculateReadingTime = (content) => {
-  const text = content.replace(/<[^>]*>?/gm, ""); // Loại bỏ thẻ HTML để đếm từ chuẩn hơn
+  const text = content.replace(/<[^>]*>?/gm, ""); 
   const wordCount = text.split(/\s+/).length;
   return Math.ceil(wordCount / 200);
 };
 
-// 3. Tạo đoạn trích ngắn (Excerpt) từ Content nếu người dùng không nhập
 const generateExcerpt = (content, maxLength = 150) => {
-  const text = content.replace(/<[^>]*>?/gm, ""); // Bỏ HTML
+  const text = content.replace(/<[^>]*>?/gm, ""); 
   return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 };
 
-// --- MAIN CONTROLLERS ---
-
-// CREATE – Recruiter đăng bài
 export const createCareerGuide = async (req, res) => {
   try {
     const { title, thumbnail, content, tags, category, excerpt } = req.body;
@@ -45,10 +36,9 @@ export const createCareerGuide = async (req, res) => {
       });
     }
 
-    // Xử lý dữ liệu tự động
-    const slug = createSlug(title) + "-" + Date.now(); // Thêm timestamp để tránh trùng slug tuyệt đối
+    const slug = createSlug(title) + "-" + Date.now(); 
     const readingTime = calculateReadingTime(content);
-    const finalExcerpt = excerpt || generateExcerpt(content); // Nếu ko nhập excerpt thì tự cắt
+    const finalExcerpt = excerpt || generateExcerpt(content); 
 
     const guide = await CareerGuide.create({
       title,
@@ -78,12 +68,9 @@ export const createCareerGuide = async (req, res) => {
   }
 };
 
-// GET ALL – Student xem danh sách (Có tìm kiếm + Phân trang + Tối ưu data)
 export const getAllCareerGuides = async (req, res) => {
   try {
     const { keyword, category, page = 1, limit = 10 } = req.query;
-
-    // Xây dựng bộ lọc
     const query = { isPublished: true };
 
     if (category) {
@@ -91,7 +78,6 @@ export const getAllCareerGuides = async (req, res) => {
     }
 
     if (keyword) {
-      // Tìm kiếm trong title hoặc tags (sử dụng regex không phân biệt hoa thường)
       query.$or = [
         { title: { $regex: keyword, $options: "i" } },
         { tags: { $regex: keyword, $options: "i" } },
@@ -99,7 +85,7 @@ export const getAllCareerGuides = async (req, res) => {
     }
 
     const guides = await CareerGuide.find(query)
-      .select("-content") // QUAN TRỌNG: Không lấy nội dung full để nhẹ API
+      .select("-content") 
       .populate("author", "fullName profilePhoto")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -125,13 +111,12 @@ export const getAllCareerGuides = async (req, res) => {
   }
 };
 
-// GET ONE – Xem chi tiết (Hỗ trợ tìm bằng ID hoặc SLUG)
 export const getCareerGuideById = async (req, res) => {
   try {
     const { id } = req.params;
 
     let guide;
-    // Kiểm tra xem id truyền vào là ObjectId hay Slug
+    
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
       guide = await CareerGuide.findById(id).populate(
         "author",
@@ -150,7 +135,6 @@ export const getCareerGuideById = async (req, res) => {
         .json({ success: false, message: "Career guide not found" });
     }
 
-    // Tăng view
     guide.views += 1;
     await guide.save();
 
@@ -164,7 +148,6 @@ export const getCareerGuideById = async (req, res) => {
   }
 };
 
-// UPDATE – Recruiter chỉnh sửa bài viết
 export const updateCareerGuide = async (req, res) => {
   try {
     const guide = await CareerGuide.findById(req.params.id);
@@ -183,17 +166,14 @@ export const updateCareerGuide = async (req, res) => {
 
     const { title, content, excerpt, ...otherData } = req.body;
 
-    // Logic cập nhật thông minh
     if (title && title !== guide.title) {
       guide.title = title;
-      // Nếu đổi title, có thể đổi slug hoặc giữ nguyên tùy logic. Ở đây mình update luôn slug
       guide.slug = createSlug(title) + "-" + Date.now();
     }
 
     if (content) {
       guide.content = content;
-      guide.readingTime = calculateReadingTime(content); // Tính lại thời gian đọc
-      // Nếu người dùng không nhập excerpt mới, tự tạo lại excerpt từ content mới
+      guide.readingTime = calculateReadingTime(content); 
       if (!excerpt) {
         guide.excerpt = generateExcerpt(content);
       }
@@ -201,7 +181,6 @@ export const updateCareerGuide = async (req, res) => {
 
     if (excerpt) guide.excerpt = excerpt;
 
-    // Cập nhật các trường còn lại
     Object.assign(guide, otherData);
 
     const updatedGuide = await guide.save();
@@ -216,7 +195,6 @@ export const updateCareerGuide = async (req, res) => {
   }
 };
 
-// DELETE – Recruiter xoá bài
 export const deleteCareerGuide = async (req, res) => {
   try {
     const guide = await CareerGuide.findById(req.params.id);
@@ -246,7 +224,6 @@ export const deleteCareerGuide = async (req, res) => {
   }
 };
 
-// GET BY RECRUITER – Lấy danh sách bài đăng của chính recruiter
 export const getCareerGuidesByRecruiter = async (req, res) => {
   try {
     if (req.role !== "recruiter") {
@@ -254,7 +231,7 @@ export const getCareerGuidesByRecruiter = async (req, res) => {
     }
 
     const guides = await CareerGuide.find({ author: req.id })
-      .select("-content") // Tối ưu: Không lấy content nặng
+      .select("-content") 
       .populate("author", "fullName profilePhoto")
       .populate("company", "name logo")
       .sort({ createdAt: -1 });
@@ -269,10 +246,8 @@ export const getCareerGuidesByRecruiter = async (req, res) => {
   }
 };
 
-// GET ONE (Recruiter View) - Giữ nguyên logic xem chi tiết để edit
 export const getCareerGuideDetailsForRecruiter = async (req, res) => {
   try {
-    // Logic này giữ nguyên vì cần lấy full content để fill vào form Edit
     const guide = await CareerGuide.findById(req.params.id);
 
     if (!guide) {

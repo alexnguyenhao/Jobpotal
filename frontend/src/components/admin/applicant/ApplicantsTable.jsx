@@ -98,7 +98,7 @@ const ApplicantsTable = () => {
                   </Avatar>
                   <div>
                     <Link
-                      to={`/admin/applicants/resume/${item?.applicant?._id}`}
+                      to={`/recruiter/applicants/resume/${item?.applicant?._id}`}
                       className="font-semibold text-gray-900 hover:text-blue-600 transition-colors block"
                     >
                       {item?.applicant?.fullName || "Unknown"}

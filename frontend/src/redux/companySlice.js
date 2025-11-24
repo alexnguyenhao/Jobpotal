@@ -99,7 +99,7 @@ export const getCompanyByIdAdmin = createAsyncThunk(
   async (companyId, { rejectWithValue }) => {
     try {
       const res = await axios.get(
-        `${COMPANY_API_END_POINT}/admin/${companyId}`,
+        `${COMPANY_API_END_POINT}/recruiter/${companyId}`,
         { withCredentials: true }
       );
       return res.data?.company || null;

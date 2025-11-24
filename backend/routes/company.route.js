@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/public", getAllCompanies);
 router.post("/register", isAuthenticated, registerCompany);
 router.get("/get", isAuthenticated, getCompany);
-router.get("/admin/:id", isAuthenticated, getCompanyById);
+router.get("/recruiter/:id", isAuthenticated, getCompanyById);
 router.put("/update/:id", isAuthenticated, singleUpload, updateCompany);
 router.delete("/delete/:id", isAuthenticated, deleteCompany);
 

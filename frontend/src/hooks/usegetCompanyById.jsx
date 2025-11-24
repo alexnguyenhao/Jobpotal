@@ -18,7 +18,7 @@ const usegetCompanyById = (companyId, isRecruiter = false) => {
 
       try {
         const endpoint = isRecruiter
-          ? `${COMPANY_API_END_POINT}/admin/${companyId}`
+          ? `${COMPANY_API_END_POINT}/recruiter/${companyId}`
           : `${COMPANY_API_END_POINT}/${companyId}`;
 
         const res = await axios.get(endpoint, { withCredentials: true });

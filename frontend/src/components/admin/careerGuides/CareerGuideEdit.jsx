@@ -69,7 +69,7 @@ const CareerGuideEdit = () => {
       const data = await fetchMyGuideById(id);
 
       if (!data) {
-        return navigate("/admin/career-guides");
+        return navigate("/recruiter/career-guides");
       }
 
       form.reset({
@@ -107,7 +107,7 @@ const CareerGuideEdit = () => {
     const res = await updateGuide(id, payload);
 
     if (res) {
-      navigate("/admin/career-guides");
+      navigate("/recruiter/career-guides");
     }
     setIsSubmitting(false);
   };
@@ -140,7 +140,7 @@ const CareerGuideEdit = () => {
         {/* --- HEADER --- */}
         <div className="flex items-center gap-4 mb-8">
           <Button
-            onClick={() => navigate("/admin/career-guides")}
+            onClick={() => navigate("/recruiter/career-guides")}
             variant="outline"
             size="icon"
             className="h-10 w-10 rounded-full border-gray-200"
@@ -361,7 +361,7 @@ const CareerGuideEdit = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/admin/career-guides")}
+                  onClick={() => navigate("/recruiter/career-guides")}
                 >
                   Cancel
                 </Button>

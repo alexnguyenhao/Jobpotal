@@ -8,7 +8,7 @@ const fromEmail = process.env.FROM_EMAIL;
 export const sendEmail = async (to, subject, html) => {
   const msg = {
     to,
-    from: `Admin <${fromEmail}>`,
+    from: `JobPortal <${fromEmail}>`,
     subject,
     html,
   };

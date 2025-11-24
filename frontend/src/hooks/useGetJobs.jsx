@@ -4,14 +4,10 @@ import { JOB_API_END_POINT } from "@/utils/constant.js";
 import { useDispatch } from "react-redux";
 import { setAllJobs } from "@/redux/jobSlice.js";
 import { useLocation } from "react-router-dom";
-import { useRef } from "react";
 
-// --- 1. MAIN HOOK: useGetJobs ---
-// Automatically fetches jobs based on URL query params (for search/filter)
 export const useGetJobs = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -34,21 +30,17 @@ export const useGetJobs = () => {
       }
     };
 
-    // 🚀 FIX: tránh fetch lặp khi mount / redirect / login
-    if (!hasFetched.current) {
-      hasFetched.current = true;
-      fetchJobs();
-    }
+    fetchJobs();
 
   }, [location.search, dispatch]);
 };
 export const getJobByCompany = async (companyId) => {
-  if (!companyId) return []; // Safety check
+  if (!companyId) return []; 
   try {
     const res = await axios.get(`${JOB_API_END_POINT}/company/${companyId}`, {
       withCredentials: true,
     });
-    return res.data?.jobs || []; // Optional chaining for safety
+    return res.data?.jobs || []; 
   } catch (error) {
     console.error(
       "❌ Error fetching jobs by company:",
@@ -58,9 +50,8 @@ export const getJobByCompany = async (companyId) => {
   }
 };
 
-// ✅ Get Jobs by Category ID
 export const getJobByCategory = async (categoryId) => {
-  if (!categoryId) return []; // Safety check
+  if (!categoryId) return []; 
   try {
     const res = await axios.get(`${JOB_API_END_POINT}/category/${categoryId}`, {
       withCredentials: true,
@@ -75,9 +66,8 @@ export const getJobByCategory = async (categoryId) => {
   }
 };
 
-// ✅ Delete Job by ID
 export const deleteJobById = async (jobId) => {
-  if (!jobId) return false; // Safety check
+  if (!jobId) return false; 
   try {
     const res = await axios.delete(`${JOB_API_END_POINT}/${jobId}`, {
       withCredentials: true,

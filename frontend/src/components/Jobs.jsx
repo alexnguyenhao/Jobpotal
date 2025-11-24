@@ -15,36 +15,35 @@ import { Briefcase, ArrowLeft, ArrowRight } from "lucide-react";
 const ITEMS_PER_PAGE = 9;
 
 const Jobs = () => {
-  useGetJobs(); // Hook fetch data
+  useGetJobs(); 
   const { allJobs, loading } = useSelector((store) => store.job);
 
-  // Pagination state
   const [page, setPage] = useState(1);
 
-  // Tính toán phân trang
+    
   const totalJobs = allJobs.length;
   const totalPages = Math.ceil(totalJobs / ITEMS_PER_PAGE);
   const startIdx = (page - 1) * ITEMS_PER_PAGE;
   const endIdx = startIdx + ITEMS_PER_PAGE;
   const currentJobs = allJobs.slice(startIdx, endIdx);
 
-  // Scroll lên đầu khi chuyển trang
+  
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page]);
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* --- 1. STICKY FILTER SECTION --- */}
+      
       <div className=" top-[68px] z-30 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-4 py-4 md:px-8">
           <JobFilterBar />
         </div>
       </div>
 
-      {/* --- 2. MAIN CONTENT --- */}
+      
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
-        {/* Result Count & Title */}
+        
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2 text-gray-600">
             <Briefcase className="w-5 h-5 text-[#6A38C2]" />
@@ -56,7 +55,7 @@ const Jobs = () => {
           </div>
         </div>
 
-        {/* --- JOB LIST GRID --- */}
+        
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -83,7 +82,7 @@ const Jobs = () => {
         ) : (
           <>
             {totalJobs === 0 ? (
-              // Empty State
+              
               <div className="flex flex-col justify-center items-center py-24 bg-white rounded-2xl border border-dashed border-gray-200 text-center">
                 <div className="bg-gray-50 p-4 rounded-full mb-4">
                   <Briefcase className="h-10 w-10 text-gray-300" />
@@ -97,7 +96,7 @@ const Jobs = () => {
                 </p>
               </div>
             ) : (
-              // Job Cards
+              
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -110,7 +109,7 @@ const Jobs = () => {
               </motion.div>
             )}
 
-            {/* --- PAGINATION --- */}
+            
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-12">
                 <Button
@@ -126,7 +125,7 @@ const Jobs = () => {
                 <div className="flex items-center gap-1 mx-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (num) => {
-                      // Logic hiển thị rút gọn nếu quá nhiều trang (optional simple version here)
+                      
                       if (
                         totalPages > 7 &&
                         Math.abs(num - page) > 2 &&

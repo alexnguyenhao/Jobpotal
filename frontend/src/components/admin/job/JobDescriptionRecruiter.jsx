@@ -99,7 +99,7 @@ const JobDescriptionRecruiter = () => {
       });
       if (res.data.success) {
         toast.success("Job deleted successfully");
-        navigate("/admin/jobs");
+        navigate("/recruiter/jobs");
       }
     } catch (error) {
       toast.error("Failed to delete job");
@@ -260,7 +260,7 @@ const JobDescriptionRecruiter = () => {
                     </div>
                     <Button
                       onClick={() =>
-                        navigate(`/admin/jobs/${jobId}/applicants`)
+                        navigate(`/recruiter/jobs/${jobId}/applicants`)
                       }
                       className="w-full bg-white text-[#6A38C2] hover:bg-gray-50 font-bold border-none"
                     >
@@ -310,7 +310,7 @@ const JobDescriptionRecruiter = () => {
                   <Button
                     variant="outline"
                     className="w-full border-dashed"
-                    onClick={() => navigate(`/admin/jobs/edit/${jobId}`)}
+                    onClick={() => navigate(`/recruiter/jobs/edit/${jobId}`)}
                   >
                     Update Job Details
                   </Button>

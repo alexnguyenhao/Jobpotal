@@ -1,13 +1,13 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { CV } from "../models/cv.model.js";
-import { User } from "../models/user.model.js"; // Import thêm nếu cần check profile
+import { User } from "../models/user.model.js"; 
 import { Notification } from "../models/notification.model.js";
 import { sendEmail } from "../libs/send-email.js";
 import { applicantJobTemplate } from "../templates/applicantJobTemplate.js";
 import { getReceiverSocketId, io } from "../socket.js";
+import { jobApplicationSuccessTemplate } from "../templates/jobApplicationSuccessTemplate.js"; 
 
-// 1. APPLY JOB
 export const applyJob = async (req, res) => {
   try {
     const userId = req.id;
@@ -21,7 +21,6 @@ export const applyJob = async (req, res) => {
     const jobId = req.params.id;
     const { cvId } = req.body;
 
-    // Validate Input
     if (!jobId) {
       return res.status(400).json({
         message: "Job ID is required",
@@ -29,13 +28,17 @@ export const applyJob = async (req, res) => {
       });
     }
 
-    // Kiểm tra Job có tồn tại không
-    const job = await Job.findById(jobId);
+    const job = await Job.findById(jobId).populate("company");
     if (!job) {
       return res.status(404).json({
         message: "Job not found",
         success: false,
       });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "User not found", success: false });
     }
 
     const usingProfile = cvId === null;
@@ -47,7 +50,23 @@ export const applyJob = async (req, res) => {
       });
     }
 
-    // Kiểm tra đã apply chưa
+    if (usingProfile && !user.resume) {
+        return res.status(400).json({
+            message: "Your profile does not have a resume yet. Please upload one in settings.",
+            success: false,
+        });
+    }
+
+    if (!usingProfile) {
+      const cv = await CV.findById(cvId);
+      if (!cv || cv.user.toString() !== userId) {
+        return res.status(403).json({
+          message: "Invalid CV selected or access denied.",
+          success: false,
+        });
+      }
+    }
+
     const existing = await Application.findOne({
       job: jobId,
       applicant: userId,
@@ -59,42 +78,23 @@ export const applyJob = async (req, res) => {
         success: false,
       });
     }
-    if (!usingProfile) {
-      const cv = await CV.findById(cvId);
-      if (!cv || cv.user.toString() !== userId) {
-        return res.status(403).json({
-          message: "Invalid CV selected or access denied.",
-          success: false,
-        });
-      }
-    } else {
-      const user = await User.findById(userId);
-      if (!user.resume) {
-        return res.status(400).json({
-          message:
-            "Your profile does not have a resume yet. Please upload one in settings.",
-          success: false,
-        });
-      }
-    }
 
-    // Tạo Application
     const application = await Application.create({
       job: jobId,
       applicant: userId,
       cv: usingProfile ? null : cvId,
       usedProfile: usingProfile,
     });
-
-    // Push application vào Job
+    
+ 
     job.applications.push(application._id);
     await job.save();
+
     if (job.created_by) {
       const recruiterId = job.created_by;
-
-      // 1. Tạo Notification trong Database
       const notiMessage = `You received a new application for job: ${job.title}`;
 
+ 
       const notification = await Notification.create({
         recipient: recruiterId,
         sender: userId,
@@ -104,19 +104,35 @@ export const applyJob = async (req, res) => {
         isRead: false,
       });
 
-      // 2. Gửi Socket Real-time
+
       const receiverSocketId = getReceiverSocketId(recruiterId.toString());
       if (receiverSocketId) {
-        // Emit sự kiện tới client của Recruiter
         io.to(receiverSocketId).emit("newNotification", notification);
       }
     }
+    const companyName = job.company?.name || "The Company";
+    const jobTitle = job.title;
+
+    const jobsPageUrl = `${process.env.FRONTEND_URL}/jobs`; 
+
+    const emailSubject = `Application Received: ${jobTitle}`;
+    const emailHtml = jobApplicationSuccessTemplate(
+        user.fullName, 
+        jobTitle, 
+        companyName, 
+        jobsPageUrl
+    );
+
+    sendEmail(user.email, emailSubject, emailHtml).catch(err => {
+        console.error("Failed to send application confirmation email:", err);
+    });
 
     return res.status(201).json({
       message: "Application submitted successfully!",
       success: true,
       application,
     });
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -126,7 +142,6 @@ export const applyJob = async (req, res) => {
   }
 };
 
-// 2. GET APPLIED JOBS (Student xem lịch sử)
 export const getAppliedJobs = async (req, res) => {
   try {
     const userId = req.id;
@@ -142,10 +157,8 @@ export const getAppliedJobs = async (req, res) => {
         },
       });
 
-    // Note: .find() trả về mảng rỗng [] nếu ko có, chứ ko phải null/undefined
     if (!application || application.length === 0) {
       return res.status(200).json({
-        // Trả về 200 OK với mảng rỗng là chuẩn hơn 404
         message: "You haven't applied to any jobs yet.",
         application: [],
         success: true,
@@ -166,7 +179,6 @@ export const getAppliedJobs = async (req, res) => {
   }
 };
 
-// 3. GET APPLICANTS (Recruiter xem ứng viên của 1 Job)
 export const getApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -177,11 +189,11 @@ export const getApplicants = async (req, res) => {
       populate: [
         {
           path: "applicant",
-          select: "-password", // Bỏ field password
+          select: "-password", 
           populate: { path: "profile" },
         },
         {
-          path: "cv", // Populate thêm CV nếu user dùng custom CV
+          path: "cv", 
         },
       ],
     });
@@ -239,8 +251,6 @@ export const updateStatus = async (req, res) => {
       const jobData = application.job;
       const jobTitle = jobData?.title || "Unknown Job";
       const companyName = jobData?.company?.name || "Career Support";
-
-      // A. Tạo Notification (DB)
       const notiMessage = `Your application for ${jobTitle} has been ${status.toLowerCase()}.`;
 
       const notification = await Notification.create({

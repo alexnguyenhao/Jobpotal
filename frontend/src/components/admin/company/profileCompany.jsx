@@ -324,7 +324,7 @@ const ProfileCompany = () => {
                     <Button
                       variant="outline"
                       className="w-full border-dashed"
-                      onClick={() => navigate(`/admin/companies/${company._id}`)}
+                      onClick={() => navigate(`/recruiter/companies/${company._id}`)}
                     >
                       Update Company Details
                     </Button>

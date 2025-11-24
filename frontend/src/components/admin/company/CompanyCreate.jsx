@@ -28,7 +28,7 @@ const CompanyCreate = () => {
       if (createCompany.fulfilled.match(resultAction)) {
         const newCompany = resultAction.payload;
         dispatch(setSingleCompany(newCompany)); // lưu vào store
-        navigate(`/admin/companies/${newCompany._id}`);
+        navigate(`/recruiter/companies/${newCompany._id}`);
       } else {
         toast.error(resultAction.payload || "Failed to create company");
       }
@@ -57,7 +57,7 @@ const CompanyCreate = () => {
       />
 
       <div className="flex items-center gap-2 my-10">
-        <Button variant="outline" onClick={() => navigate("/admin/companies")}>
+        <Button variant="outline" onClick={() => navigate("/recruiter/companies")}>
           Cancel
         </Button>
         <Button onClick={handleCreateCompany}>Continue</Button>

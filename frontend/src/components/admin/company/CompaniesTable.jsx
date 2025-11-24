@@ -97,7 +97,7 @@ const CompaniesTable = () => {
           asChild
           className="bg-black hover:bg-gray-800 text-white shadow-md transition-all"
         >
-          <Link to="/admin/companies/create">
+          <Link to="/recruiter/companies/create">
             <PlusCircle size={18} className="mr-2" /> Register Company
           </Link>
         </Button>
@@ -258,7 +258,7 @@ const CompaniesTable = () => {
                                   size="icon"
                                   className="h-8 w-8 hover:text-green-600"
                                 >
-                                  <Link to={`/admin/companies/${company._id}`}>
+                                  <Link to={`/recruiter/companies/${company._id}`}>
                                     <Eye size={16} />
                                   </Link>
                                 </Button>
@@ -275,7 +275,7 @@ const CompaniesTable = () => {
                                   size="icon"
                                   className="h-8 w-8 hover:text-blue-600"
                                 >
-                                  <Link to={`/admin/companies/${company._id}`}>
+                                  <Link to={`/recruiter/companies/${company._id}`}>
                                     {" "}
                                     {/* Note: Route edit của bạn có thể khác, check lại nhé */}
                                     <Edit size={16} />

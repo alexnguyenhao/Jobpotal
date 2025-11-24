@@ -124,7 +124,7 @@ const AdminJobsTable = () => {
           asChild
           className="bg-black hover:bg-gray-800 text-white shadow-md transition-all"
         >
-          <Link to="/admin/jobs/create">
+          <Link to="/recruiter/jobs/create">
             <PlusCircle size={18} className="mr-2" /> Post New Job
           </Link>
         </Button>
@@ -216,7 +216,7 @@ const AdminJobsTable = () => {
                           </Avatar>
                           <div className="space-y-1">
                             <Link
-                              to={`/admin/jobs/descriptions/${job._id}`}
+                              to={`/recruiter/jobs/descriptions/${job._id}`}
                               className="font-semibold text-gray-900 hover:text-blue-600 line-clamp-1 transition-colors"
                             >
                               {job?.title}
@@ -245,7 +245,7 @@ const AdminJobsTable = () => {
                           variant="secondary"
                           className="bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer font-normal"
                           onClick={() =>
-                            navigate(`/admin/jobs/${job._id}/applicants`)
+                            navigate(`/recruiter/jobs/${job._id}/applicants`)
                           }
                         >
                           <Eye className="w-3 h-3 mr-1" />{" "}
@@ -272,7 +272,7 @@ const AdminJobsTable = () => {
                                   size="icon"
                                   className="h-8 w-8 hover:text-blue-600"
                                 >
-                                  <Link to={`/admin/jobs/edit/${job._id}`}>
+                                  <Link to={`/recruiter/jobs/edit/${job._id}`}>
                                     <Edit size={16} />
                                   </Link>
                                 </Button>
@@ -288,7 +288,7 @@ const AdminJobsTable = () => {
                                   className="h-8 w-8 hover:text-green-600"
                                   onClick={() =>
                                     navigate(
-                                      `/admin/jobs/${job._id}/applicants`
+                                      `/recruiter/jobs/${job._id}/applicants`
                                     )
                                   }
                                 >

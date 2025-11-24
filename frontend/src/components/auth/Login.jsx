@@ -6,12 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-// Store & Utils
 import { USER_API_END_POINT } from "@/utils/constant";
 import { loginSchema } from "@/lib/loginSchema";
 import { setLoading, setUser } from "@/redux/authSlice";
-
-// Components
 import NavBar from "@/components/shared/NavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Icons
 import { 
   Eye, 
   EyeOff, 
@@ -36,18 +32,15 @@ import {
 } from "lucide-react";
 
 const Login = () => {
-  // --- STATE ---
   const [showPassword, setShowPassword] = useState(false);
   const { loading } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // State cho 2FA
-  const [requires2FA, setRequires2FA] = useState(false); // Có yêu cầu 2FA không?
-  const [tempUserId, setTempUserId] = useState(""); // Lưu tạm ID user để verify OTP
-  const [otp, setOtp] = useState(""); // Lưu mã OTP người dùng nhập
+  const [requires2FA, setRequires2FA] = useState(false); 
+  const [tempUserId, setTempUserId] = useState(""); 
+  const [otp, setOtp] = useState(""); 
 
-  // React Hook Form cho Login cơ bản
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -57,7 +50,6 @@ const Login = () => {
     },
   });
 
-  // --- XỬ LÝ LOGIN (BƯỚC 1) ---
   const onSubmit = async (data) => {
     try {
       dispatch(setLoading(true));
@@ -66,13 +58,11 @@ const Login = () => {
         withCredentials: true,
       });
 
-      // TRƯỜNG HỢP 1: Yêu cầu 2FA
       if (res.data.require2FA) {
         setRequires2FA(true);
         setTempUserId(res.data.userId);
         toast.info(res.data.message || "Please enter the OTP sent to your email.");
       } 
-      // TRƯỜNG HỢP 2: Login thành công luôn (Không bật 2FA)
       else if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(`Welcome back, ${res.data.user.fullName || "User"}!`);
@@ -85,7 +75,6 @@ const Login = () => {
     }
   };
 
-  // --- XỬ LÝ VERIFY OTP (BƯỚC 2) ---
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (!otp) return toast.error("Please enter the OTP code.");
@@ -93,7 +82,7 @@ const Login = () => {
     try {
       dispatch(setLoading(true));
       const res = await axios.post(
-        `${USER_API_END_POINT}/verify-otp`, // Gọi route verify mà ta đã tạo ở backend
+        `${USER_API_END_POINT}/verify-otp`, 
         { userId: tempUserId, otp },
         {
           headers: { "Content-Type": "application/json" },
@@ -102,7 +91,7 @@ const Login = () => {
       );
 
       if (res.data.success) {
-        dispatch(setUser(res.data.user)); // Lưu user vào Redux
+        dispatch(setUser(res.data.user)); 
         toast.success(`Welcome back, ${res.data.user.fullName}!`);
         navigate("/");
       }
@@ -120,8 +109,6 @@ const Login = () => {
 
       <main className="flex-grow flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 border border-gray-100">
-          
-          {/* LEFT SIDE: BANNER (Giữ nguyên) */}
           <div className="hidden lg:flex flex-col justify-center items-start p-12 bg-[#6A38C2] text-white relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
@@ -141,10 +128,10 @@ const Login = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE: LOGIN FORM HOẶC OTP FORM */}
+
           <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
             
-            {/* --- FORM ĐĂNG NHẬP (Hiển thị khi chưa yêu cầu 2FA) --- */}
+            
             {!requires2FA ? (
               <>
                 <div className="mb-8">
@@ -158,7 +145,6 @@ const Login = () => {
 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Các field cũ giữ nguyên */}
                     <FormField
                       control={form.control}
                       name="email"
@@ -273,7 +259,6 @@ const Login = () => {
                 </Form>
               </>
             ) : (
-              // --- FORM NHẬP OTP (Hiển thị khi cần 2FA) ---
               <div className="fade-in animate-in slide-in-from-right-8 duration-500">
                  <div className="mb-8 text-center">
                     <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">

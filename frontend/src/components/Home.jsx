@@ -23,7 +23,7 @@ const Home = () => {
   }, [dispatch]);
   useEffect(() => {
     if (user?.role === "recruiter") {
-      navigate("/admin/companies");
+      navigate("/recruiter/companies");
     }
   }, [user, navigate]);
 

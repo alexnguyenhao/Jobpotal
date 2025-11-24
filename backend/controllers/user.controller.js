@@ -12,13 +12,10 @@ import { resetPasswordTemplate } from "../templates/resetPasswordTemplate.js";
 import { aj } from "../libs/arcjet.js";
 import { Job } from "../models/job.model.js";
 import otpGenerator from "otp-generator";
+import { twoFactorAuthTemplate } from "../templates/twoFactorAuthTemplate.js";
 
-/* ==============================
-   🧩 REGISTER USER
-============================== */
 export const register = async (req, res) => {
   try {
-    // ✅ ARCJET check
     const decision = await aj.protect(req, {
       requested: 5,
       email: req.body.email,
@@ -38,7 +35,6 @@ export const register = async (req, res) => {
       role,
     } = req.body;
 
-    // ✅ Validate input by role
     if (role === "student") {
       if (
         !fullName ||
@@ -67,7 +63,6 @@ export const register = async (req, res) => {
         .json({ message: "Invalid role type", success: false });
     }
 
-    // ✅ Check duplicate email
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({
@@ -75,10 +70,8 @@ export const register = async (req, res) => {
         success: false,
       });
 
-    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Upload avatar if provided
     let profilePhotoUrl = "";
     if (req.file && role === "student") {
       const fileUri = getDataURI(req.file);
@@ -86,7 +79,6 @@ export const register = async (req, res) => {
       profilePhotoUrl = cloudResponse.secure_url;
     }
 
-    // ✅ Create User
     const newUser = await User.create({
       fullName,
       email,
@@ -99,7 +91,6 @@ export const register = async (req, res) => {
       profilePhoto: profilePhotoUrl || "",
     });
 
-    // ✅ Create Profile linked to user
     const profileData = {
       user: newUser._id,
       title: "",
@@ -117,7 +108,7 @@ export const register = async (req, res) => {
     newUser.profile = newProfile._id;
     await newUser.save();
 
-    // ✅ Send verification email
+   
     const verificationToken = jwt.sign(
       { userId: newUser._id, purpose: "email-verification" },
       process.env.SECRET_KEY,
@@ -151,9 +142,7 @@ export const register = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 VERIFY EMAIL
-============================== */
+
 export const verifyEmail = async (req, res) => {
   try {
     const token = req.query.token;
@@ -200,9 +189,6 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 LOGIN
-============================== */
 export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -237,37 +223,31 @@ export const login = async (req, res) => {
         success: false,
       });
 
-    // ✅ LOGIC 2FA MỚI THÊM VÀO ĐÂY
     if (user.is2FAEnabled) {
-      // 1. Tạo OTP
+      
       const otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
         specialChars: false,
         lowerCaseAlphabets: false,
       });
 
-      // 2. Lưu OTP vào DB
       user.twoFAOtp = otp;
-      user.twoFAOtpExpires = Date.now() + 5 * 60 * 1000; // 5 phút
+      user.twoFAOtpExpires = Date.now() + 5 * 60 * 1000; 
       await user.save();
+      const emailSubject = "Login Verification Code (2FA)";
+      const emailBody = twoFactorAuthTemplate(otp);
+      await sendEmail(user.email, emailSubject, emailBody);
 
-      // 3. Gửi OTP qua Email (Dùng lại hàm sendEmail của bạn)
-      await sendEmail(
-        user.email,
-        "Login Verification Code (2FA)",
-        `Your OTP code is: ${otp}. It expires in 5 minutes.`
-      );
-
-      // 4. Trả về response yêu cầu OTP (Chưa cấp Token)
+      
       return res.status(200).json({
         message: "OTP sent to your email. Please verify to complete login.",
         success: true,
-        require2FA: true, // Frontend dựa vào flag này để chuyển trang nhập OTP
+        require2FA: true, 
         userId: user._id,
       });
     }
 
-    // --- Nếu KHÔNG bật 2FA thì chạy logic cũ bên dưới ---
+    
 
     const token = jwt.sign(
       { userId: user._id, role: user.role, company: user.company || null },
@@ -295,10 +275,7 @@ export const login = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 VERIFY LOGIN OTP (Mới)
-   API này được gọi khi user nhấn "Xác nhận" ở màn hình nhập OTP
-============================== */
+
 export const verifyLoginOTP = async (req, res) => {
   try {
     const { userId, otp } = req.body;
@@ -312,17 +289,17 @@ export const verifyLoginOTP = async (req, res) => {
       return res.status(404).json({ message: "User not found", success: false });
     }
 
-    // Kiểm tra OTP
+    
     if (!user.twoFAOtp || user.twoFAOtp !== otp) {
       return res.status(400).json({ message: "Invalid OTP", success: false });
     }
 
-    // Kiểm tra hết hạn
+   
     if (user.twoFAOtpExpires < Date.now()) {
       return res.status(400).json({ message: "OTP has expired", success: false });
     }
 
-    // ✅ OTP Hợp lệ: Reset OTP và cấp Token
+    
     user.twoFAOtp = null;
     user.twoFAOtpExpires = null;
     await user.save();
@@ -352,13 +329,10 @@ export const verifyLoginOTP = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 TOGGLE 2FA (Mới - Bật/Tắt trong Setting)
-============================== */
 export const toggle2FA = async (req, res) => {
   try {
-    const userId = req.id; // Lấy từ middleware verifyToken
-    const { enable } = req.body; // true hoặc false
+    const userId = req.id; 
+    const { enable } = req.body; 
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found", success: false });
@@ -378,9 +352,6 @@ export const toggle2FA = async (req, res) => {
   }
 };
 
-/* ==============================
-   🧩 GET PROFILE (with populate)
-============================== */
 export const getMyProfile = async (req, res) => {
   try {
     const userId = req.id;
@@ -441,7 +412,7 @@ export const updateProfile = async (req, res) => {
         .status(404)
         .json({ message: "Profile not found", success: false });
 
-    // ✅ Upload resume if provided
+  
     if (file) {
       const fileUri = getDataURI(file);
       const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
@@ -451,7 +422,6 @@ export const updateProfile = async (req, res) => {
       user.resumeOriginalName = file.originalname;
     }
 
-    // ✅ Update User basic info
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (phoneNumber) user.phoneNumber = phoneNumber;
@@ -465,7 +435,7 @@ export const updateProfile = async (req, res) => {
         ? skills
         : skills.split(",").map((s) => s.trim());
 
-    // ✅ Update Profile fields
+   
 
     if (careerObjective !== undefined)
       profile.careerObjective = careerObjective;
@@ -553,7 +523,6 @@ export const updateAvatar = async (req, res) => {
   }
 };
 
-//change password
 export const changePassword = async (req, res) => {
   try {
     const userId = req.id;
@@ -587,7 +556,7 @@ export const changePassword = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
-//sent Email forgot password
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -602,7 +571,6 @@ export const forgotPassword = async (req, res) => {
         .status(404)
         .json({ message: "User not found", success: false });
     }
-    //send email reset password
     const resetToken = jwt.sign(
       { userId: user._id, purpose: "password-reset" },
       process.env.SECRET_KEY,
@@ -671,7 +639,6 @@ export const logout = async (req, res) => {
   }
 };
 
-// ✅ Save job
 export const saveJob = async (req, res) => {
   try {
     const userId = req.id;
@@ -710,7 +677,6 @@ export const saveJob = async (req, res) => {
   }
 };
 
-// ❌ Remove saved job
 export const unsaveJob = async (req, res) => {
   try {
     const userId = req.id;
@@ -740,8 +706,7 @@ export const unsaveJob = async (req, res) => {
   }
 };
 
-// 📋 Get all saved jobs
-export const getSavedJobs = async (req, res) => {
+  export const getSavedJobs = async (req, res) => {
   try {
     const userId = req.id;
     const user = await User.findById(userId).populate({

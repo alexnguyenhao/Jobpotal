@@ -19,7 +19,7 @@ router.get("/search", searchJobs);
 router.get("/get/:id", getJobById);
 router.get("/company/:companyId", getJobsByCompany);
 router.get("/category/:categoryId", getJobsByCategory);
-router.get("/admin/get", isAuthenticated, getAdminJobs);
+router.get("/recruiter/get", isAuthenticated, getAdminJobs);
 router.post("/post", isAuthenticated, postJob);
 router.put("/update/:id", isAuthenticated, updateJob);
 router.delete("/:id", isAuthenticated, deleteJob);

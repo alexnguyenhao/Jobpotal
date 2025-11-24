@@ -53,7 +53,6 @@ const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Custom hook actions
   const { readAll, readById, deleteNotice } = useNotificationActions();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,12 +60,10 @@ const NavBar = () => {
   const hasFetched = useRef(false);
   const socketRef = useRef(null);
 
-  // Fetch initial notifications
   useGetAllNotification();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  // ----------- CHECK LOGIN SESSION ----------- //
   useEffect(() => {
     if (hasFetched.current || isAuthenticated) return;
 
@@ -96,7 +93,6 @@ const NavBar = () => {
     checkUser();
   }, [dispatch, isAuthenticated]);
 
-  // ----------- SOCKET.IO NOTIFICATIONS ----------- //
   useEffect(() => {
     if (!user) return;
 
@@ -116,7 +112,6 @@ const NavBar = () => {
     };
   }, [user, dispatch]);
 
-  // ----------- LOGOUT ----------- //
   const logoutHandler = async () => {
     setIsLoggingOut(true);
 
@@ -139,11 +134,10 @@ const NavBar = () => {
     }
   };
 
-  // ----------- NAV LINKS ----------- //
   const recruiterLinks = [
-    { path: "/admin/companies", label: "Companies", icon: Building2 },
-    { path: "/admin/jobs", label: "Jobs", icon: Briefcase },
-    { path: "/admin/career-guides", label: "Career Guides", icon: BookOpen },
+    { path: "/recruiter/companies", label: "Companies", icon: Building2 },
+    { path: "/recruiter/jobs", label: "Jobs", icon: Briefcase },
+    { path: "/recruiter/career-guides", label: "Career Guides", icon: BookOpen },
   ];
 
   const studentLinks = [
@@ -155,9 +149,8 @@ const NavBar = () => {
   ];
 
   const navLinks = user?.role === "recruiter" ? recruiterLinks : studentLinks;
-  const homeRoute = user?.role === "recruiter" ? "/admin/companies" : "/";
+  const homeRoute = user?.role === "recruiter" ? "/recruiter/companies" : "/";
 
-  // ----------- RETURN UI ----------- //
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,7 +170,6 @@ const NavBar = () => {
             </h1>
           </Link>
 
-          {/* DESKTOP MENU */}
           <div className="hidden md:flex items-center space-x-8">
             {!loading && (
               <ul className="flex items-center space-x-6">
@@ -198,7 +190,6 @@ const NavBar = () => {
               </ul>
             )}
 
-            {/* AUTH BUTTONS */}
             {!isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <Link to="/login">
@@ -211,7 +202,6 @@ const NavBar = () => {
             ) : (
               <div className="flex items-center gap-4">
 
-                {/* NOTIFICATION BELL */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -230,7 +220,6 @@ const NavBar = () => {
                     className="w-80 p-0 bg-white shadow-xl rounded-xl border border-gray-100"
                     align="end"
                   >
-                    {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/50 rounded-t-xl">
                       <h4 className="font-semibold text-gray-900">Notifications</h4>
                       {unreadCount > 0 && (
@@ -254,7 +243,6 @@ const NavBar = () => {
                       )}
                     </div>
 
-                    {/* Notification List */}
                     <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                       {notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
@@ -272,7 +260,6 @@ const NavBar = () => {
                               !noti.isRead ? "bg-purple-50/60" : "bg-white"
                             }`}
                           >
-                            {/* Icon */}
                             <div className="flex-shrink-0 mt-1">
                                 <div
                                   className={`p-1.5 rounded-full ${
@@ -299,14 +286,13 @@ const NavBar = () => {
                               </span>
                             </div>
 
-                            {/* Delete Button (Visible on Hover) */}
                             <div className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-0 opacity-100">
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50"
                                     onClick={(e) => {
-                                        e.stopPropagation(); // Prevent triggering "Read" click
+                                        e.stopPropagation(); 
                                         deleteNotice(noti._id);
                                     }}
                                 >
@@ -314,7 +300,6 @@ const NavBar = () => {
                                 </Button>
                             </div>
                             
-                            {/* Unread Indicator Dot */}
                             {!noti.isRead && (
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#6A38C2] group-hover:opacity-0 transition-opacity" />
                             )}
@@ -329,7 +314,7 @@ const NavBar = () => {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Avatar className="cursor-pointer w-9 h-9 ring-2 ring-offset-2 ring-transparent hover:ring-[#6A38C2]/20 transition-all">
-                      <AvatarImage src={user?.profilePhoto} objectFit="cover" />
+                      <AvatarImage src={user?.profilePhoto} objectFit="object-cover" />
                       <AvatarFallback className="bg-[#6A38C2] text-white">
                         {user?.fullName?.[0]?.toUpperCase()}
                       </AvatarFallback>

@@ -67,11 +67,8 @@ const JobFilterBar = () => {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-4">
       <form onSubmit={handleSubmit(onSubmit)}>
-        {/* --- MAIN SEARCH BAR (HERO STYLE) --- */}
-        {/* Container hình viên thuốc, đổ bóng tím */}
         <div className="bg-white p-2 rounded-2xl md:rounded-full shadow-xl shadow-purple-100/50 border border-slate-200/60 flex flex-col md:flex-row items-center gap-2 md:gap-0 relative z-20 transition-all duration-300 hover:shadow-purple-200/60">
           
-          {/* 1. Keyword Input */}
           <div className="flex items-center px-4 w-full md:flex-1 h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
             <Search className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <Input
@@ -81,7 +78,6 @@ const JobFilterBar = () => {
             />
           </div>
 
-          {/* 2. Location Select */}
           <div className="flex items-center px-4 w-full md:w-[240px] h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
             <MapPin className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -92,15 +88,12 @@ const JobFilterBar = () => {
                 placeholder="All Locations"
                 labelKey="name"
                 valueKey="_id"
-                // Style đè để loại bỏ viền của SelectSearch
                 className="border-none shadow-none p-0 h-auto text-slate-700 font-medium bg-transparent focus:ring-0 w-full"
               />
             </div>
           </div>
 
-          {/* 3. Action Buttons */}
           <div className="flex items-center gap-2 p-1 w-full md:w-auto justify-end md:justify-start">
-            {/* Filter Toggle Button */}
             <Button
               type="button"
               variant="ghost"
@@ -115,7 +108,7 @@ const JobFilterBar = () => {
               <span className="hidden sm:inline">Filters</span>
             </Button>
 
-            {/* Search Button */}
+            
             <Button
               type="submit"
               className="w-full md:w-auto rounded-xl md:rounded-full bg-[#6A38C2] hover:bg-[#5a2ea6] text-white px-8 h-12 font-bold text-base shadow-lg shadow-purple-200 transition-all hover:scale-105"
@@ -125,7 +118,6 @@ const JobFilterBar = () => {
           </div>
         </div>
 
-        {/* --- ADVANCED FILTERS SECTION (Floating Below) --- */}
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
@@ -254,7 +246,6 @@ const JobFilterBar = () => {
                   </FilterGroup>
                 </div>
 
-                {/* Footer Actions for Advanced Filters */}
                 <div className="flex justify-end items-center mt-6 pt-4 border-t border-gray-200 border-dashed">
                   <Button
                     type="button"
@@ -280,7 +271,6 @@ const JobFilterBar = () => {
   );
 };
 
-// Helper Component for cleaner code
 const FilterGroup = ({ label, icon, children }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">

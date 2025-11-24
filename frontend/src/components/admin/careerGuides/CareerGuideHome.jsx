@@ -86,7 +86,7 @@ const CareerGuideHome = () => {
           asChild
           className="bg-black hover:bg-gray-800 text-white shadow-md transition-all"
         >
-          <Link to="/admin/career-guides/create">
+          <Link to="/recruiter/career-guides/create">
             <PlusCircle size={18} className="mr-2" /> Create Guide
           </Link>
         </Button>
@@ -146,7 +146,7 @@ const CareerGuideHome = () => {
               </p>
               {searchTerm === "" && (
                 <Button asChild variant="outline" className="mt-6">
-                  <Link to="/admin/career-guides/create">
+                  <Link to="/recruiter/career-guides/create">
                     Create your first guide
                   </Link>
                 </Button>
@@ -199,7 +199,7 @@ const CareerGuideHome = () => {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Link
-                                    to={`/admin/career-guides/detail/${g._id}`}
+                                    to={`/recruiter/career-guides/detail/${g._id}`}
                                     className="font-semibold text-gray-900 hover:text-blue-600 transition-colors block leading-snug line-clamp-2 break-words"
                                   >
                                     {g.title}
@@ -273,7 +273,7 @@ const CareerGuideHome = () => {
                                   className="h-8 w-8 hover:text-blue-600"
                                 >
                                   <Link
-                                    to={`/admin/career-guides/edit/${g._id}`}
+                                    to={`/recruiter/career-guides/edit/${g._id}`}
                                   >
                                     <Edit size={16} />
                                   </Link>

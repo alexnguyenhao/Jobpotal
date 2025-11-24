@@ -104,7 +104,7 @@ const UpdateJob = () => {
         });
       } catch (err) {
         toast.error("Failed to load job details");
-        navigate("/admin/jobs");
+        navigate("/recruiter/jobs");
       } finally {
         setLoadingJob(false);
       }
@@ -145,7 +145,7 @@ const UpdateJob = () => {
 
       if (res.data.success) {
         toast.success("Job updated successfully!");
-        navigate("/admin/jobs");
+        navigate("/recruiter/jobs");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Update failed");
@@ -167,7 +167,7 @@ const UpdateJob = () => {
         {/* --- HEADER --- */}
         <div className="flex items-center gap-4 mb-8">
           <Button
-            onClick={() => navigate("/admin/jobs")}
+            onClick={() => navigate("/recruiter/jobs")}
             variant="outline"
             size="icon"
             className="h-10 w-10 rounded-full border-gray-200"
@@ -598,7 +598,7 @@ const UpdateJob = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/admin/jobs")}
+                  onClick={() => navigate("/recruiter/jobs")}
                 >
                   Cancel
                 </Button>
