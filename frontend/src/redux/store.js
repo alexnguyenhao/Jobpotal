@@ -20,6 +20,7 @@ import applicationSlice from "@/redux/applicationSlice.js";
 import cvSlice from "@/redux/cvSlice.js";
 import careerGuideSlice from "@/redux/careerGuideSlice.js";
 import notificationSlice from "@/redux/notificationSlice.js";
+import adminSlice from "@/redux/adminSlice.js";
 
 const persistConfig = {
   key: "root",
@@ -36,6 +37,7 @@ const rootReducer = combineReducers({
   cv: cvSlice,
   careerGuide: careerGuideSlice,
   notification: notificationSlice,
+  admin: adminSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

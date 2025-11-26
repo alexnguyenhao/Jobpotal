@@ -22,7 +22,7 @@ import {
   Heart,
   Trash2,
   CheckCheck,
-  Settings
+  Settings,
 } from "lucide-react";
 
 // Components
@@ -33,13 +33,18 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Constants & Redux
 import { USER_API_END_POINT } from "@/utils/constant.js";
 import { setUser, logout, setLoading } from "@/redux/authSlice.js";
 import { clearCVState } from "@/redux/cvSlice";
-import { setNotifications } from "@/redux/notificationSlice";
+import { addNotification } from "@/redux/notificationSlice";
 
 // Hooks
 import useGetAllNotification from "@/hooks/useGetAllNotification";
@@ -104,7 +109,7 @@ const NavBar = () => {
 
     socketRef.current.on("newNotification", (notification) => {
       toast.info(notification.message);
-      dispatch(setNotifications((prev) => [notification, ...prev]));
+      dispatch(addNotification(notification));
     });
 
     return () => {
@@ -137,7 +142,6 @@ const NavBar = () => {
   const recruiterLinks = [
     { path: "/recruiter/companies", label: "Companies", icon: Building2 },
     { path: "/recruiter/jobs", label: "Jobs", icon: Briefcase },
-    { path: "/recruiter/career-guides", label: "Career Guides", icon: BookOpen },
   ];
 
   const studentLinks = [
@@ -155,7 +159,6 @@ const NavBar = () => {
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-
           {/* LOGO */}
           <Link
             to={homeRoute}
@@ -201,7 +204,6 @@ const NavBar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-4">
-
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -221,14 +223,16 @@ const NavBar = () => {
                     align="end"
                   >
                     <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/50 rounded-t-xl">
-                      <h4 className="font-semibold text-gray-900">Notifications</h4>
+                      <h4 className="font-semibold text-gray-900">
+                        Notifications
+                      </h4>
                       {unreadCount > 0 && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-6 w-6 text-gray-500 hover:text-[#6A38C2]"
                                 onClick={readAll}
                               >
@@ -249,7 +253,9 @@ const NavBar = () => {
                           <div className="bg-gray-100 p-3 rounded-full mb-3">
                             <Bell className="w-6 h-6 text-gray-400" />
                           </div>
-                          <p className="text-sm text-gray-500">No notifications yet</p>
+                          <p className="text-sm text-gray-500">
+                            No notifications yet
+                          </p>
                         </div>
                       ) : (
                         notifications.map((noti) => (
@@ -261,47 +267,56 @@ const NavBar = () => {
                             }`}
                           >
                             <div className="flex-shrink-0 mt-1">
-                                <div
-                                  className={`p-1.5 rounded-full ${
-                                    noti.type === "application_status"
-                                      ? "bg-blue-100 text-blue-600"
-                                      : "bg-gray-100 text-gray-600"
-                                  }`}
-                                >
-                                  {noti.type === "application_status" ? (
-                                    <CheckCircle2 size={14} />
-                                  ) : (
-                                    <AlertCircle size={14} />
-                                  )}
-                                </div>
+                              <div
+                                className={`p-1.5 rounded-full ${
+                                  noti.type === "application_status"
+                                    ? "bg-blue-100 text-blue-600"
+                                    : "bg-gray-100 text-gray-600"
+                                }`}
+                              >
+                                {noti.type === "application_status" ? (
+                                  <CheckCircle2 size={14} />
+                                ) : (
+                                  <AlertCircle size={14} />
+                                )}
+                              </div>
                             </div>
 
                             {/* Content */}
                             <div className="flex-1 min-w-0 pr-6">
-                              <p className={`text-sm ${!noti.isRead ? 'font-semibold text-gray-900' : 'text-gray-700'} leading-snug break-words`}>
+                              <p
+                                className={`text-sm ${
+                                  !noti.isRead
+                                    ? "font-semibold text-gray-900"
+                                    : "text-gray-700"
+                                } leading-snug break-words`}
+                              >
                                 {noti.message}
                               </p>
                               <span className="text-[10px] text-gray-400 mt-1 block">
-                                {new Date(noti.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                {new Date(noti.createdAt).toLocaleString([], {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })}
                               </span>
                             </div>
 
                             <div className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-0 opacity-100">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                                    onClick={(e) => {
-                                        e.stopPropagation(); 
-                                        deleteNotice(noti._id);
-                                    }}
-                                >
-                                    <Trash2 size={14} />
-                                </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotice(noti._id);
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
                             </div>
-                            
+
                             {!noti.isRead && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#6A38C2] group-hover:opacity-0 transition-opacity" />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#6A38C2] group-hover:opacity-0 transition-opacity" />
                             )}
                           </div>
                         ))
@@ -314,7 +329,10 @@ const NavBar = () => {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Avatar className="cursor-pointer w-9 h-9 ring-2 ring-offset-2 ring-transparent hover:ring-[#6A38C2]/20 transition-all">
-                      <AvatarImage src={user?.profilePhoto} objectFit="object-cover" />
+                      <AvatarImage
+                        src={user?.profilePhoto}
+                        className="object-cover"
+                      />
                       <AvatarFallback className="bg-[#6A38C2] text-white">
                         {user?.fullName?.[0]?.toUpperCase()}
                       </AvatarFallback>
@@ -323,58 +341,93 @@ const NavBar = () => {
 
                   <PopoverContent className="w-60 p-2 mr-4" align="end">
                     <div className="flex items-center gap-3 px-3 py-3 border-b border-gray-100 mb-1">
-                        <Avatar className="w-10 h-10">
-                            <AvatarImage src={user?.profilePhoto} />
-                            <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col overflow-hidden">
-                            <span className="font-semibold text-gray-900 truncate text-sm">{user?.fullName}</span>
-                            <span className="text-xs text-gray-500 capitalize">{user?.role}</span>
-                        </div>
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={user?.profilePhoto} />
+                        <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="font-semibold text-gray-900 truncate text-sm">
+                          {user?.fullName}
+                        </span>
+                        <span className="text-xs text-gray-500 capitalize">
+                          {user?.role}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="space-y-0.5 mt-2">
                       {user?.role === "student" && (
                         <>
-                         <div>
-                          <h1 className="font-semibold text-gray-900 text-sm">Manage Account</h1>
-                         <Link to="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
-                            <User2 size={16} /> Profile
-                          </Link>
-                          <Link to="/setting-account" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
-                            <Settings size={16} /> Setting Account
-                          </Link>
+                          <div>
+                            <h1 className="font-semibold text-gray-900 text-sm">
+                              Manage Account
+                            </h1>
+                            <Link
+                              to="/profile"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <User2 size={16} /> Profile
+                            </Link>
+                            <Link
+                              to="/setting-account"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <Settings size={16} /> Setting Account
+                            </Link>
                           </div>
                           <div>
-                            <h1 className="font-semibold text-gray-900 text-sm">Manage CV</h1>
-                            <Link to="/cv/list" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                            <h1 className="font-semibold text-gray-900 text-sm">
+                              Manage CV
+                            </h1>
+                            <Link
+                              to="/cv/list"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
                               <FileText size={16} /> CV List
                             </Link>
                           </div>
                           <div>
-                          <h1 className="font-semibold text-gray-900 text-sm">Manage Job</h1>
-                          <Link to="/saved-jobs" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
-                            <Heart size={16} /> Saved Jobs
-                          </Link>
-                          <Link to="/applied-jobs" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
-                            <Briefcase size={16} /> Applied Jobs
-                          </Link>
+                            <h1 className="font-semibold text-gray-900 text-sm">
+                              Manage Job
+                            </h1>
+                            <Link
+                              to="/saved-jobs"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <Heart size={16} /> Saved Jobs
+                            </Link>
+                            <Link
+                              to="/applied-jobs"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <Briefcase size={16} /> Applied Jobs
+                            </Link>
                           </div>
                           <div>
-                          <h1 className="font-semibold text-gray-900 text-sm">Notifications</h1>
-                          <Link to="/notifications" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
-                            <Bell size={16} /> Notifications
-                          </Link>
+                            <h1 className="font-semibold text-gray-900 text-sm">
+                              Notifications
+                            </h1>
+                            <Link
+                              to="/notifications"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <Bell size={16} /> Notifications
+                            </Link>
                           </div>
-                          
                         </>
                       )}
                       {user?.role === "recruiter" && (
-                        <>                       
-                          <Link to="/notifications" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                        <>
+                          <Link
+                            to="/notifications"
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                          >
                             <Bell size={16} /> Notifications
                           </Link>
-                          <Link to="/setting-account" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors">
+                          <Link
+                            to="/setting-account"
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                          >
                             <Settings size={16} /> Setting Account
                           </Link>
                         </>

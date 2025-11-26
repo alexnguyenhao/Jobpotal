@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { deleteCompany, fetchCompanies } from "@/redux/companySlice.js";
 import { toast } from "sonner";
+import { format } from "date-fns"; // Gợi ý: Dùng thư viện này format ngày cho đẹp (npm install date-fns)
 
 // --- UI COMPONENTS ---
 import {
@@ -24,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge"; // Nếu chưa có: npx shadcn-ui@latest add badge
 
 import useGetAllCompanies from "@/hooks/useGetAllCompanies";
 import {
@@ -35,6 +37,9 @@ import {
   Building2,
   MapPin,
   Globe,
+  MoreHorizontal,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 // --- SHARED ---
@@ -50,7 +55,6 @@ const CompaniesTable = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ❗ CALL HOOK CORRECTLY (top-level)
   useGetAllCompanies();
 
   const filterCompanies =
@@ -70,7 +74,7 @@ const CompaniesTable = () => {
 
     dispatch(deleteCompany(selectedCompany._id))
       .then(() => {
-        dispatch(fetchCompanies());   
+        dispatch(fetchCompanies());
         toast.success(`Deleted "${selectedCompany.name}" successfully!`);
       })
       .catch(() => {
@@ -83,14 +87,14 @@ const CompaniesTable = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6 animate-in fade-in duration-500">
-      {/* --- HEADER SECTION --- */}
+      {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
             Companies
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage your registered organizations and profiles.
+            Manage your registered organizations.
           </p>
         </div>
         <Button
@@ -103,18 +107,20 @@ const CompaniesTable = () => {
         </Button>
       </div>
 
-      {/* --- MAIN CONTENT CARD --- */}
-      <Card className="shadow-sm border-gray-200">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Registered Companies</CardTitle>
+      {/* --- MAIN CARD --- */}
+      <Card className="border-none shadow-md bg-white">
+        <CardHeader className="pb-4 border-b">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <CardTitle className="text-xl font-semibold">
+              Total Companies: {companies.length}
+            </CardTitle>
 
-            {/* Search Bar */}
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            {/* Search Bar stylized */}
+            <div className="relative w-full sm:w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search by company name..."
-                className="pl-9 bg-gray-50 focus:bg-white transition-all"
+                placeholder="Search companies..."
+                className="pl-9 bg-gray-50 border-gray-200 focus:bg-white transition-all rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -122,18 +128,15 @@ const CompaniesTable = () => {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-0">
           {/* LOADING STATE */}
           {loading && (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center space-x-4 p-4 border rounded-lg"
-                >
-                  <Skeleton className="h-12 w-12 rounded-md" />
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
                     <Skeleton className="h-4 w-[150px]" />
                   </div>
                 </div>
@@ -143,181 +146,169 @@ const CompaniesTable = () => {
 
           {/* EMPTY STATE */}
           {!loading && filterCompanies.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <Building2 className="h-8 w-8 text-gray-400" />
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="bg-gray-50 p-6 rounded-full mb-4">
+                <Building2 className="h-10 w-10 text-gray-300" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900">
                 No companies found
               </h3>
-              <p className="text-gray-500 max-w-sm mt-2">
-                You haven't registered any companies yet or your search returned
-                no results.
+              <p className="text-gray-500 mt-1">
+                Try adjusting your search or register a new one.
               </p>
             </div>
           )}
 
-          {/* DATA TABLE */}
+          {/* TABLE */}
           {!loading && filterCompanies.length > 0 && (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow>
-                    <TableHead className="w-[400px]">Company Profile</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Website</TableHead>
-                    <TableHead className="text-right">Date Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filterCompanies.map((company) => (
-                    <TableRow
-                      key={company._id}
-                      className="group hover:bg-slate-50 transition-colors"
-                    >
-                      {/* 1. Profile Info */}
-                      <TableCell className="py-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 rounded-lg border bg-white shadow-sm">
-                            <AvatarImage
-                              src={company?.logo}
-                              className="object-contain"
-                            />
-                            <AvatarFallback className="rounded-lg bg-gray-100 text-gray-500 font-bold">
-                              {company?.name?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="space-y-1">
-                            <Link
-                              to={`/company/${company._id}`}
-                              className="font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-1"
-                            >
-                              {company?.name}
-                            </Link>
-                            <p className="text-xs text-gray-500 line-clamp-1 max-w-[250px]">
-                              {company?.description ||
-                                "No description provided."}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      {/* 2. Location */}
-                      <TableCell className="text-sm text-gray-600">
-                        {company?.location ? (
-                          <div className="flex items-center gap-1.5">
-                            <MapPin size={14} className="text-gray-400" />
-                            <span className="truncate max-w-[150px]">
-                              {company.location}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic">N/A</span>
-                        )}
-                      </TableCell>
-
-                      {/* 3. Website (Optional Col) */}
-                      <TableCell className="text-sm">
-                        {company?.website ? (
-                          <a
-                            href={company.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 text-blue-600 hover:underline"
+            <Table>
+              <TableHeader className="bg-gray-50/50">
+                <TableRow>
+                  <TableHead className="w-[350px] pl-6">Company</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Verified</TableHead>
+                  <TableHead className="text-right pr-6">Date</TableHead>
+                  <TableHead className="text-right pr-6">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filterCompanies.map((company) => (
+                  <TableRow
+                    key={company._id}
+                    className="group hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0"
+                  >
+                    {/* 1. Profile Info */}
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-14 w-14 rounded-xl border border-gray-100 shadow-sm bg-white">
+                          <AvatarImage
+                            src={company?.logo}
+                            className="object-contain p-1"
+                          />
+                          <AvatarFallback className="rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 font-bold text-lg">
+                            {company?.name?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <Link
+                            to={`/company/${company._id}`}
+                            className="font-semibold text-gray-900 hover:text-[#6A38C2] transition-colors text-base"
                           >
-                            <Globe size={14} />
-                            Visit
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-xs">
-                            No website
+                            {company?.name}
+                          </Link>
+                          <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                            {company?.description || "No description provided"}
                           </span>
-                        )}
-                      </TableCell>
+                          {/* Website mini link */}
+                          {company?.website && (
+                            <a
+                              href={company.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1"
+                            >
+                              <Globe size={10} /> {company.website}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
 
-                      {/* 4. Date */}
-                      <TableCell className="text-right text-sm text-gray-500">
-                        {company?.createdAt
-                          ? new Date(company.createdAt).toLocaleDateString(
-                              "en-GB"
-                            )
-                          : "N/A"}
-                      </TableCell>
+                    {/* 2. Location */}
+                    <TableCell>
+                      {company?.location ? (
+                        <div className="flex items-center gap-2 text-gray-600 text-sm">
+                          <MapPin
+                            size={14}
+                            className="text-gray-400 shrink-0"
+                          />
+                          <span className="truncate max-w-[150px]">
+                            {company.location}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic text-sm">--</span>
+                      )}
+                    </TableCell>
 
-                      {/* 5. Actions Buttons (Tooltip) */}
-                      <TableCell className="text-right">
+                    {/* 3. Status (Badge) */}
+                    <TableCell className="text-center">
+                      <Badge
+                        variant="secondary" // Hoặc dùng variant của bạn
+                        className={`${
+                          company?.status === "active"
+                            ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200"
+                        } px-2.5 py-0.5 rounded-full font-normal shadow-none border`}
+                      >
+                        {company?.status === "active" ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+
+                    {/* 4. Verified */}
+                    <TableCell className="text-center">
+                      {company?.isVerified ? (
                         <TooltipProvider>
-                          <div className="flex items-center justify-end gap-1">
-                            {/* View */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  asChild
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 hover:text-green-600"
-                                >
-                                  <Link to={`/recruiter/companies/${company._id}`}>
-                                    <Eye size={16} />
-                                  </Link>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>View Details</TooltipContent>
-                            </Tooltip>
-
-                            {/* Edit */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  asChild
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 hover:text-blue-600"
-                                >
-                                  <Link to={`/recruiter/companies/${company._id}`}>
-                                    {" "}
-                                    {/* Note: Route edit của bạn có thể khác, check lại nhé */}
-                                    <Edit size={16} />
-                                  </Link>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit Company</TooltipContent>
-                            </Tooltip>
-
-                            {/* Delete */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 hover:text-red-600"
-                                  onClick={() => handleDeleteClick(company)}
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete</TooltipContent>
-                            </Tooltip>
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <CheckCircle2 className="h-5 w-5 text-blue-500 mx-auto" />
+                            </TooltipTrigger>
+                            <TooltipContent>Verified Company</TooltipContent>
+                          </Tooltip>
                         </TooltipProvider>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      ) : (
+                        <span className="text-red-500">Not Verified</span>
+                      )}
+                    </TableCell>
+
+                    {/* 5. Date */}
+                    <TableCell className="text-right text-gray-500 text-sm pr-6">
+                      {company?.createdAt
+                        ? company.createdAt.split("T")[0] // Hoặc dùng format(new Date(company.createdAt), 'dd MMM yyyy')
+                        : "N/A"}
+                    </TableCell>
+
+                    {/* 6. Actions */}
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Edit Button */}
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full border-gray-200 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                        >
+                          <Link to={`/recruiter/companies/${company._id}`}>
+                            <Edit size={14} />
+                          </Link>
+                        </Button>
+
+                        {/* Delete Button */}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full border-gray-200 hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                          onClick={() => handleDeleteClick(company)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      {/* CONFIRM DELETE DIALOG */}
       <ConfirmDeleteDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Company"
-        message={`Are you sure you want to delete "${selectedCompany?.name}"? This will also remove all associated jobs.`}
+        message={`Are you sure you want to delete "${selectedCompany?.name}"?`}
       />
     </div>
   );

@@ -15,7 +15,7 @@ import Browse from "@/components/Browse.jsx";
 import Profile from "@/components/Profile.jsx";
 import JobDescription from "@/components/JobDescription.jsx";
 
-// Admin pages
+// Recruiter pages
 import Companies from "@/components/admin/company/Companies.jsx";
 import CompanyCreate from "@/components/admin/company/CompanyCreate.jsx";
 import CompanySetup from "@/components/admin/company/CompanySetup.jsx";
@@ -25,23 +25,50 @@ import Applicants from "@/components/admin/applicant/Applicants.jsx";
 import ProfileCompany from "@/components/admin/company/ProfileCompany.jsx";
 import Resume from "@/components/profile/Resume.jsx";
 import RecruiterResume from "./components/admin/applicant/RecruiterResume.jsx";
+import JobDescriptionRecruiter from "@/components/admin/job/JobDescriptionRecruiter.jsx";
+import UpdateJob from "@/components/admin/job/UpdateJob.jsx";
+
+// CV Pages
 import CVHome from "@/components/cv/CVHome.jsx";
 import CVBuilder from "@/components/cv/CVBuilder.jsx";
 import CVList from "@/components/cv/CVList.jsx";
 import CVView from "@/components/cv/CVView.jsx";
 import ApplicantCVView from "@/components/admin/applicant/ApplicantCVView.jsx";
-import CareerGuideHome from "@/components/admin/careerGuides/CareerGuideHome.jsx";
+
+// Public Career Guide
 import CareerGuide from "@/components/careerguide/CareerGuide.jsx";
-import CareerGuideCreate from "@/components/admin/careerGuides/CareerGuideCreate.jsx";
-import CareerGuideEdit from "@/components/admin/careerGuides/CareerGuideEdit.jsx";
-import CareerGuideDetail from "@/components/admin/careerGuides/CareerGuideDetail.jsx";
 import GuideDetail from "./components/careerguide/GuideDetail";
-import JobDescriptionRecruiter from "@/components/admin/job/JobDescriptionRecruiter.jsx";
-import UpdateJob from "@/components/admin/job/UpdateJob.jsx";
+
+// User Settings
 import Notifications from "@/components/Notifications.jsx";
 import AppliedJobTable from "@/components/AppliedJobTable.jsx";
 import SavedJobTable from "@/components/SavedJobTable.jsx";
 import SettingAccount from "@/components/SettingAccount.jsx";
+
+// --- ADMIN IMPORT ---
+import AdminLogin from "@/components/DashBoardAdmin/Auth/AdminLogin.jsx";
+import ProtectedAdminRoute from "@/components/DashBoardAdmin/Auth/ProtectedAdminRoute.jsx";
+import AdminLayout from "./components/DashBoardAdmin/Dashboard/Layout/AdminLayout.jsx";
+import AdminDashboard from "@/components/DashBoardAdmin/Dashboard/AdminDashboard.jsx";
+
+// Admin Tables
+import AdminUsersTable from "./components/DashBoardAdmin/AdminUsersTable.jsx";
+import AdminJobsTable from "./components/DashBoardAdmin/AdminJobsTable.jsx";
+import AdminCompaniesTable from "./components/DashBoardAdmin/AdminCompaniesTable.jsx";
+import AdminApplicationsTable from "./components/DashBoardAdmin/AdminApplicationsTable.jsx";
+import Analytics from "./components/DashBoardAdmin/Analytics.jsx";
+import Setting from "./components/DashBoardAdmin/Setting.jsx";
+
+// Admin Details
+import UserDetail from "./components/DashBoardAdmin/UserDetail.jsx";
+import CompanyDetail from "./components/DashBoardAdmin/CompanyDetail.jsx";
+import JobDetail from "./components/DashBoardAdmin/JobDetail.jsx";
+
+// ✅ ADMIN CAREER GUIDE IMPORTS (ĐÃ SỬA)
+import CareerGuideHome from "@/components/DashBoardAdmin/careerGuides/CareerGuideHome.jsx";
+import CareerGuideCreate from "@/components/DashBoardAdmin/careerGuides/CareerGuideCreate.jsx";
+import CareerGuideEdit from "@/components/DashBoardAdmin/careerGuides/CareerGuideEdit.jsx";
+import CareerGuideDetail from "@/components/DashBoardAdmin/careerGuides/CareerGuideDetail.jsx";
 
 const appRouter = createBrowserRouter([
   // ✅ Routes có layout chung (NavBar + Footer)
@@ -54,9 +81,9 @@ const appRouter = createBrowserRouter([
       { path: "/notifications", element: <Notifications /> },
       { path: "/description/:id", element: <JobDescription /> },
       { path: "/profile", element: <Profile /> },
-      {path: "/saved-jobs", element: <SavedJobTable />},
-      {path: "/applied-jobs", element: <AppliedJobTable />},
-      {path: "/setting-account", element: <SettingAccount />},
+      { path: "/saved-jobs", element: <SavedJobTable /> },
+      { path: "/applied-jobs", element: <AppliedJobTable /> },
+      { path: "/setting-account", element: <SettingAccount /> },
       { path: "/recruiter/companies", element: <Companies /> },
       { path: "/recruiter/companies/create", element: <CompanyCreate /> },
       { path: "/recruiter/companies/:id", element: <CompanySetup /> },
@@ -80,16 +107,8 @@ const appRouter = createBrowserRouter([
       { path: "/cv/list", element: <CVList /> },
       { path: "/cv/:id", element: <CVView /> },
       { path: "/cv/view/:id", element: <ApplicantCVView /> },
-      { path: "/recruiter/career-guides", element: <CareerGuideHome /> },
-      { path: "/recruiter/career-guides/create", element: <CareerGuideCreate /> },
-      { path: "/recruiter/career-guides/edit/:id", element: <CareerGuideEdit /> },
-      {
-        path: "/recruiter/career-guides/detail/:id",
-        element: <CareerGuideDetail />,
-      },
       { path: "/career-guides", element: <CareerGuide /> },
-      //<Link to={`/career-guide/detail/${guide.slug || guide._id}`}>
-      { path: "/career-guide/detail/:id", element: <GuideDetail /> }, //slug
+      { path: "/career-guide/detail/:id", element: <GuideDetail /> },
     ],
   },
 
@@ -99,6 +118,77 @@ const appRouter = createBrowserRouter([
   { path: "/verify-email", element: <Verification /> },
   { path: "/reset-password", element: <ResetPassword /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
+
+  // ✅ ADMIN SYSTEM ROUTES
+  {
+    path: "/admin/login",
+    element: <AdminLogin />,
+  },
+  {
+    path: "/admin",
+    element: (
+      <ProtectedAdminRoute>
+        <AdminLayout />
+      </ProtectedAdminRoute>
+    ),
+    children: [
+      {
+        path: "dashboard",
+        element: <AdminDashboard />,
+      },
+      // --- Tables ---
+      {
+        path: "users",
+        element: <AdminUsersTable />,
+      },
+      {
+        path: "jobs",
+        element: <AdminJobsTable />,
+      },
+      {
+        path: "companies",
+        element: <AdminCompaniesTable />,
+      },
+      {
+        path: "applications",
+        element: <AdminApplicationsTable />,
+      },
+
+      { path: "analytics", element: <Analytics /> },
+      { path: "settings", element: <Setting /> },
+
+      {
+        path: "users/:id",
+        element: <UserDetail />,
+      },
+      {
+        path: "companies/:id",
+        element: <CompanyDetail />,
+      },
+      {
+        path: "jobs/:id",
+        element: <JobDetail />,
+      },
+
+      // --- Career Guides Management ---
+      {
+        path: "career-guides",
+        element: <CareerGuideHome />,
+      },
+      {
+        path: "career-guides/create",
+        element: <CareerGuideCreate />, // Bây giờ nó sẽ render đúng form create
+      },
+      {
+        path: "career-guides/edit/:id",
+        element: <CareerGuideEdit />,
+      },
+      {
+        path: "career-guides/detail/:id",
+        element: <CareerGuideDetail />,
+      },
+    ],
+  },
 ]);
 
 function App() {

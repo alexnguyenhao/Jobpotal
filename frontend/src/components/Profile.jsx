@@ -21,14 +21,12 @@ import {
   FileText,
   PenBox,
   ExternalLink,
+  Users,
+  MessageCircleHeart,
 } from "lucide-react";
-
-// Components
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSections from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
-
-// Dialogs
 import UpdateProfileDialog from "@/components/profile/UpdateProfileDialog";
 import UpdateTitleProfileDialog from "@/components/profile/UpdateTitleProfileDialog";
 import UpdateWorkExperienceDialog from "@/components/profile/UpdateWorkExperienceDialog";
@@ -37,6 +35,8 @@ import UpdateCertificationDialog from "@/components/profile/UpdateCertificationD
 import UpdateLanguagesDialog from "@/components/profile/UpdateLanguagesDialog";
 import UpdateAchievementsDialog from "@/components/profile/UpdateAchievementsDialog";
 import UpdateProjectsDialog from "@/components/profile/UpdateProjectsDialog";
+import UpdateOperationsDialog from "@/components/profile/UpdateoperationsDialog";
+import UpdateInterestsDialog from "@/components/profile/UpdateinterestsDialog";
 
 const Profile = () => {
   useGetAppliedJobs(); // Fetch applied jobs on mount
@@ -57,6 +57,7 @@ const Profile = () => {
     lang: false,
     achieve: false,
     proj: false,
+    operations: false,
   });
 
   // --- HANDLERS ---
@@ -132,6 +133,18 @@ const Profile = () => {
       data: user?.profile?.projects || [],
       openSetter: (v) => setOpen((prev) => ({ ...prev, proj: v })),
     },
+    {
+      title: "Operations",
+      icon: Users,
+      data: user?.profile?.operations || [],
+      openSetter: (v) => setOpen((prev) => ({ ...prev, operations: v })),
+    },
+    {
+      title: "Interests",
+      icon: MessageCircleHeart,
+      data: user?.profile?.interests || [],
+      openSetter: (v) => setOpen((prev) => ({ ...prev, interests: v })),
+    },
   ];
 
   if (!user) return null;
@@ -173,22 +186,19 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* --- PROFILE HEADER (INFO CHÍNH) --- */}
         <ProfileHeader
           user={user}
           onEdit={() => setOpen((prev) => ({ ...prev, profile: true }))}
-          // Pass props để upload avatar trực tiếp tại đây
           fileInputRef={fileInputRef}
           onClickAvatar={() => fileInputRef.current?.click()}
           onAvatarChange={handleAvatarChange}
         />
 
-        {/* --- PROFILE DETAIL SECTIONS --- */}
+
         <ProfileSections sections={profileSections} />
 
       </div>
 
-      {/* --- MODALS / DIALOGS --- */}
       <UpdateProfileDialog
         open={open.profile}
         setOpen={(v) => setOpen((prev) => ({ ...prev, profile: v }))}
@@ -196,6 +206,7 @@ const Profile = () => {
       <UpdateTitleProfileDialog
         open={open.title}
         setOpen={(v) => setOpen((prev) => ({ ...prev, title: v }))}
+        initialData={user?.profile?.title || []}
       />
       <UpdateWorkExperienceDialog
         open={open.work}
@@ -225,6 +236,16 @@ const Profile = () => {
         open={open.proj}
         setOpen={(v) => setOpen((prev) => ({ ...prev, proj: v }))}
         initialData={user?.profile?.projects || []}
+      />
+      <UpdateOperationsDialog
+        open={open.operations}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, operations: v }))}
+        initialData={user?.profile?.operations || []}
+      />
+      <UpdateInterestsDialog
+        open={open.interests}
+        setOpen={(v) => setOpen((prev) => ({ ...prev, interests: v }))}
+        initialData={user?.profile?.interests || []}
       />
     </div>
   );

@@ -7,14 +7,9 @@ import {
   resetCompanyState,
 } from "@/redux/companySlice";
 import { toast } from "sonner";
-
-// UI Components
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-
 // Icons
 import {
   MapPin,
@@ -25,7 +20,6 @@ import {
   Building2,
   Calendar,
   Facebook,
-  ArrowLeft,
   Edit,
   CheckCircle2,
   AlertCircle,
@@ -155,7 +149,6 @@ const ProfileCompany = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-
       {/* --- MAIN CONTENT --- */}
       <div className="max-w-5xl mx-auto mt-8 px-4 md:px-0">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
@@ -203,6 +196,7 @@ const ProfileCompany = () => {
                   <span className="flex items-center gap-1.5">
                     <MapPin size={14} /> {company.location || "N/A"}
                   </span>
+                  <span>TaxCode: {company.taxCode || "N/A"}</span>
                   {company.website && (
                     <a
                       href={company.website}
@@ -324,7 +318,9 @@ const ProfileCompany = () => {
                     <Button
                       variant="outline"
                       className="w-full border-dashed"
-                      onClick={() => navigate(`/recruiter/companies/${company._id}`)}
+                      onClick={() =>
+                        navigate(`/recruiter/companies/${company._id}`)
+                      }
                     >
                       Update Company Details
                     </Button>

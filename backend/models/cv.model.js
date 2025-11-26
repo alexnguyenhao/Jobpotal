@@ -82,6 +82,16 @@ const cvSchema = new mongoose.Schema(
         technologies: [String],
       },
     ],
+    operations: [
+      {
+        title: String,
+        position: String,
+        description: String,
+        startDate: String,
+        endDate: String,
+      },
+    ],
+    interests: { type: String },
     styleConfig: {
       fontFamily: { type: String, default: "font-sans" },
       fontSizeClass: { type: String, default: "text-base" },

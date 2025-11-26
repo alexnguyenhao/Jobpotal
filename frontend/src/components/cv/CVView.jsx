@@ -24,7 +24,10 @@ const CVView = () => {
     languages,
     achievements,
     projects,
+    operations,
+    interests,
     styleConfig,
+
   } = useSelector((state) => state.cv);
 
   const [loading, setLoading] = useState(true);
@@ -64,6 +67,8 @@ const CVView = () => {
     languages,
     achievements,
     projects,
+    operations,
+    interests,
     styleConfig,
   };
 

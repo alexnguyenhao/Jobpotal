@@ -121,7 +121,7 @@ export const deleteCompany = createAsyncThunk(
       await axios.delete(`${COMPANY_API_END_POINT}/delete/${companyId}`, {
         withCredentials: true,
       });
-      return companyId; 
+      return companyId;
     } catch (error) {
       const msg = error.response?.data?.message || "Failed to delete company";
       toast.error(msg);
@@ -135,10 +135,11 @@ const companySlice = createSlice({
   name: "company",
   initialState: {
     singleCompany: null,
-    companies: [], 
+    companies: [],
     searchCompanyByText: "",
     loading: false,
     error: null,
+    status: "",
   },
   reducers: {
     setSingleCompany: (state, action) => {
@@ -154,6 +155,9 @@ const companySlice = createSlice({
       state.singleCompany = null;
       state.loading = false;
       state.error = null;
+    },
+    setStatus: (state, action) => {
+      state.status = action.payload;
     },
   },
 
@@ -173,12 +177,12 @@ const companySlice = createSlice({
       });
     builder
       .addCase(fetchPublicCompanies.pending, (state) => {
-        state.loading = true; 
+        state.loading = true;
         state.error = null;
       })
       .addCase(fetchPublicCompanies.fulfilled, (state, action) => {
         state.loading = false;
-        state.companies = action.payload; 
+        state.companies = action.payload;
       })
       .addCase(fetchPublicCompanies.rejected, (state, action) => {
         state.loading = false;

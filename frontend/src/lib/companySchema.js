@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const companySchema = z.object({
   name: z.string().min(2, "Company name is required"),
+  taxCode: z.string().min(10, "Tax code is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   location: z.string().min(2, "Location is required"),
@@ -22,7 +23,5 @@ export const companySchema = z.object({
   email: z.string().email("Invalid email address"),
   facebook: z.string().url("Invalid Facebook URL").optional().or(z.literal("")),
   tags: z.string().optional(),
-  status: z.enum(["active", "inactive", "banned"]),
-  isVerified: z.boolean(),
   file: z.any().optional(),
 });

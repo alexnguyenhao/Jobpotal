@@ -17,8 +17,5 @@ router.get("/get", isAuthenticated, getCompany);
 router.get("/recruiter/:id", isAuthenticated, getCompanyById);
 router.put("/update/:id", isAuthenticated, singleUpload, updateCompany);
 router.delete("/delete/:id", isAuthenticated, deleteCompany);
-
-// ✅ Cuối cùng mới để route public "/:id"
 router.get("/:id", getCompanyById);
-
 export default router;

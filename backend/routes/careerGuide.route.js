@@ -2,28 +2,22 @@ import express from "express";
 import {
   createCareerGuide,
   getAllCareerGuides,
+  getAllCareerGuidesAdmin,
   getCareerGuideById,
+  getCareerGuideByIdAdmin,
   updateCareerGuide,
   deleteCareerGuide,
-  getCareerGuidesByRecruiter,
-  getCareerGuideDetailsForRecruiter,
 } from "../controllers/careerGuide.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
+import isAdmin from "../middlewares/isAdmin.js";
 
 const router = express.Router();
+router.post("/admin/create", isAuthenticated, isAdmin, createCareerGuide);
+router.get("/admin", isAuthenticated, isAdmin, getAllCareerGuidesAdmin);
+router.get("/admin/:id", isAuthenticated, isAdmin, getCareerGuideByIdAdmin);
+router.put("/admin/:id", isAuthenticated, isAdmin, updateCareerGuide);
+router.delete("/admin/:id", isAuthenticated, isAdmin, deleteCareerGuide);
 
-// ================================
-// PRIVATE ROUTES (PHẢI ĐỂ TRÊN)
-// ================================
-router.post("/create", isAuthenticated, createCareerGuide);
-router.get("/mine", isAuthenticated, getCareerGuidesByRecruiter);
-router.get("/mine/:id", isAuthenticated, getCareerGuideDetailsForRecruiter);
-router.put("/update/:id", isAuthenticated, updateCareerGuide);
-router.delete("/delete/:id", isAuthenticated, deleteCareerGuide);
-
-// ================================
-// PUBLIC ROUTES (ĐỂ SAU CÙNG)
-// ================================
 router.get("/", getAllCareerGuides);
 router.get("/:id", getCareerGuideById);
 

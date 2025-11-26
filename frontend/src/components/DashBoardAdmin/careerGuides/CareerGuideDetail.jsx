@@ -57,7 +57,7 @@ const CareerGuideDetail = () => {
     const load = async () => {
       const data = await fetchMyGuideById(id);
       if (!data) {
-        return navigate("/recruiter/career-guides");
+        return navigate("/admin/career-guides");
       }
       setGuide(data);
       setLoading(false);
@@ -77,7 +77,7 @@ const CareerGuideDetail = () => {
     const ok = await deleteGuide(id);
 
     if (ok) {
-      navigate("/recruiter/career-guides");
+      navigate("/admin/career-guides");
     } else {
       setIsDeleting(false);
     }
@@ -109,7 +109,7 @@ const CareerGuideDetail = () => {
             variant="ghost"
             size="icon"
             className="rounded-full hover:bg-gray-100"
-            onClick={() => navigate("/recruiter/career-guides")}
+            onClick={() => navigate("/admin/career-guides")}
           >
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Button>
@@ -145,7 +145,7 @@ const CareerGuideDetail = () => {
           <Button
             variant="outline"
             className="hidden sm:flex"
-            onClick={() => navigate(`/recruiter/career-guides/edit/${guide._id}`)}
+            onClick={() => navigate(`/admin/career-guides/edit/${guide._id}`)}
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit Guide
@@ -204,7 +204,7 @@ const CareerGuideDetail = () => {
                 </Avatar>
                 <div>
                   <p className="text-sm font-bold text-gray-900">
-                    {guide.author?.fullName || "Recruiter"}
+                    {guide.author?.fullName || "admin"}
                   </p>
                   <p className="text-xs text-gray-500">Content Creator</p>
                 </div>
@@ -330,7 +330,7 @@ const CareerGuideDetail = () => {
                 <div>
                   <p className="text-sm font-bold text-gray-900">Author</p>
                   <p className="text-sm text-gray-600">
-                    {guide.author?.fullName || "Recruiter"}
+                    {guide.author?.fullName || "admin"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {guide.author?.email}
@@ -345,7 +345,7 @@ const CareerGuideDetail = () => {
                 variant="outline"
                 className="w-full border-dashed"
                 onClick={() =>
-                  navigate(`/recruiter/career-guides/edit/${guide._id}`)
+                  navigate(`/admin/career-guides/edit/${guide._id}`)
                 }
               >
                 <Edit size={16} className="mr-2" /> Update Content

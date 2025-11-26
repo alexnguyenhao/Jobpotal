@@ -102,13 +102,14 @@ export const register = async (req, res) => {
       languages: [],
       projects: [],
       achievements: [],
+      operations: [],
+      interests: "",
     };
 
     const newProfile = await Profile.create(profileData);
     newUser.profile = newProfile._id;
     await newUser.save();
 
-   
     const verificationToken = jwt.sign(
       { userId: newUser._id, purpose: "email-verification" },
       process.env.SECRET_KEY,
@@ -141,7 +142,6 @@ export const register = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
-
 
 export const verifyEmail = async (req, res) => {
   try {
@@ -216,7 +216,12 @@ export const login = async (req, res) => {
         message: "Account does not exist with current role",
         success: false,
       });
-
+    if (user.status === "banned")
+      return res.status(403).json({
+        message:
+          "Your account has been banned by admin please contact admin for more details",
+        success: false,
+      });
     if (!user.isEmailVerified)
       return res.status(403).json({
         message: "Please verify your email before logging in",
@@ -224,7 +229,6 @@ export const login = async (req, res) => {
       });
 
     if (user.is2FAEnabled) {
-      
       const otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
         specialChars: false,
@@ -232,22 +236,19 @@ export const login = async (req, res) => {
       });
 
       user.twoFAOtp = otp;
-      user.twoFAOtpExpires = Date.now() + 5 * 60 * 1000; 
+      user.twoFAOtpExpires = Date.now() + 5 * 60 * 1000;
       await user.save();
       const emailSubject = "Login Verification Code (2FA)";
       const emailBody = twoFactorAuthTemplate(otp);
       await sendEmail(user.email, emailSubject, emailBody);
 
-      
       return res.status(200).json({
         message: "OTP sent to your email. Please verify to complete login.",
         success: true,
-        require2FA: true, 
+        require2FA: true,
         userId: user._id,
       });
     }
-
-    
 
     const token = jwt.sign(
       { userId: user._id, role: user.role, company: user.company || null },
@@ -275,31 +276,33 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const verifyLoginOTP = async (req, res) => {
   try {
     const { userId, otp } = req.body;
 
     if (!userId || !otp) {
-      return res.status(400).json({ message: "Missing required fields", success: false });
+      return res
+        .status(400)
+        .json({ message: "Missing required fields", success: false });
     }
 
     const user = await User.findById(userId).populate("profile");
     if (!user) {
-      return res.status(404).json({ message: "User not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
     }
 
-    
     if (!user.twoFAOtp || user.twoFAOtp !== otp) {
       return res.status(400).json({ message: "Invalid OTP", success: false });
     }
 
-   
     if (user.twoFAOtpExpires < Date.now()) {
-      return res.status(400).json({ message: "OTP has expired", success: false });
+      return res
+        .status(400)
+        .json({ message: "OTP has expired", success: false });
     }
 
-    
     user.twoFAOtp = null;
     user.twoFAOtpExpires = null;
     await user.save();
@@ -322,33 +325,40 @@ export const verifyLoginOTP = async (req, res) => {
         user,
         success: true,
       });
-
   } catch (err) {
     console.error("❌ Verify OTP error:", err);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
 export const toggle2FA = async (req, res) => {
   try {
-    const userId = req.id; 
-    const { enable } = req.body; 
+    const userId = req.id;
+    const { enable } = req.body;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found", success: false });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
 
     user.is2FAEnabled = enable;
     await user.save();
 
     return res.status(200).json({
-      message: `Two-Factor Authentication is now ${enable ? "Enabled" : "Disabled"}`,
+      message: `Two-Factor Authentication is now ${
+        enable ? "Enabled" : "Disabled"
+      }`,
       success: true,
-      is2FAEnabled: user.is2FAEnabled
+      is2FAEnabled: user.is2FAEnabled,
     });
-
   } catch (err) {
     console.error("❌ Toggle 2FA error:", err);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -397,6 +407,8 @@ export const updateProfile = async (req, res) => {
       achievements,
       company,
       projects,
+      operations,
+      interests,
     } = req.body;
 
     const file = req.file;
@@ -412,7 +424,6 @@ export const updateProfile = async (req, res) => {
         .status(404)
         .json({ message: "Profile not found", success: false });
 
-  
     if (file) {
       const fileUri = getDataURI(file);
       const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
@@ -434,8 +445,6 @@ export const updateProfile = async (req, res) => {
       profile.skills = Array.isArray(skills)
         ? skills
         : skills.split(",").map((s) => s.trim());
-
-   
 
     if (careerObjective !== undefined)
       profile.careerObjective = careerObjective;
@@ -463,6 +472,13 @@ export const updateProfile = async (req, res) => {
       profile.projects = Array.isArray(projects)
         ? projects
         : JSON.parse(projects);
+    if (operations !== undefined)
+      profile.operations = Array.isArray(operations)
+        ? operations
+        : JSON.parse(operations);
+    if (interests !== undefined) {
+      profile.interests = interests;
+    }
 
     if (company !== undefined && user.role === "recruiter")
       user.company = company;
@@ -706,7 +722,7 @@ export const unsaveJob = async (req, res) => {
   }
 };
 
-  export const getSavedJobs = async (req, res) => {
+export const getSavedJobs = async (req, res) => {
   try {
     const userId = req.id;
     const user = await User.findById(userId).populate({

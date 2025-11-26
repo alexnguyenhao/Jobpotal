@@ -42,6 +42,9 @@ const PostJob = () => {
 
   const { companies } = useSelector((store) => store.company);
   const { categories } = useSelector((store) => store.category);
+  const activeCompanies = companies.filter(
+    (company) => company.status === "active" && company.isVerified
+  );
 
   useGetAllCategories();
 
@@ -62,7 +65,7 @@ const PostJob = () => {
       jobType: [],
       experience: "",
       position: 1,
-      companyId: "",
+      companyId: activeCompanies[0]?._id,
       categoryId: "",
       seniorityLevel: "",
       applicationDeadline: "",
@@ -166,8 +169,8 @@ const PostJob = () => {
                             Company <span className="text-red-500">*</span>
                           </FormLabel>
                           <Select
-                            value={field.value}
                             onValueChange={field.onChange}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -175,11 +178,33 @@ const PostJob = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {companies.map((c) => (
-                                <SelectItem key={c._id} value={c._id}>
-                                  {c.name}
-                                </SelectItem>
-                              ))}
+                              {/* 👇 LOGIC CHECK ĐIỀU KIỆN Ở ĐÂY */}
+                              {activeCompanies.length > 0 ? (
+                                activeCompanies.map((company) => (
+                                  <SelectItem
+                                    key={company._id}
+                                    value={company._id}
+                                  >
+                                    {company.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                // Hiển thị khi không có công ty nào active
+                                <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
+                                  <span className="text-sm text-muted-foreground">
+                                    You don't have any active company.
+                                  </span>
+                                  <Button
+                                    variant="link"
+                                    className="text-[#6A38C2] h-auto p-0"
+                                    onClick={() =>
+                                      navigate("/recruiter/companies/create")
+                                    }
+                                  >
+                                    + Create new company
+                                  </Button>
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -418,10 +443,10 @@ const PostJob = () => {
                         </FormItem>
                       )}
                     />
-                    
+
                     {/* Currency & Negotiable Group */}
                     <div className="flex gap-4 items-end">
-                       <FormField
+                      <FormField
                         control={form.control}
                         name="currency"
                         render={({ field }) => (
@@ -449,7 +474,7 @@ const PostJob = () => {
                         name="isNegotiable"
                         render={({ field }) => (
                           <FormItem className="flex items-center gap-2 pb-2">
-                             <FormControl>
+                            <FormControl>
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
@@ -462,7 +487,7 @@ const PostJob = () => {
                         )}
                       />
                     </div>
-                    
+
                     <FormField
                       control={form.control}
                       name="applicationDeadline"
@@ -470,7 +495,11 @@ const PostJob = () => {
                         <FormItem className="md:col-span-3">
                           <FormLabel>Application Deadline</FormLabel>
                           <FormControl>
-                            <Input type="date" className="md:w-1/3" {...field} />
+                            <Input
+                              type="date"
+                              className="md:w-1/3"
+                              {...field}
+                            />
                           </FormControl>
                         </FormItem>
                       )}

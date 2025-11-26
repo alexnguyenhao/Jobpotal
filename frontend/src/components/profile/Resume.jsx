@@ -13,9 +13,10 @@ import {
   Star,
   FolderGit2,
   ExternalLink,
+  Heart, // Import icon trái tim cho Interests
+  Zap,   // Import icon cho Operations
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 // --- Helper Components ---
 
@@ -27,13 +28,6 @@ const SectionHeader = ({ title, icon: Icon }) => (
     <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide">
       {title}
     </h2>
-  </div>
-);
-
-const ContactItem = ({ icon: Icon, text }) => (
-  <div className="flex items-center gap-2 text-gray-600 text-sm">
-    <Icon size={14} className="text-[#6A38C2]" />
-    <span>{text}</span>
   </div>
 );
 
@@ -118,7 +112,7 @@ const StudentResume = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {/* LEFT COLUMN (Main Info) */}
+          {/* LEFT COLUMN (Main Info - Experience, Projects, Operations) */}
           <div className="md:col-span-2 space-y-10">
             {/* EXPERIENCE */}
             <section>
@@ -193,6 +187,40 @@ const StudentResume = () => {
                 </div>
               ) : (
                 <EmptyState text="Add personal or academic projects." />
+              )}
+            </section>
+
+            {/* OPERATIONS / ACTIVITIES */}
+            <section>
+              <SectionHeader title="Activities & Operations" icon={Zap} />
+              {p.operations?.length > 0 ? (
+                <div className="space-y-6">
+                  {p.operations.map((op, i) => (
+                    <div
+                      key={i}
+                      className="relative pl-4 border-l-2 border-gray-200"
+                    >
+                      <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#6A38C2]" />
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-1">
+                        <h3 className="font-bold text-gray-900 text-lg">
+                          {op.position}
+                        </h3>
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded whitespace-nowrap mt-1 sm:mt-0">
+                          {formatDate(op.startDate)} -{" "}
+                          {op.endDate ? formatDate(op.endDate) : "Present"}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-[#6A38C2] mb-2">
+                        {op.title} {/* Ví dụ: Tên tổ chức, tên chiến dịch */}
+                      </p>
+                      <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                        {op.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState text="Add extracurricular activities or operations." />
               )}
             </section>
           </div>
@@ -276,7 +304,6 @@ const StudentResume = () => {
               <SectionHeader title="Awards & Certs" icon={Award} />
               {p.certifications?.length > 0 || p.achievements?.length > 0 ? (
                 <div className="space-y-4 text-sm">
-                  {/* Combine both lists for simplicity in sidebar */}
                   {p.certifications?.map((cert, i) => (
                     <div key={`cert-${i}`}>
                       <p className="font-bold text-gray-800">{cert.name}</p>
@@ -296,6 +323,26 @@ const StudentResume = () => {
                 <EmptyState text="Add awards." />
               )}
             </section>
+
+             {/* INTERESTS */}
+             <section>
+              <SectionHeader title="Interests" icon={Heart} />
+              {p.interests?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {p.interests.map((int, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600 font-medium"
+                    >
+                      {int}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState text="Add interests." />
+              )}
+            </section>
+
           </div>
         </div>
       </div>

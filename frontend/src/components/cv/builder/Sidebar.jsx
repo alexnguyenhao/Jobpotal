@@ -27,7 +27,8 @@ import CertificationsSection from "./sections/CertificationsSection";
 import LanguagesSection from "./sections/LanguagesSection";
 import AchievementsSection from "./sections/AchievementsSection";
 import TitleSection from "./sections/TitleSection";
-
+import OperationsSection from "./sections/OperationsSection";
+import InterestsSection from "./sections/InterestsSection";
 const Sidebar = ({ cvData, updateField }) => {
   return (
     <div className="w-full md:w-[380px] bg-white border-r h-full flex flex-col">
@@ -184,6 +185,35 @@ const Sidebar = ({ cvData, updateField }) => {
                   cvData={cvData}
                   updateField={updateField}
                 />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 11. Operations */}
+            <AccordionItem
+              value="operations"
+              className="border rounded-lg px-2"
+            >
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
+                  Operations
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <OperationsSection cvData={cvData} updateField={updateField} />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 12. Interests */}
+            <AccordionItem value="interests" className="border rounded-lg px-2">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
+                  Interests
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <InterestsSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

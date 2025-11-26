@@ -17,6 +17,9 @@ import { PenLine } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/authSlice";
+
 
 const titleSchema = z.object({
   title: z
@@ -30,6 +33,7 @@ export default function UpdateTitleProfileDialog({
   initialData = "",
   onUpdate,
 }) {
+  const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
@@ -40,14 +44,12 @@ export default function UpdateTitleProfileDialog({
     defaultValues: { title: "" },
   });
 
-  //i don't want to reset data when open dialog changes
   useEffect(() => {
     if (initialData) {
       reset({ title: initialData });
     }
   }, [initialData, reset]);
 
-  // 🟢 Submit handler
   const onSubmit = async (data) => {
     try {
       const res = await axios.post(
@@ -56,11 +58,13 @@ export default function UpdateTitleProfileDialog({
         { withCredentials: true }
       );
 
-      if (res.data.success) {
-        onUpdate && onUpdate(res.data.user?.profile?.title || data.title);
-        toast.success("Title updated successfully!");
-        setOpen(false);
-      }
+    if (res.data.success) {
+      dispatch(setUser(res.data.user)); 
+      onUpdate && onUpdate(res.data.user?.profile?.title || data.title);
+      toast.success("Title updated successfully!");
+      setOpen(false);
+    }
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update title");
     }

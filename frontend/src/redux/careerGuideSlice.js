@@ -3,9 +3,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const careerGuideSlice = createSlice({
   name: "careerGuide",
   initialState: {
-    publicGuides: [], // Student xem
-    myGuides: [], // Recruiter xem
-    singleGuide: null, // Chi tiết bài viết
+    publicGuides: [],
+    myGuides: [],
+    singleGuide: null,
     loading: false,
     error: null,
   },

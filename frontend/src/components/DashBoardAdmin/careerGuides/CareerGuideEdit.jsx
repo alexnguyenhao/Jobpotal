@@ -30,11 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Icons
-import {
-  Loader2,
-  ArrowLeft,
-  ImageIcon,
-} from "lucide-react";
+import { Loader2, ArrowLeft, ImageIcon } from "lucide-react";
 
 // --- QUILL EDITOR ---
 import Quill from "quill";
@@ -69,7 +65,7 @@ const CareerGuideEdit = () => {
       const data = await fetchMyGuideById(id);
 
       if (!data) {
-        return navigate("/recruiter/career-guides");
+        return navigate("/admin/career-guides");
       }
 
       form.reset({
@@ -107,7 +103,7 @@ const CareerGuideEdit = () => {
     const res = await updateGuide(id, payload);
 
     if (res) {
-      navigate("/recruiter/career-guides");
+      navigate("/admin/career-guides");
     }
     setIsSubmitting(false);
   };
@@ -116,20 +112,20 @@ const CareerGuideEdit = () => {
   if (loadingData) {
     return (
       <div className="min-h-screen bg-gray-50/50 py-10 px-4 md:px-8">
-         <div className="max-w-4xl mx-auto space-y-8">
-            <div className="flex gap-4 items-center">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                </div>
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="flex gap-4 items-center">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
             </div>
-            <div className="bg-white rounded-2xl p-8 space-y-6">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-60 w-full" />
-            </div>
-         </div>
+          </div>
+          <div className="bg-white rounded-2xl p-8 space-y-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-60 w-full" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -140,7 +136,7 @@ const CareerGuideEdit = () => {
         {/* --- HEADER --- */}
         <div className="flex items-center gap-4 mb-8">
           <Button
-            onClick={() => navigate("/recruiter/career-guides")}
+            onClick={() => navigate("/admin/career-guides")}
             variant="outline"
             size="icon"
             className="h-10 w-10 rounded-full border-gray-200"
@@ -150,7 +146,10 @@ const CareerGuideEdit = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               Edit Guide
-              <Badge variant="outline" className="text-gray-500 font-normal text-xs px-2 py-0.5 h-6">
+              <Badge
+                variant="outline"
+                className="text-gray-500 font-normal text-xs px-2 py-0.5 h-6"
+              >
                 ID: {id.slice(-4)}
               </Badge>
             </h1>
@@ -165,7 +164,6 @@ const CareerGuideEdit = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="p-8 space-y-8">
-                
                 {/* --- 1. ARTICLE DETAILS --- */}
                 <Section title="Article Details">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -245,7 +243,7 @@ const CareerGuideEdit = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                           <div className="border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                          <div className="border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                             <QuillEditor
                               value={field.value}
                               onChange={field.onChange}
@@ -262,65 +260,80 @@ const CareerGuideEdit = () => {
                 <Section title="Media & Tags">
                   <div className="grid grid-cols-1 gap-6">
                     <div className="flex flex-col md:flex-row gap-6">
-                       {/* Preview */}
-                       <div className="w-full md:w-1/3 shrink-0">
-                          <FormLabel className="block mb-2">Thumbnail Preview</FormLabel>
-                          <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                            {thumbnailValue ? (
-                              <img
-                                src={thumbnailValue}
-                                alt="Preview"
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.src = "https://via.placeholder.com/300?text=Invalid+URL";
-                                }}
-                              />
-                            ) : (
-                              <div className="text-center p-4">
-                                <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                                <span className="text-xs text-gray-400">No image</span>
-                              </div>
-                            )}
-                          </div>
-                       </div>
+                      {/* Preview */}
+                      <div className="w-full md:w-1/3 shrink-0">
+                        <FormLabel className="block mb-2">
+                          Thumbnail Preview
+                        </FormLabel>
+                        <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                          {thumbnailValue ? (
+                            <img
+                              src={thumbnailValue}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.src =
+                                  "https://via.placeholder.com/300?text=Invalid+URL";
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center p-4">
+                              <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                              <span className="text-xs text-gray-400">
+                                No image
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                       {/* Inputs */}
-                       <div className="flex-1 space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="thumbnail"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Thumbnail URL</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="https://..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      {/* Inputs */}
+                      <div className="flex-1 space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="thumbnail"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Thumbnail URL</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name="tags"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Tags (Comma separated)</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="career, tips, resume" {...field} />
-                                </FormControl>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {field.value?.split(",").filter(Boolean).map((tag, i) => (
-                                    <Badge key={i} variant="secondary" className="font-normal bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <FormField
+                          control={form.control}
+                          name="tags"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tags (Comma separated)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="career, tips, resume"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {field.value
+                                  ?.split(",")
+                                  .filter(Boolean)
+                                  .map((tag, i) => (
+                                    <Badge
+                                      key={i}
+                                      variant="secondary"
+                                      className="font-normal bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    >
                                       {tag.trim()}
                                     </Badge>
                                   ))}
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                       </div>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
                 </Section>
@@ -334,12 +347,18 @@ const CareerGuideEdit = () => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm bg-white">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Publish Status</FormLabel>
+                            <FormLabel className="text-base">
+                              Publish Status
+                            </FormLabel>
                             <div className="text-sm text-gray-500">
                               {field.value ? (
-                                <span className="text-green-600 font-medium flex items-center gap-1">● Published</span>
+                                <span className="text-green-600 font-medium flex items-center gap-1">
+                                  ● Published
+                                </span>
                               ) : (
-                                <span className="text-amber-600 font-medium flex items-center gap-1">● Draft</span>
+                                <span className="text-amber-600 font-medium flex items-center gap-1">
+                                  ● Draft
+                                </span>
                               )}
                             </div>
                           </div>
@@ -361,7 +380,7 @@ const CareerGuideEdit = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/recruiter/career-guides")}
+                  onClick={() => navigate("/admin/career-guides")}
                 >
                   Cancel
                 </Button>

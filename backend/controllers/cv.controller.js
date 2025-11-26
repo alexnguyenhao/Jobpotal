@@ -46,6 +46,8 @@ export const createCV = async (req, res) => {
       languages: profile.languages || [],
       achievements: profile.achievements || [],
       projects: profile.projects || [],
+      operations: profile.operations || [],
+      interests: profile.interests || [],
 
       styleConfig: {
         fontFamily: "font-sans",

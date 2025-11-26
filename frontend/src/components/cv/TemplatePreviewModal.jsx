@@ -84,11 +84,16 @@ const TemplatePreviewModal = ({ open, onClose, template }) => {
         year: "2021",
       },
     ],
+    operations: [
+      {
+        title: "Outstanding Student Award",
+        description: "Top 5% in the IT department",
+        startDate: "2021",
+        endDate: "2021",
+      },
+    ],
+    interests: ["Reading", "Swimming", "Gaming", "Traveling", "Cooking"],
   };
-
-  // =======================
-  // TEMPLATE RENDER SWITCH
-  // =======================
   const renderTemplate = () => {
     switch (template) {
       case "modern":

@@ -11,15 +11,11 @@ import categoryRoute from "./routes/jobcategory.route.js";
 import cvRoute from "./routes/cv.route.js";
 import careerGuideRoute from "./routes/careerGuide.route.js";
 import notificationRoute from "./routes/notification.route.js";
+import adminRoute from "./routes/admin.route.js";
 
-// --- THAY ĐỔI 1: Import từ socket.js ---
 import { app, server } from "./socket.js";
 
 dotenv.config();
-
-// (Đoạn này app = express() đã bị xóa vì app được import ở trên)
-
-//middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -42,6 +38,7 @@ app.use("/api/v1/category", categoryRoute);
 app.use("/api/v1/cv", cvRoute);
 app.use("/api/v1/career-guides", careerGuideRoute);
 app.use("/api/v1/notification", notificationRoute);
+app.use("/api/v1/admin", adminRoute);
 
 // --- THAY ĐỔI 2: Dùng server.listen thay vì app.listen ---
 server.listen(PORT, () => {

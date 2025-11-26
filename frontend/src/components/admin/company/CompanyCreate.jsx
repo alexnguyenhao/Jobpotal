@@ -10,6 +10,7 @@ import { createCompany, setSingleCompany } from "@/redux/companySlice";
 
 const CompanyCreate = () => {
   const [companyName, setCompanyName] = useState("");
+  const [taxCode, setTaxCode] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -18,16 +19,17 @@ const CompanyCreate = () => {
       toast.error("Please enter a valid company name.");
       return;
     }
-
+    if (!taxCode.trim()) {
+      toast.error("Please enter a valid tax code.");
+      return;
+    }
     try {
       const resultAction = await dispatch(
-        createCompany({ companyName }) // gửi formData vào thunk
+        createCompany({ companyName, taxCode })
       );
-
-      // Nếu createCompany thành công
       if (createCompany.fulfilled.match(resultAction)) {
         const newCompany = resultAction.payload;
-        dispatch(setSingleCompany(newCompany)); // lưu vào store
+        dispatch(setSingleCompany(newCompany));
         navigate(`/recruiter/companies/${newCompany._id}`);
       } else {
         toast.error(resultAction.payload || "Failed to create company");
@@ -46,7 +48,6 @@ const CompanyCreate = () => {
           What would you like to name your company? You can change this later.
         </p>
       </div>
-
       <Label>Company Name</Label>
       <Input
         type="text"
@@ -55,9 +56,19 @@ const CompanyCreate = () => {
         value={companyName}
         onChange={(e) => setCompanyName(e.target.value)}
       />
-
+      <Label>Tax Code</Label>
+      <Input
+        type="text"
+        className="my-2"
+        placeholder="123456789"
+        value={taxCode}
+        onChange={(e) => setTaxCode(e.target.value)}
+      />
       <div className="flex items-center gap-2 my-10">
-        <Button variant="outline" onClick={() => navigate("/recruiter/companies")}>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/recruiter/companies")}
+        >
           Cancel
         </Button>
         <Button onClick={handleCreateCompany}>Continue</Button>

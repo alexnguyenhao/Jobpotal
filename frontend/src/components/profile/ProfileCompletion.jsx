@@ -13,6 +13,8 @@ const ProfileCompletion = ({ profile }) => {
     profile.achievements?.length > 0,
     profile.projects?.length > 0,
     profile.skills?.length > 0,
+    profile.operations?.length > 0,
+    profile.interests?.length > 0,
     !!profile.careerObjective,
   ];
 

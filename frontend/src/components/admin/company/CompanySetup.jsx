@@ -47,6 +47,7 @@ const CompanySetup = () => {
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: "",
+      taxCode: "",
       description: "",
       website: "",
       location: "",
@@ -67,6 +68,7 @@ const CompanySetup = () => {
     if (singleCompany) {
       form.reset({
         name: singleCompany.name || "",
+        taxCode: singleCompany.taxCode || "",
         description: singleCompany.description || "",
         website: singleCompany.website || "",
         location: singleCompany.location || "",
@@ -77,8 +79,8 @@ const CompanySetup = () => {
         email: singleCompany.email || "",
         facebook: singleCompany.socials?.facebook || "",
         tags: singleCompany.tags?.join(", ") || "",
-        status: singleCompany.status || "active",
-        isVerified: singleCompany.isVerified || false,
+        status: singleCompany.status,
+        isVerified: singleCompany.isVerified,
         file: null,
       });
       setPreviewLogo(singleCompany.logo);
@@ -223,6 +225,19 @@ const CompanySetup = () => {
                               placeholder="e.g. Tech Solutions Inc."
                               {...field}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="taxCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tax Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="123456789" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -389,36 +404,6 @@ const CompanySetup = () => {
                               {...field}
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </Section>
-
-                {/* --- 5. SETTINGS --- */}
-                <Section title="Settings" isLast>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

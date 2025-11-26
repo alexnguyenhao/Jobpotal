@@ -17,23 +17,15 @@ const API = CAREER_GUIDE_API_END_POINT;
 export default function useCareerGuide() {
   const dispatch = useDispatch();
 
-  const { myGuides, publicGuides, singleGuide, loading, error } =
-    useSelector((state) => state.careerGuide);
+  // Lấy state từ Redux
+  const { myGuides, publicGuides, singleGuide, loading, error } = useSelector(
+    (state) => state.careerGuide
+  );
 
   const startLoading = () => dispatch(setCareerGuideLoading(true));
   const endLoading = () => dispatch(setCareerGuideLoading(false));
-
-  // ❗ FETCH GUARD — chống fetch nhiều lần
-  const myGuidesFetchedRef = useRef(false);
-  const publicFetchedRef = useRef(false);
-
-  // ================================
-  // PUBLIC GUIDES
-  // ================================
+  const adminGuidesFetchedRef = useRef(false);
   const fetchPublicGuides = async (params = {}) => {
-    if (publicFetchedRef.current) return; // 👈 chỉ fetch 1 lần
-    publicFetchedRef.current = true;
-
     try {
       startLoading();
       const res = await axios.get(API, { params });
@@ -42,17 +34,15 @@ export default function useCareerGuide() {
         dispatch(setCareerGuideError("Failed to load guides"));
         return;
       }
+
       dispatch(setPublicGuides(res.data.guides || []));
-    } catch {
+    } catch (err) {
       dispatch(setCareerGuideError("Cannot load guides"));
     } finally {
       endLoading();
     }
   };
 
-  // ================================
-  // PUBLIC DETAIL
-  // ================================
   const fetchGuideDetail = async (idOrSlug) => {
     if (!idOrSlug) return;
     try {
@@ -63,60 +53,52 @@ export default function useCareerGuide() {
 
       dispatch(setSingleGuide(res.data.guide));
       return res.data.guide;
-    } catch {
+    } catch (err) {
       dispatch(setCareerGuideError("Guide not found"));
       return null;
     } finally {
       endLoading();
     }
   };
-
-  // ================================
-  // MY GUIDES
-  // ================================
   const fetchMyGuides = async () => {
-    if (myGuidesFetchedRef.current) return; // 👈 chống fetch loop
-    myGuidesFetchedRef.current = true;
+    if (adminGuidesFetchedRef.current) return;
+    adminGuidesFetchedRef.current = true;
 
     try {
       startLoading();
-      const res = await axios.get(`${API}/mine`, {
+      const res = await axios.get(`${API}/admin`, {
         withCredentials: true,
       });
 
       if (!res.data.success) {
-        toast.error("Cannot load your guides");
+        toast.error("Cannot load admin guides");
         return;
       }
-
       dispatch(setMyGuides(res.data.guides || []));
-    } catch {
-      toast.error("Cannot load your guides");
+    } catch (err) {
+      toast.error("Cannot load admin guides");
     } finally {
       endLoading();
     }
   };
 
-  // ================================
-  // GET MY GUIDE BY ID
-  // ================================
   const fetchMyGuideById = async (id) => {
     if (!id) return null;
 
     try {
       startLoading();
-      const res = await axios.get(`${API}/mine/${id}`, {
+      const res = await axios.get(`${API}/admin/${id}`, {
         withCredentials: true,
       });
 
       if (!res.data.success) {
-        toast.error("Guide not found or no permission");
+        toast.error("Guide not found");
         return null;
       }
 
       dispatch(setSingleGuide(res.data.guide));
       return res.data.guide;
-    } catch {
+    } catch (err) {
       toast.error("Cannot load guide detail");
       return null;
     } finally {
@@ -124,9 +106,6 @@ export default function useCareerGuide() {
     }
   };
 
-  // ================================
-  // CREATE
-  // ================================
   const createGuide = async (payload) => {
     if (!payload.title || !payload.content) {
       toast.error("Title & content are required");
@@ -135,7 +114,7 @@ export default function useCareerGuide() {
 
     try {
       startLoading();
-      const res = await axios.post(`${API}/create`, payload, {
+      const res = await axios.post(`${API}/admin/create`, payload, {
         withCredentials: true,
       });
 
@@ -146,8 +125,7 @@ export default function useCareerGuide() {
 
       toast.success("Created successfully");
 
-      // Không fetch lại toàn bộ nếu không cần
-      myGuidesFetchedRef.current = false;
+      adminGuidesFetchedRef.current = false;
       await fetchMyGuides();
 
       return res.data.guide;
@@ -159,15 +137,12 @@ export default function useCareerGuide() {
     }
   };
 
-  // ================================
-  // UPDATE
-  // ================================
   const updateGuide = async (id, payload) => {
     if (!id) return null;
 
     try {
       startLoading();
-      const res = await axios.put(`${API}/update/${id}`, payload, {
+      const res = await axios.put(`${API}/admin/${id}`, payload, {
         withCredentials: true,
       });
 
@@ -178,27 +153,25 @@ export default function useCareerGuide() {
 
       toast.success("Updated successfully");
 
-      myGuidesFetchedRef.current = false;
-      await fetchMyGuides();
+      adminGuidesFetchedRef.current = false;
+      dispatch(setSingleGuide(res.data.guide));
 
       return res.data.guide;
-    } catch {
-      toast.error("Update failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
       return null;
     } finally {
       endLoading();
     }
   };
 
-  // ================================
-  // DELETE
-  // ================================
   const deleteGuide = async (id) => {
     if (!id) return false;
 
     try {
       startLoading();
-      const res = await axios.delete(`${API}/delete/${id}`, {
+
+      const res = await axios.delete(`${API}/admin/${id}`, {
         withCredentials: true,
       });
 
@@ -207,12 +180,12 @@ export default function useCareerGuide() {
         return false;
       }
 
-      toast.success("Deleted");
+      toast.success("Deleted successfully");
 
       dispatch(setMyGuides(myGuides.filter((g) => g._id !== id)));
 
       return true;
-    } catch {
+    } catch (err) {
       toast.error("Delete failed");
       return false;
     } finally {

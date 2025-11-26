@@ -9,6 +9,9 @@ const notificationSlice = createSlice({
     setNotifications: (state, action) => {
       state.notifications = action.payload;
     },
+    addNotification: (state, action) => {
+      state.notifications.push(action.payload);
+    },
     // Update a specific notification to isRead: true
     markNotificationAsRead: (state, action) => {
       const notificationId = action.payload;
@@ -40,6 +43,7 @@ const notificationSlice = createSlice({
 
 export const {
   setNotifications,
+  addNotification,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   removeNotification,

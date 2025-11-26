@@ -7,7 +7,7 @@ export const applicantJobTemplate = (
   const isAccepted = status.toLowerCase() === "accepted";
   const statusColor = isAccepted ? "#16a34a" : "#64748b";
   const title = isAccepted ? "Application Accepted! 🎉" : "Application Update";
-  const headerColor = isAccepted 
+  const headerColor = isAccepted
     ? "linear-gradient(135deg, #16a34a, #15803d)" // Gradient Xanh lá
     : "linear-gradient(135deg, #64748b, #475569)"; // Gradient Xám
 

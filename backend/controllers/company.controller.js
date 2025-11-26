@@ -1,14 +1,18 @@
 import { Company } from "../models/company.model.js";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "cloudinary";
-
-// 🏢 Đăng ký công ty
 export const registerCompany = async (req, res) => {
   try {
-    const { companyName } = req.body;
+    const { companyName, taxCode } = req.body;
     if (!companyName) {
       return res.status(400).json({
         message: "Company name is required",
+        success: false,
+      });
+    }
+    if (!taxCode) {
+      return res.status(400).json({
+        message: "Tax code is required",
         success: false,
       });
     }
@@ -16,18 +20,20 @@ export const registerCompany = async (req, res) => {
     const existingCompany = await Company.findOne({ name: companyName });
     if (existingCompany) {
       return res.status(400).json({
-        message: "You can't register same company name twice",
+        message: "Company name already exists",
         success: false,
       });
     }
 
     const company = await Company.create({
       name: companyName,
-      userId: req.id, // lấy từ middleware auth
+      taxCode,
+      userId: req.id,
+      isVerified: false,
+      status: "inactive",
     });
-
     return res.status(201).json({
-      message: "Company registered successfully",
+      message: "Register company successfully",
       company,
       success: true,
     });
@@ -42,12 +48,12 @@ export const registerCompany = async (req, res) => {
 
 export const getCompany = async (req, res) => {
   try {
-    const userId = req.id; // recruiter hiện tại
+    const userId = req.id;
     const companies = await Company.find({ userId });
 
     return res.status(200).json({
       success: true,
-      companies, // có thể rỗng []
+      companies,
       message:
         companies.length > 0
           ? "Fetched your companies successfully"
@@ -61,12 +67,10 @@ export const getCompany = async (req, res) => {
     });
   }
 };
-// Lấy danh sách tất cả công ty (Cho trang chủ - Public)
 export const getAllCompanies = async (req, res) => {
   try {
-    // Lấy tất cả công ty, chỉ lấy field cần thiết để nhẹ
     const companies = await Company.find(
-      {},
+      { isVerified: true, status: "active" },
       { name: 1, logo: 1, location: 1, _id: 1 }
     )
       .sort({ createdAt: -1 })
@@ -84,7 +88,6 @@ export const getAllCompanies = async (req, res) => {
     });
   }
 };
-// 🔍 Lấy chi tiết 1 công ty
 export const getCompanyById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -97,7 +100,6 @@ export const getCompanyById = async (req, res) => {
       });
     }
 
-    // 🔹 Nếu không đăng nhập → public view
     if (!req.id) {
       return res.status(200).json({
         success: true,
@@ -105,6 +107,7 @@ export const getCompanyById = async (req, res) => {
         company: {
           _id: company._id,
           name: company.name,
+          taxCode: company.taxCode,
           logo: company.logo,
           industry: company.industry,
           location: company.location,
@@ -118,18 +121,16 @@ export const getCompanyById = async (req, res) => {
         },
       });
     }
-
-    // 🔹 Nếu là recruiter → kiểm tra quyền
     const isOwner = company.userId.toString() === req.id.toString();
 
     if (!isOwner) {
-      // Recruiter khác chỉ được xem bản công khai
       return res.status(200).json({
         success: true,
         view: "limited",
         company: {
           _id: company._id,
           name: company.name,
+          taxCode: company.taxCode,
           logo: company.logo,
           industry: company.industry,
           description: company.description,
@@ -139,7 +140,6 @@ export const getCompanyById = async (req, res) => {
       });
     }
 
-    // ✅ Chính recruiter đó → full info
     return res.status(200).json({
       success: true,
       view: "private",
@@ -157,6 +157,7 @@ export const updateCompany = async (req, res) => {
   try {
     const {
       name,
+      taxCode,
       description,
       website,
       location,
@@ -166,11 +167,7 @@ export const updateCompany = async (req, res) => {
       phone,
       email,
       tags,
-      status,
-      isVerified,
     } = req.body;
-
-    // 🧩 Xử lý upload ảnh (nếu có)
     let logo;
     if (req.file) {
       const fileUri = getDataUri(req.file);
@@ -179,8 +176,6 @@ export const updateCompany = async (req, res) => {
       });
       logo = cloudRes.secure_url;
     }
-
-    // 🧠 Xử lý các field phức tạp
     const parsedTags = tags
       ? typeof tags === "string"
         ? JSON.parse(tags)
@@ -189,6 +184,7 @@ export const updateCompany = async (req, res) => {
 
     const updateData = {
       name,
+      taxCode,
       description,
       website,
       location,
@@ -198,11 +194,7 @@ export const updateCompany = async (req, res) => {
       phone,
       email,
       tags: parsedTags,
-      status,
-      isVerified,
     };
-
-    // Chỉ gán logo mới nếu có file upload
     if (logo) updateData.logo = logo;
 
     const company = await Company.findByIdAndUpdate(req.params.id, updateData, {

@@ -66,6 +66,17 @@ const profileSchema = new mongoose.Schema(
         year: { type: String, required: true },
       },
     ],
+    operations: [
+      {
+        title: { type: String, required: true },
+        position: { type: String, required: true },
+        description: { type: String, required: true },
+        startDate: { type: String, required: true },
+        endDate: { type: String, required: true },
+      },
+    ],
+    interests: { type: String },
+    
   },
   { timestamps: true }
 );

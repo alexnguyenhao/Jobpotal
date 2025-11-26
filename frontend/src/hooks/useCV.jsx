@@ -15,6 +15,8 @@ import {
   updateAchievements,
   updateProjects,
   updateStyleConfig,
+  updateInterests,
+  updateOperations,
   setLoading,
 } from "@/redux/cvSlice";
 import { toast } from "sonner";
@@ -111,6 +113,8 @@ const useCV = () => {
         dispatch(updateLanguages(cv.languages ?? []));
         dispatch(updateAchievements(cv.achievements ?? []));
         dispatch(updateProjects(cv.projects ?? []));
+        dispatch(updateOperations(cv.operations ?? []));
+        dispatch(updateInterests(cv.interests ?? []));
         dispatch(updateStyleConfig(cv.styleConfig ?? {}));
       }
     } catch {
@@ -156,6 +160,8 @@ const useCV = () => {
         if (cv.languages) dispatch(updateLanguages(cv.languages));
         if (cv.achievements) dispatch(updateAchievements(cv.achievements));
         if (cv.projects) dispatch(updateProjects(cv.projects));
+        if (cv.operations) dispatch(updateOperations(cv.operations));
+        if (cv.interests) dispatch(updateInterests(cv.interests));
         if (cv.styleConfig) dispatch(updateStyleConfig(cv.styleConfig));
 
         if (showToast) toast.success("CV updated");
@@ -259,6 +265,8 @@ const useCV = () => {
         dispatch(updateLanguages(cv.languages ?? []));
         dispatch(updateAchievements(cv.achievements ?? []));
         dispatch(updateProjects(cv.projects ?? []));
+        dispatch(updateOperations(cv.operations ?? []));
+        dispatch(updateInterests(cv.interests ?? []));
         dispatch(updateStyleConfig(cv.styleConfig ?? {}));
 
         return cv;

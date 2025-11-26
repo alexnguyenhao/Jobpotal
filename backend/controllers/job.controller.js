@@ -1,4 +1,5 @@
 import { Job } from "../models/job.model.js";
+import { Company } from "../models/company.model.js";
 export const postJob = async (req, res) => {
   try {
     const {
@@ -20,10 +21,42 @@ export const postJob = async (req, res) => {
       category,
       seniorityLevel,
       applicationDeadline,
+      status,
     } = req.body;
 
     const userId = req.id;
+    if (!title || !description || !company || !province) {
+      return res.status(400).json({
+        message: "Missing required fields.",
+        success: false,
+      });
+    }
 
+    // Check company status
+    const companyInfo = await Company.findById(company);
+
+    if (!companyInfo) {
+      return res.status(404).json({
+        message: "Company not found.",
+        success: false,
+      });
+    }
+
+    // If company is not verified
+    if (!companyInfo.isVerified) {
+      return res.status(403).json({
+        message: "Company is not verified.",
+        success: false,
+      });
+    }
+
+    // If company is banned or inactive
+    if (companyInfo.status === "banned" || companyInfo.status === "inactive") {
+      return res.status(403).json({
+        message: "Company is banned or inactive.",
+        success: false,
+      });
+    }
     // Validate
     if (
       !title ||
@@ -88,6 +121,7 @@ export const postJob = async (req, res) => {
       category,
       applicationDeadline: new Date(applicationDeadline),
       created_by: userId,
+      status: "Open",
     });
 
     return res.status(201).json({
@@ -106,7 +140,8 @@ export const postJob = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find()
+    // Lấy tất cả job OPEN
+    const jobs = await Job.find({ status: "Open" })
       .populate("company category")
       .sort({ createdAt: -1 });
 
@@ -116,13 +151,14 @@ export const getAllJobs = async (req, res) => {
       jobs,
     });
   } catch (err) {
-    console.error("❌ Get All Jobs Error:", err);
+    console.error("Get All Jobs Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
     });
   }
 };
+
 export const searchJobs = async (req, res) => {
   try {
     const {
@@ -311,10 +347,10 @@ export const getJobsByCompany = async (req, res) => {
     const companyId = req.params.companyId;
     const limit = 100;
 
-    const jobs = await Job.find({ company: companyId })
+    const jobs = await Job.find({ company: companyId, status: "Open" })
       .populate("company category", "name logo _id")
       .sort({ createdAt: -1 })
-      .limit(limit); 
+      .limit(limit);
 
     return res.status(200).json({
       success: true,
@@ -332,7 +368,7 @@ export const getJobsByCompany = async (req, res) => {
 export const getJobsByCategory = async (req, res) => {
   try {
     const categoryId = req.params.categoryId;
-    const jobs = await Job.find({ category: categoryId })
+    const jobs = await Job.find({ category: categoryId, status: "Open" })
       .populate("company category")
       .sort({ createdAt: -1 });
     return res.status(200).json({

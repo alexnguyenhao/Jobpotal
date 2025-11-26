@@ -1,33 +1,35 @@
 import { CareerGuide } from "../models/careerGuide.model.js";
-import { User } from "../models/user.model.js";
+
+// --- HELPERS ---
 const createSlug = (text) => {
   return text
     .toString()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[đĐ]/g, "d")
     .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "") 
-    .replace(/\-\-+/g, "-") 
-    .replace(/^-+/, "") 
-    .replace(/-+$/, ""); 
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 };
 
 const calculateReadingTime = (content) => {
-  const text = content.replace(/<[^>]*>?/gm, ""); 
+  const text = content.replace(/<[^>]*>?/gm, "");
   const wordCount = text.split(/\s+/).length;
   return Math.ceil(wordCount / 200);
 };
 
 const generateExcerpt = (content, maxLength = 150) => {
-  const text = content.replace(/<[^>]*>?/gm, ""); 
+  const text = content.replace(/<[^>]*>?/gm, "");
   return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 };
 
 export const createCareerGuide = async (req, res) => {
   try {
-    const { title, thumbnail, content, tags, category, excerpt } = req.body;
+    const { title, thumbnail, content, tags, category, excerpt, isPublished } =
+      req.body;
 
     if (!title || !content) {
       return res.status(400).json({
@@ -36,9 +38,9 @@ export const createCareerGuide = async (req, res) => {
       });
     }
 
-    const slug = createSlug(title) + "-" + Date.now(); 
+    const slug = createSlug(title) + "-" + Date.now();
     const readingTime = calculateReadingTime(content);
-    const finalExcerpt = excerpt || generateExcerpt(content); 
+    const finalExcerpt = excerpt || generateExcerpt(content);
 
     const guide = await CareerGuide.create({
       title,
@@ -49,8 +51,9 @@ export const createCareerGuide = async (req, res) => {
       readingTime,
       tags: tags || [],
       category: category || "job-search",
-      author: req.id,
-      company: req.company || null,
+      author: req.id, // ID của Admin đang đăng nhập
+      company: null, // Admin thường không gắn với company
+      isPublished: isPublished || false,
     });
 
     return res.status(201).json({
@@ -71,6 +74,7 @@ export const createCareerGuide = async (req, res) => {
 export const getAllCareerGuides = async (req, res) => {
   try {
     const { keyword, category, page = 1, limit = 10 } = req.query;
+
     const query = { isPublished: true };
 
     if (category) {
@@ -85,7 +89,7 @@ export const getAllCareerGuides = async (req, res) => {
     }
 
     const guides = await CareerGuide.find(query)
-      .select("-content") 
+      .select("-content")
       .populate("author", "fullName profilePhoto")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -111,12 +115,28 @@ export const getAllCareerGuides = async (req, res) => {
   }
 };
 
+export const getAllCareerGuidesAdmin = async (req, res) => {
+  try {
+    const guides = await CareerGuide.find()
+      .select("-content")
+      .populate("author", "fullName profilePhoto")
+      .sort({ createdAt: -1 });
+
+    return res.json({ success: true, guides });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to load admin guides",
+      error: error.message,
+    });
+  }
+};
+
 export const getCareerGuideById = async (req, res) => {
   try {
     const { id } = req.params;
-
     let guide;
-    
+
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
       guide = await CareerGuide.findById(id).populate(
         "author",
@@ -135,6 +155,7 @@ export const getCareerGuideById = async (req, res) => {
         .json({ success: false, message: "Career guide not found" });
     }
 
+    // Tăng view
     guide.views += 1;
     await guide.save();
 
@@ -148,6 +169,27 @@ export const getCareerGuideById = async (req, res) => {
   }
 };
 
+export const getCareerGuideByIdAdmin = async (req, res) => {
+  try {
+    const guide = await CareerGuide.findById(req.params.id).populate(
+      "author",
+      "fullName profilePhoto"
+    );
+
+    if (!guide) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Guide not found" });
+    }
+
+    return res.json({ success: true, guide });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Error", error: error.message });
+  }
+};
+
 export const updateCareerGuide = async (req, res) => {
   try {
     const guide = await CareerGuide.findById(req.params.id);
@@ -156,12 +198,6 @@ export const updateCareerGuide = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Guide not found" });
-    }
-
-    if (guide.author.toString() !== req.id) {
-      return res
-        .status(403)
-        .json({ success: false, message: "No permission to edit this guide" });
     }
 
     const { title, content, excerpt, ...otherData } = req.body;
@@ -173,7 +209,7 @@ export const updateCareerGuide = async (req, res) => {
 
     if (content) {
       guide.content = content;
-      guide.readingTime = calculateReadingTime(content); 
+      guide.readingTime = calculateReadingTime(content);
       if (!excerpt) {
         guide.excerpt = generateExcerpt(content);
       }
@@ -205,13 +241,6 @@ export const deleteCareerGuide = async (req, res) => {
         .json({ success: false, message: "Guide not found" });
     }
 
-    if (guide.author.toString() !== req.id) {
-      return res.status(403).json({
-        success: false,
-        message: "No permission to delete this guide",
-      });
-    }
-
     await guide.deleteOne();
 
     return res.json({ success: true, message: "Deleted successfully" });
@@ -221,49 +250,5 @@ export const deleteCareerGuide = async (req, res) => {
       message: "Failed to delete guide",
       error: error.message,
     });
-  }
-};
-
-export const getCareerGuidesByRecruiter = async (req, res) => {
-  try {
-    if (req.role !== "recruiter") {
-      return res.status(403).json({ success: false, message: "Access denied" });
-    }
-
-    const guides = await CareerGuide.find({ author: req.id })
-      .select("-content") 
-      .populate("author", "fullName profilePhoto")
-      .populate("company", "name logo")
-      .sort({ createdAt: -1 });
-
-    return res.json({ success: true, guides });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load recruiter guides",
-      error: error.message,
-    });
-  }
-};
-
-export const getCareerGuideDetailsForRecruiter = async (req, res) => {
-  try {
-    const guide = await CareerGuide.findById(req.params.id);
-
-    if (!guide) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Guide not found" });
-    }
-
-    if (guide.author.toString() !== req.id) {
-      return res.status(403).json({ success: false, message: "No permission" });
-    }
-
-    return res.json({ success: true, guide });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Error", error: error.message });
   }
 };
