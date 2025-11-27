@@ -143,7 +143,19 @@ const UserDetail = () => {
                         : "text-red-500"
                     }
                   >
-                    {user.isEmailVerified ? "Yes" : "No"}
+                    {user.status ? "Active" : "Banned"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-500">Status</span>
+                  <span
+                    className={
+                      user.status
+                        ? "text-green-600 font-medium"
+                        : "text-red-500"
+                    }
+                  >
+                    {user.status ? "Active" : "Banned"}
                   </span>
                 </div>
                 <div className="flex justify-between py-2">

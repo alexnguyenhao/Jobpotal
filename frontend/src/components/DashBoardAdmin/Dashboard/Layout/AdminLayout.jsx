@@ -5,16 +5,14 @@ import AdminHeader from "./AdminHeader";
 import { X } from "lucide-react";
 
 const AdminLayout = () => {
-  // State để điều khiển sidebar trên mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* 1. SIDEBAR (Desktop) */}
-      <AdminSidebar />
-
-      {/* 1.1 SIDEBAR (Mobile Drawer) */}
-      {/* Overlay */}
+      <AdminSidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-50 md:hidden"
@@ -33,11 +31,12 @@ const AdminLayout = () => {
             <X size={24} className="text-gray-500" />
           </button>
         </div>
-        {/* Reuse logic menu here or extract menu items to separate config */}
-        <AdminSidebar />
+        <AdminSidebar
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
       </div>
 
-      {/* 2. MAIN CONTENT AREA */}
       <div className="flex-1 md:ml-64 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
         <AdminHeader setIsSidebarOpen={setIsSidebarOpen} />

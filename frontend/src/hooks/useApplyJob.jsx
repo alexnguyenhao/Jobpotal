@@ -40,8 +40,8 @@ const useApplyJob = () => {
           applications: [...singleJob.applications, { applicant: user._id }],
         };
         dispatch(setSingleJob(updatedJob));
-        
-        return true; 
+
+        return true;
       }
     } catch (error) {
       console.error(error);
@@ -50,7 +50,7 @@ const useApplyJob = () => {
       } else {
         toast.error(error?.response?.data?.message || "Application failed");
       }
-      return false; 
+      return false;
     } finally {
       setIsApplying(false);
     }

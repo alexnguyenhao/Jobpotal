@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema(
         "new_job",
         "system_alert",
         "new_application",
+        "new_company",
       ],
       default: "application_status",
     },
@@ -28,7 +29,6 @@ const notificationSchema = new mongoose.Schema(
     relatedId: {
       type: mongoose.Schema.Types.ObjectId,
     },
-    // Trạng thái đã đọc chưa
     isRead: {
       type: Boolean,
       default: false,

@@ -7,10 +7,10 @@ import { toast } from "sonner";
 
 const useGetAllCompanies = () => {
   const dispatch = useDispatch();
-  const fetchedRef = useRef(false); 
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (fetchedRef.current) return; 
+    if (fetchedRef.current) return;
     fetchedRef.current = true;
 
     const fetchCompanies = async () => {
@@ -25,7 +25,7 @@ const useGetAllCompanies = () => {
           toast.error(res.data.message || "Failed to fetch companies");
         }
       } catch (error) {
-        console.error("❌ Error fetching companies:", error);
+        console.error("Error fetching companies:", error);
         toast.error(
           error.response?.data?.message || "Failed to load your companies"
         );

@@ -18,7 +18,16 @@ export const jobSchema = z.object({
   companyId: z.string().min(1, "Company is required"),
   categoryId: z.string().min(1, "Category is required"),
   seniorityLevel: z
-    .enum(["Intern", "Junior", "Mid", "Senior", "Lead", "Manager"])
+    .enum([
+      "Intern",
+      "Junior",
+      "Mid",
+      "Senior",
+      "Lead",
+      "Manager",
+      "Director",
+      "Executive",
+    ])
     .optional(),
 
   applicationDeadline: z.string().min(1, "Deadline is required"),

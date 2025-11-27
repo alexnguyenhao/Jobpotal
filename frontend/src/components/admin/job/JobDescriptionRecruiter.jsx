@@ -29,13 +29,10 @@ import {
   Building2,
   Loader2,
   AlertCircle,
-  MoreHorizontal,
 } from "lucide-react";
 
-// Shared Components
 import ConfirmDeleteDialog from "@/components/shared/ConfirmDeleteDialog";
 
-// --- HELPER COMPONENTS ---
 const SectionHeader = ({ title, icon: Icon }) => (
   <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3 mt-8 first:mt-0">
     <div className="p-2 bg-purple-50 rounded-lg text-[#6A38C2]">
@@ -127,6 +124,7 @@ const JobDescriptionRecruiter = () => {
     experienceLevel,
     seniorityLevel,
     jobType,
+    numberOfPositions,
     applications,
     createdAt,
     applicationDeadline,
@@ -185,21 +183,15 @@ const JobDescriptionRecruiter = () => {
             </div>
           </div>
 
-          {/* 2. BODY CONTENT */}
           <div className="p-8 md:p-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              {/* LEFT COLUMN (Content) */}
               <div className="lg:col-span-8 space-y-10">
-                {/* Description */}
-                {/* --- Description (Thêm whitespace-pre-wrap) --- */}
                 <section>
                   <SectionHeader title="Job Description" icon={Briefcase} />
                   <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap text-justify">
                     {description}
                   </div>
                 </section>
-
-                {/* --- Requirements (Sử dụng hàm parseStringToArray) --- */}
                 <section>
                   <SectionHeader title="Requirements" icon={CheckCircle2} />
                   <ul className="space-y-3">
@@ -209,7 +201,6 @@ const JobDescriptionRecruiter = () => {
                         className="flex items-start gap-3 text-sm text-gray-700"
                       >
                         <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#6A38C2] shrink-0"></span>
-                        {/* Xóa ký tự gạch đầu dòng nếu người dùng tự nhập */}
                         <span className="leading-relaxed">
                           {req.replace(/^- /, "")}
                         </span>
@@ -217,8 +208,6 @@ const JobDescriptionRecruiter = () => {
                     ))}
                   </ul>
                 </section>
-
-                {/* --- Benefits (Sử dụng hàm parseStringToArray) --- */}
                 <section>
                   <SectionHeader title="Benefits" icon={DollarSign} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -231,7 +220,6 @@ const JobDescriptionRecruiter = () => {
                           size={16}
                           className="text-green-600 shrink-0"
                         />
-                        {/* Xóa ký tự gạch đầu dòng nếu có */}
                         {ben.replace(/^- /, "")}
                       </div>
                     ))}
@@ -239,9 +227,7 @@ const JobDescriptionRecruiter = () => {
                 </section>
               </div>
 
-              {/* RIGHT COLUMN (Sidebar) */}
               <div className="lg:col-span-4 space-y-8">
-                {/* Applicant Card - Highlighted */}
                 <Card className="bg-[#6A38C2] border-none shadow-lg shadow-purple-200 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
                   <CardContent className="p-6 relative z-10">
@@ -269,7 +255,6 @@ const JobDescriptionRecruiter = () => {
                   </CardContent>
                 </Card>
 
-                {/* Job Overview */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <AlertCircle size={16} className="text-[#6A38C2]" />
@@ -299,10 +284,14 @@ const JobDescriptionRecruiter = () => {
                       label="Level"
                       value={seniorityLevel}
                     />
+                    <OverviewItem
+                      icon={Users}
+                      label="Positions"
+                      value={`${numberOfPositions || 1} openings`}
+                    />
                   </div>
                 </div>
 
-                {/* Helper Actions */}
                 <div className="text-center">
                   <p className="text-xs text-gray-400 mb-2">
                     Need to make changes?

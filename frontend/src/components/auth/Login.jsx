@@ -21,14 +21,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { 
-  Eye, 
-  EyeOff, 
-  Loader2, 
-  User, 
-  KeyRound, 
-  ShieldCheck, 
-  ArrowLeft 
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  User,
+  KeyRound,
+  ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 const Login = () => {
@@ -37,16 +37,16 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [requires2FA, setRequires2FA] = useState(false); 
-  const [tempUserId, setTempUserId] = useState(""); 
-  const [otp, setOtp] = useState(""); 
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempUserId, setTempUserId] = useState("");
+  const [otp, setOtp] = useState("");
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      role: "", 
+      role: "",
     },
   });
 
@@ -61,9 +61,10 @@ const Login = () => {
       if (res.data.require2FA) {
         setRequires2FA(true);
         setTempUserId(res.data.userId);
-        toast.info(res.data.message || "Please enter the OTP sent to your email.");
-      } 
-      else if (res.data.success) {
+        toast.info(
+          res.data.message || "Please enter the OTP sent to your email."
+        );
+      } else if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(`Welcome back, ${res.data.user.fullName || "User"}!`);
         setTimeout(() => navigate("/"), 1000);
@@ -82,7 +83,7 @@ const Login = () => {
     try {
       dispatch(setLoading(true));
       const res = await axios.post(
-        `${USER_API_END_POINT}/verify-otp`, 
+        `${USER_API_END_POINT}/verify-otp`,
         { userId: tempUserId, otp },
         {
           headers: { "Content-Type": "application/json" },
@@ -91,7 +92,7 @@ const Login = () => {
       );
 
       if (res.data.success) {
-        dispatch(setUser(res.data.user)); 
+        dispatch(setUser(res.data.user));
         toast.success(`Welcome back, ${res.data.user.fullName}!`);
         navigate("/");
       }
@@ -101,7 +102,6 @@ const Login = () => {
       dispatch(setLoading(false));
     }
   };
-
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -128,10 +128,7 @@ const Login = () => {
             </div>
           </div>
 
-
           <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
-            
-            
             {!requires2FA ? (
               <>
                 <div className="mb-8">
@@ -144,7 +141,10 @@ const Login = () => {
                 </div>
 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
                     <FormField
                       control={form.control}
                       name="email"
@@ -174,7 +174,10 @@ const Login = () => {
                         <FormItem>
                           <div className="flex justify-between items-center">
                             <FormLabel>Password</FormLabel>
-                            <Link to="/forgot-password" className="text-xs font-medium text-[#6A38C2] hover:underline">
+                            <Link
+                              to="/forgot-password"
+                              className="text-xs font-medium text-[#6A38C2] hover:underline"
+                            >
                               Forgot password?
                             </Link>
                           </div>
@@ -192,7 +195,11 @@ const Login = () => {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                               >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                {showPassword ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
                               </button>
                             </div>
                           </FormControl>
@@ -242,7 +249,8 @@ const Login = () => {
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging in...
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                          Logging in...
                         </>
                       ) : (
                         "Login"
@@ -251,7 +259,10 @@ const Login = () => {
 
                     <p className="text-center text-sm text-gray-500">
                       Don't have an account?{" "}
-                      <Link to="/signup" className="text-[#6A38C2] font-bold hover:underline">
+                      <Link
+                        to="/signup"
+                        className="text-[#6A38C2] font-bold hover:underline"
+                      >
                         Sign up
                       </Link>
                     </p>
@@ -260,55 +271,57 @@ const Login = () => {
               </>
             ) : (
               <div className="fade-in animate-in slide-in-from-right-8 duration-500">
-                 <div className="mb-8 text-center">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ShieldCheck className="w-8 h-8 text-[#6A38C2]" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900">
-                        Two-Factor Auth
-                    </h2>
-                    <p className="text-gray-500 mt-2">
-                        We sent a code to your email. Enter it below to access your account.
-                    </p>
+                <div className="mb-8 text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ShieldCheck className="w-8 h-8 text-[#6A38C2]" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    Two-Factor Auth
+                  </h2>
+                  <p className="text-gray-500 mt-2">
+                    We sent a code to your email. Enter it below to access your
+                    account.
+                  </p>
                 </div>
 
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
-                    <div className="space-y-2">
-                         <div className="relative">
-                            <Input
-                                type="text"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="Enter 6-digit OTP code"
-                                className="h-14 text-center text-2xl tracking-widest font-bold bg-gray-50 border-gray-200 focus:bg-white"
-                                maxLength={6}
-                            />
-                        </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="Enter 6-digit OTP code"
+                        className="h-14 text-center text-2xl tracking-widest font-bold bg-gray-50 border-gray-200 focus:bg-white"
+                        maxLength={6}
+                      />
                     </div>
+                  </div>
 
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all"
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 bg-[#6A38C2] hover:bg-[#5B30A6] text-white font-bold rounded-xl text-base shadow-lg shadow-purple-200 transition-all"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify & Login"
+                    )}
+                  </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setRequires2FA(false)}
+                      className="text-sm text-gray-500 hover:text-[#6A38C2] flex items-center justify-center gap-1 mx-auto"
                     >
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...
-                        </>
-                      ) : (
-                        "Verify & Login"
-                      )}
-                    </Button>
-                    
-                    <div className="text-center">
-                        <button 
-                            type="button"
-                            onClick={() => setRequires2FA(false)}
-                            className="text-sm text-gray-500 hover:text-[#6A38C2] flex items-center justify-center gap-1 mx-auto"
-                        >
-                            <ArrowLeft size={16}/> Back to Login
-                        </button>
-                    </div>
+                      <ArrowLeft size={16} /> Back to Login
+                    </button>
+                  </div>
                 </form>
               </div>
             )}

@@ -31,8 +31,6 @@ export const postJob = async (req, res) => {
         success: false,
       });
     }
-
-    // Check company status
     const companyInfo = await Company.findById(company);
 
     if (!companyInfo) {
@@ -41,8 +39,6 @@ export const postJob = async (req, res) => {
         success: false,
       });
     }
-
-    // If company is not verified
     if (!companyInfo.isVerified) {
       return res.status(403).json({
         message: "Company is not verified.",
@@ -50,14 +46,12 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // If company is banned or inactive
     if (companyInfo.status === "banned" || companyInfo.status === "inactive") {
       return res.status(403).json({
         message: "Company is banned or inactive.",
         success: false,
       });
     }
-    // Validate
     if (
       !title ||
       !description ||
@@ -78,7 +72,6 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // Format requirements
     const formattedRequirements =
       typeof requirements === "string"
         ? requirements
@@ -87,7 +80,6 @@ export const postJob = async (req, res) => {
             .filter(Boolean)
         : requirements;
 
-    // Format benefits
     const formattedBenefits =
       typeof benefits === "string"
         ? benefits
@@ -96,7 +88,6 @@ export const postJob = async (req, res) => {
             .filter(Boolean)
         : benefits;
 
-    // Create job
     const job = await Job.create({
       title,
       description,
@@ -130,7 +121,7 @@ export const postJob = async (req, res) => {
       job,
     });
   } catch (err) {
-    console.error("❌ Post Job Error:", err);
+    console.error(" Post Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -140,7 +131,6 @@ export const postJob = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
   try {
-    // Lấy tất cả job OPEN
     const jobs = await Job.find({ status: "Open" })
       .populate("company category")
       .sort({ createdAt: -1 });

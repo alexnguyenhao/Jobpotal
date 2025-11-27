@@ -17,6 +17,10 @@ const applicationSchema = new mongoose.Schema(
       enum: ["pending", "rejected", "accepted"],
       default: "pending",
     },
+    coverLetter: {
+      type: String,
+      default: "",
+    },
     cv: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CV",

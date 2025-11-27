@@ -43,19 +43,12 @@ const chartData = [
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-
-  // 1. Lấy dữ liệu thống kê
   const { stats, loading: statsLoading } = useGetAdminStats();
-
-  // 2. Lấy danh sách công ty để lọc ra công ty đang chờ duyệt
   const { companies, loading: companiesLoading } = useAdminCompanies();
-
-  // Lọc ra 5 công ty mới nhất đang chờ duyệt (Pending)
   const pendingCompanies = companies.filter((c) => !c.isVerified).slice(0, 5);
 
   return (
     <div className="p-6 min-h-screen bg-gray-50/50 space-y-8">
-      {/* --- 1. HEADER --- */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
@@ -71,7 +64,6 @@ const AdminDashboard = () => {
         </Button>
       </div>
 
-      {/* --- 2. STATS CARDS --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Users"
@@ -107,9 +99,7 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* --- 3. MAIN CONTENT GRID --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT COLUMN: CHART (2/3) */}
         <div className="lg:col-span-2">
           <Card className="shadow-sm border-gray-200 h-full">
             <CardHeader>
@@ -173,8 +163,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* RIGHT COLUMN: PENDING REQUESTS (1/3) */}
         <div className="lg:col-span-1">
           <Card className="shadow-sm border-gray-200 h-full flex flex-col">
             <CardHeader className="pb-4 border-b border-gray-100 bg-red-50/30">

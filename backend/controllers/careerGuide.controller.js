@@ -51,8 +51,8 @@ export const createCareerGuide = async (req, res) => {
       readingTime,
       tags: tags || [],
       category: category || "job-search",
-      author: req.id, // ID của Admin đang đăng nhập
-      company: null, // Admin thường không gắn với company
+      author: req.id,
+      company: null,
       isPublished: isPublished || false,
     });
 

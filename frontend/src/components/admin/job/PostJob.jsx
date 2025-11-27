@@ -5,16 +5,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils"; // Giả định bạn có file utils này (chuẩn shadcn)
 
 // Store & Utils
 import { JOB_API_END_POINT, provinces } from "@/utils/constant";
 import { jobSchema } from "@/lib/jobSchema";
 import useGetAllCategories from "@/hooks/useGetAllCategoris";
+import useGetAllCompanies from "@/hooks/useGetAllCompanies";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
@@ -29,12 +32,22 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-// Icons
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Check, ChevronsUpDown, X } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -42,11 +55,29 @@ const PostJob = () => {
 
   const { companies } = useSelector((store) => store.company);
   const { categories } = useSelector((store) => store.category);
-  const activeCompanies = companies.filter(
-    (company) => company.status === "active" && company.isVerified
-  );
+
+  // Lọc và format dữ liệu cho Company
+  const activeCompanies = companies
+    .filter((company) => company.status === "active" && company.isVerified)
+    .map((company) => ({
+      label: company.name,
+      value: company._id,
+    }));
+
+  // Format dữ liệu cho Category
+  const categoryOptions = categories.map((cat) => ({
+    label: cat.name,
+    value: cat._id,
+  }));
+
+  // Format dữ liệu cho Province
+  const provinceOptions = provinces.map((p) => ({
+    label: p,
+    value: p,
+  }));
 
   useGetAllCategories();
+  useGetAllCompanies();
 
   const form = useForm({
     resolver: zodResolver(jobSchema),
@@ -65,7 +96,7 @@ const PostJob = () => {
       jobType: [],
       experience: "",
       position: 1,
-      companyId: activeCompanies[0]?._id,
+      companyId: "",
       categoryId: "",
       seniorityLevel: "",
       applicationDeadline: "",
@@ -115,7 +146,7 @@ const PostJob = () => {
   return (
     <div className="min-h-screen bg-gray-50/50 py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* --- HEADER (Giống CompanySetup) --- */}
+        {/* --- HEADER --- */}
         <div className="flex items-center gap-4 mb-8">
           <Button
             onClick={() => navigate("/recruiter/jobs")}
@@ -133,7 +164,6 @@ const PostJob = () => {
           </div>
         </div>
 
-        {/* --- MAIN FORM CONTAINER --- */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -160,86 +190,29 @@ const PostJob = () => {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
+                    {/* COMPANY SELECTION (Searchable & Clearable) */}
+                    <SearchableSelect
+                      form={form}
                       name="companyId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Company <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select company" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {/* 👇 LOGIC CHECK ĐIỀU KIỆN Ở ĐÂY */}
-                              {activeCompanies.length > 0 ? (
-                                activeCompanies.map((company) => (
-                                  <SelectItem
-                                    key={company._id}
-                                    value={company._id}
-                                  >
-                                    {company.name}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                // Hiển thị khi không có công ty nào active
-                                <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
-                                  <span className="text-sm text-muted-foreground">
-                                    You don't have any active company.
-                                  </span>
-                                  <Button
-                                    variant="link"
-                                    className="text-[#6A38C2] h-auto p-0"
-                                    onClick={() =>
-                                      navigate("/recruiter/companies/create")
-                                    }
-                                  >
-                                    + Create new company
-                                  </Button>
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      label="Company"
+                      options={activeCompanies}
+                      placeholder="Select company"
+                      emptyMessage="No company found."
+                      isRequired
+                      onCreateClick={() =>
+                        navigate("/recruiter/companies/create")
+                      }
                     />
 
-                    <FormField
-                      control={form.control}
+                    {/* CATEGORY SELECTION (Searchable & Clearable) */}
+                    <SearchableSelect
+                      form={form}
                       name="categoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Category <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories.map((c) => (
-                                <SelectItem key={c._id} value={c._id}>
-                                  {c.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      label="Category"
+                      options={categoryOptions}
+                      placeholder="Select category"
+                      emptyMessage="No category found."
+                      isRequired
                     />
                   </div>
                 </Section>
@@ -272,7 +245,7 @@ const PostJob = () => {
                         control={form.control}
                         name="requirements"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="md:col-span-2">
                             <FormLabel>Requirements (One per line)</FormLabel>
                             <FormControl>
                               <Textarea
@@ -289,7 +262,7 @@ const PostJob = () => {
                         control={form.control}
                         name="benefits"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="md:col-span-2">
                             <FormLabel>Benefits (One per line)</FormLabel>
                             <FormControl>
                               <Textarea
@@ -306,7 +279,7 @@ const PostJob = () => {
                   </div>
                 </Section>
 
-                {/* --- 3. ATTRIBUTES (Type, Level, etc.) --- */}
+                {/* --- 3. ATTRIBUTES --- */}
                 <Section title="Job Attributes">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
@@ -384,12 +357,13 @@ const PostJob = () => {
                             <SelectContent>
                               {[
                                 "Intern",
-                                "Fresher",
                                 "Junior",
                                 "Mid",
                                 "Senior",
                                 "Lead",
                                 "Manager",
+                                "Director",
+                                "Executive",
                               ].map((l) => (
                                 <SelectItem key={l} value={l}>
                                   {l}
@@ -444,7 +418,6 @@ const PostJob = () => {
                       )}
                     />
 
-                    {/* Currency & Negotiable Group */}
                     <div className="flex gap-4 items-end">
                       <FormField
                         control={form.control}
@@ -507,35 +480,15 @@ const PostJob = () => {
                   </div>
                 </Section>
 
-                {/* --- 5. LOCATION --- */}
                 <Section title="Location" isLast>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
+                    <SearchableSelect
+                      form={form}
                       name="province"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City / Province</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select City" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {provinces.map((p) => (
-                                <SelectItem key={p} value={p}>
-                                  {p}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      label="City / Province"
+                      options={provinceOptions}
+                      placeholder="Select City"
+                      emptyMessage="No city found."
                     />
 
                     <FormField
@@ -569,8 +522,6 @@ const PostJob = () => {
                   </div>
                 </Section>
               </div>
-
-              {/* --- FOOTER ACTION (Giống CompanySetup) --- */}
               <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
                 <Button
                   type="button"
@@ -602,7 +553,6 @@ const PostJob = () => {
   );
 };
 
-// --- Helper Section Component (Y hệt CompanySetup) ---
 const Section = ({ title, children, isLast }) => (
   <div className={`${!isLast ? "border-b border-gray-100 pb-8" : ""}`}>
     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
@@ -611,5 +561,109 @@ const Section = ({ title, children, isLast }) => (
     {children}
   </div>
 );
+
+const SearchableSelect = ({
+  form,
+  name,
+  label,
+  options,
+  placeholder,
+  emptyMessage,
+  isRequired,
+  onCreateClick,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel>
+            {label} {isRequired && <span className="text-red-500">*</span>}
+          </FormLabel>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <FormControl>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    "w-full justify-between pl-3 text-left font-normal",
+                    !field.value && "text-muted-foreground"
+                  )}
+                >
+                  {field.value
+                    ? options.find((item) => item.value === field.value)?.label
+                    : placeholder}
+                  <div className="flex items-center ml-2 h-4 w-4 shrink-0 opacity-50">
+                    {field.value ? (
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          form.setValue(name, "");
+                        }}
+                        className="hover:bg-slate-200 rounded-full p-0.5 cursor-pointer transition-colors"
+                      >
+                        <X className="h-3 w-3 text-black" />
+                      </div>
+                    ) : (
+                      <ChevronsUpDown className="h-4 w-4" />
+                    )}
+                  </div>
+                </Button>
+              </FormControl>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" align="start">
+              <Command>
+                <CommandInput
+                  placeholder={`Search ${label.toLowerCase()}...`}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {emptyMessage}
+                    {onCreateClick && (
+                      <Button
+                        variant="link"
+                        className="mt-2 h-auto p-0 text-[#6A38C2]"
+                        onClick={onCreateClick}
+                      >
+                        + Create new
+                      </Button>
+                    )}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {options.map((item) => (
+                      <CommandItem
+                        value={item.label}
+                        key={item.value}
+                        onSelect={() => {
+                          form.setValue(name, item.value);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            item.value === field.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {item.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
 
 export default PostJob;
