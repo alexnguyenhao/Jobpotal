@@ -19,6 +19,8 @@ const applicationSchema = new mongoose.Schema(
     },
     coverLetter: {
       type: String,
+      trim: true,
+      maxLength: [5000, "Cover letter cannot exceed 5000 characters"],
       default: "",
     },
     cv: {

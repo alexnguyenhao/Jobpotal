@@ -17,9 +17,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+// 👇 1. Import thêm Dialog để xem Cover Letter
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area"; // (Tuỳ chọn) cho text dài
 
 // Icons
 import {
@@ -31,13 +41,12 @@ import {
   Calendar,
   Mail,
   Phone,
+  MessageSquare, // 👇 2. Import icon Message
 } from "lucide-react";
 
 const ApplicantsTable = () => {
-  // Sử dụng hook thay vì useSelector và hàm axios trực tiếp
   const { applicants, statusHandler } = useUpdateApplication();
 
-  // --- EMPTY STATE ---
   if (!applicants?.applications?.length) {
     return (
       <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-200 text-center">
@@ -60,7 +69,7 @@ const ApplicantsTable = () => {
 
         <TableHeader className="bg-gray-50/50">
           <TableRow>
-            <TableHead className="w-[300px] py-4 font-semibold text-gray-700">
+            <TableHead className="w-[250px] py-4 font-semibold text-gray-700">
               Candidate
             </TableHead>
             <TableHead className="font-semibold text-gray-700">
@@ -68,6 +77,10 @@ const ApplicantsTable = () => {
             </TableHead>
             <TableHead className="font-semibold text-gray-700">
               Resume / CV
+            </TableHead>
+            {/* 👇 3. Thêm cột Cover Letter */}
+            <TableHead className="font-semibold text-gray-700">
+              Cover Letter
             </TableHead>
             <TableHead className="font-semibold text-gray-700">
               Date Applied
@@ -104,7 +117,7 @@ const ApplicantsTable = () => {
                       {item?.applicant?.fullName || "Unknown"}
                     </Link>
                     <span className="text-xs text-gray-500">
-                      Applicant ID: {item._id.slice(-6)}
+                      ID: {item._id.slice(-6)}
                     </span>
                   </div>
                 </div>
@@ -136,8 +149,7 @@ const ApplicantsTable = () => {
                     to={`/cv/view/${item.cv._id}`}
                     className="inline-flex items-center gap-2 text-[#6A38C2] hover:text-[#5a2ea6] hover:underline font-medium text-sm"
                   >
-                    <FileText size={16} />
-                    View Online CV
+                    <FileText size={16} /> View Online CV
                   </Link>
                 ) : item?.applicant?.resume ? (
                   <a
@@ -147,18 +159,53 @@ const ApplicantsTable = () => {
                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
                   >
                     <FileText size={16} />
-                    <span className="truncate max-w-[150px]">
-                      {item.applicant.resumeOriginalName || "Download Resume"}
+                    <span className="truncate max-w-[120px]">
+                      {item.applicant.resumeOriginalName || "Download"}
                     </span>
                   </a>
                 ) : (
-                  <span className="text-gray-400 text-sm italic">
-                    No CV provided
-                  </span>
+                  <span className="text-gray-400 text-sm italic">No CV</span>
                 )}
               </TableCell>
 
-              {/* 4. DATE */}
+              {/* 👇 4. COVER LETTER COLUMN (MỚI) */}
+              <TableCell>
+                {item.coverLetter ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-2 text-gray-600 hover:text-[#6A38C2] hover:bg-purple-50"
+                      >
+                        <MessageSquare size={16} />
+                        <span className="text-xs font-medium">Read</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <MessageSquare className="w-5 h-5 text-[#6A38C2]" />
+                          Cover Letter
+                        </DialogTitle>
+                        <div className="text-sm text-gray-500">
+                          From:{" "}
+                          <span className="font-medium text-gray-900">
+                            {item?.applicant?.fullName}
+                          </span>
+                        </div>
+                      </DialogHeader>
+                      <div className="bg-gray-50 p-4 rounded-lg mt-2 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+                        {item.coverLetter}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <span className="text-gray-400 text-xs italic pl-3">N/A</span>
+                )}
+              </TableCell>
+
+              {/* 5. DATE */}
               <TableCell className="text-gray-600 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar size={14} className="text-gray-400" />
@@ -166,7 +213,7 @@ const ApplicantsTable = () => {
                 </div>
               </TableCell>
 
-              {/* 5. STATUS */}
+              {/* 6. STATUS */}
               <TableCell>
                 <Badge
                   variant="secondary"
@@ -184,7 +231,7 @@ const ApplicantsTable = () => {
                 </Badge>
               </TableCell>
 
-              {/* 6. ACTIONS */}
+              {/* 7. ACTIONS */}
               <TableCell className="text-right pr-6">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -196,13 +243,11 @@ const ApplicantsTable = () => {
                       <MoreHorizontal className="h-5 w-5" />
                     </Button>
                   </PopoverTrigger>
-
                   <PopoverContent className="w-40 p-1" align="end">
                     <div className="space-y-0.5">
                       {["Accepted", "Rejected"].map((status) => (
                         <div
                           key={status}
-                          // Gọi hàm từ hook
                           onClick={() => statusHandler(status, item?._id)}
                           className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded-md cursor-pointer transition-colors"
                         >

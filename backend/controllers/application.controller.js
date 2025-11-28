@@ -1,12 +1,12 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { CV } from "../models/cv.model.js";
-import { User } from "../models/user.model.js"; 
+import { User } from "../models/user.model.js";
 import { Notification } from "../models/notification.model.js";
 import { sendEmail } from "../libs/send-email.js";
 import { applicantJobTemplate } from "../templates/applicantJobTemplate.js";
 import { getReceiverSocketId, io } from "../socket.js";
-import { jobApplicationSuccessTemplate } from "../templates/jobApplicationSuccessTemplate.js"; 
+import { jobApplicationSuccessTemplate } from "../templates/jobApplicationSuccessTemplate.js";
 
 export const applyJob = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ export const applyJob = async (req, res) => {
     }
 
     const jobId = req.params.id;
-    const { cvId } = req.body;
+    const { cvId, coverLetter } = req.body;
 
     if (!jobId) {
       return res.status(400).json({
@@ -38,7 +38,9 @@ export const applyJob = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-        return res.status(404).json({ message: "User not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
     }
 
     const usingProfile = cvId === null;
@@ -51,10 +53,11 @@ export const applyJob = async (req, res) => {
     }
 
     if (usingProfile && !user.resume) {
-        return res.status(400).json({
-            message: "Your profile does not have a resume yet. Please upload one in settings.",
-            success: false,
-        });
+      return res.status(400).json({
+        message:
+          "Your profile does not have a resume yet. Please upload one in settings.",
+        success: false,
+      });
     }
 
     if (!usingProfile) {
@@ -84,9 +87,9 @@ export const applyJob = async (req, res) => {
       applicant: userId,
       cv: usingProfile ? null : cvId,
       usedProfile: usingProfile,
+      coverLetter: coverLetter,
     });
-    
- 
+
     job.applications.push(application._id);
     await job.save();
 
@@ -94,7 +97,6 @@ export const applyJob = async (req, res) => {
       const recruiterId = job.created_by;
       const notiMessage = `You received a new application for job: ${job.title}`;
 
- 
       const notification = await Notification.create({
         recipient: recruiterId,
         sender: userId,
@@ -104,7 +106,6 @@ export const applyJob = async (req, res) => {
         isRead: false,
       });
 
-
       const receiverSocketId = getReceiverSocketId(recruiterId.toString());
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("newNotification", notification);
@@ -113,18 +114,18 @@ export const applyJob = async (req, res) => {
     const companyName = job.company?.name || "The Company";
     const jobTitle = job.title;
 
-    const jobsPageUrl = `${process.env.FRONTEND_URL}/jobs`; 
+    const jobsPageUrl = `${process.env.FRONTEND_URL}/jobs`;
 
     const emailSubject = `Application Received: ${jobTitle}`;
     const emailHtml = jobApplicationSuccessTemplate(
-        user.fullName, 
-        jobTitle, 
-        companyName, 
-        jobsPageUrl
+      user.fullName,
+      jobTitle,
+      companyName,
+      jobsPageUrl
     );
 
-    sendEmail(user.email, emailSubject, emailHtml).catch(err => {
-        console.error("Failed to send application confirmation email:", err);
+    sendEmail(user.email, emailSubject, emailHtml).catch((err) => {
+      console.error("Failed to send application confirmation email:", err);
     });
 
     return res.status(201).json({
@@ -132,7 +133,6 @@ export const applyJob = async (req, res) => {
       success: true,
       application,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -189,11 +189,11 @@ export const getApplicants = async (req, res) => {
       populate: [
         {
           path: "applicant",
-          select: "-password", 
+          select: "-password",
           populate: { path: "profile" },
         },
         {
-          path: "cv", 
+          path: "cv",
         },
       ],
     });

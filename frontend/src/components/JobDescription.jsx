@@ -124,8 +124,8 @@ const JobDescription = () => {
     setIsSaved(savedJobs?.some((j) => (j._id || j).toString() === jobId));
   }, [savedJobs, jobId, user]);
 
-  const handleApplyWrapper = async (cvId) => {
-    const success = await applyJob(jobId, cvId, singleJob, user);
+  const handleApplyWrapper = async (cvId, coverLetter) => {
+    const success = await applyJob(jobId, cvId, coverLetter, singleJob, user);
     if (success) {
       setIsApplied(true);
       setOpenResumeDialog(false);
@@ -447,8 +447,10 @@ const JobDescription = () => {
         open={openResumeDialog}
         setOpen={setOpenResumeDialog}
         resumes={cvs}
-        onSelectResume={handleApplyWrapper}
-        onSelectProfile={() => handleApplyWrapper(null)}
+        onSelectResume={(cvId, coverLetter) =>
+          handleApplyWrapper(cvId, coverLetter)
+        }
+        onSelectProfile={(text) => handleApplyWrapper(null, text)}
       />
     </div>
   );

@@ -58,16 +58,19 @@ const Login = () => {
         withCredentials: true,
       });
 
-      if (res.data.require2FA) {
-        setRequires2FA(true);
-        setTempUserId(res.data.userId);
-        toast.info(
-          res.data.message || "Please enter the OTP sent to your email."
-        );
+      if (res.data.success) {
+        dispatch(setUser(res.data.user));
+        toast.success(`Welcome back, ${res.data.user.fullName}!`);
+        const targetPath =
+          res.data.user.role === "recruiter" ? "/recruiter/companies" : "/";
+        navigate(targetPath);
       } else if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(`Welcome back, ${res.data.user.fullName || "User"}!`);
-        setTimeout(() => navigate("/"), 1000);
+        const targetPath =
+          res.data.user.role === "recruiter" ? "/recruiter/companies" : "/";
+
+        setTimeout(() => navigate(targetPath), 1000);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");

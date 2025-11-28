@@ -15,24 +15,20 @@ export default function ResumeSelectionDialog({
   open,
   setOpen,
   resumes,
-  onSelectResume, // Hàm này cần nhận (cvId, coverLetter)
-  onSelectProfile, // Hàm này cần nhận (coverLetter)
+  onSelectResume,
+  onSelectProfile,
 }) {
-  const [selectedOption, setSelectedOption] = useState(null); // 'profile' hoặc cv._id
+  const [selectedOption, setSelectedOption] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
 
-  // Hàm xử lý khi nhấn nút Apply cuối cùng
   const handleConfirmApply = () => {
     if (!selectedOption) return;
 
     if (selectedOption === "profile") {
-      // Gọi hàm apply bằng profile, truyền thêm coverLetter
       onSelectProfile(coverLetter);
     } else {
-      // Gọi hàm apply bằng CV, truyền ID và coverLetter
       onSelectResume(selectedOption, coverLetter);
     }
-    // Dialog sẽ được đóng bởi component cha hoặc setOpen(false) tại đây nếu cần
   };
 
   return (
