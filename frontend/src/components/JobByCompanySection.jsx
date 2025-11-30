@@ -177,10 +177,7 @@ const JobByCompanySection = () => {
                     {/* Company Header */}
                     <div className="p-6 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100 flex items-center gap-4">
                       <Avatar className="h-14 w-14 rounded-xl border bg-white shadow-sm">
-                        <AvatarImage
-                          src={com.logo}
-                          objectFit="object-contain"
-                        />
+                        <AvatarImage src={com.logo} className="object-cover" />
                         <AvatarFallback className="rounded-xl bg-gray-100">
                           <Building2 className="text-gray-400" />
                         </AvatarFallback>

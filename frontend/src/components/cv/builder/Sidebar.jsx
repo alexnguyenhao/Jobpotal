@@ -40,7 +40,6 @@ const Sidebar = ({ cvData, updateField }) => {
       <ScrollArea className="flex-1">
         <div className="p-4 pb-20">
           <Accordion type="single" collapsible className="w-full space-y-2">
-            {/* 1. Title */}
             <AccordionItem value="title" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -52,8 +51,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <TitleSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 2. Personal Info */}
             <AccordionItem value="personal" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -68,8 +65,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 3. Summary */}
             <AccordionItem value="summary" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -81,8 +76,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <SummarySection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 4. Experience */}
             <AccordionItem
               value="experience"
               className="border rounded-lg px-2"
@@ -97,8 +90,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <ExperienceSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 5. Education */}
             <AccordionItem value="education" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -110,8 +101,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <EducationSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 6. Skills */}
             <AccordionItem value="skills" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -123,8 +112,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <SkillsSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 7. Projects */}
             <AccordionItem value="projects" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -136,8 +123,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <ProjectsSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 8. Certifications */}
             <AccordionItem
               value="certifications"
               className="border rounded-lg px-2"
@@ -155,8 +140,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 9. Languages */}
             <AccordionItem value="languages" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -168,8 +151,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <LanguagesSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 10. Achievements */}
             <AccordionItem
               value="achievements"
               className="border rounded-lg px-2"
@@ -187,8 +168,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 11. Operations */}
             <AccordionItem
               value="operations"
               className="border rounded-lg px-2"
@@ -203,8 +182,6 @@ const Sidebar = ({ cvData, updateField }) => {
                 <OperationsSection cvData={cvData} updateField={updateField} />
               </AccordionContent>
             </AccordionItem>
-
-            {/* 12. Interests */}
             <AccordionItem value="interests" className="border rounded-lg px-2">
               <AccordionTrigger className="hover:no-underline py-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">

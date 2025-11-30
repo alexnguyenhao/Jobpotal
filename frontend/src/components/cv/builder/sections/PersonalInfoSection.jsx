@@ -35,7 +35,7 @@ const PersonalInfoSection = ({ cvData, updateField }) => {
 
       <div className="grid grid-cols-2 gap-3">
         <Input
-          type="date" // Dùng type date cho dễ nhập
+          type="date"
           placeholder="Date of Birth"
           value={info.dateOfBirth ? info.dateOfBirth.split("T")[0] : ""}
           onChange={(e) =>
@@ -48,9 +48,6 @@ const PersonalInfoSection = ({ cvData, updateField }) => {
           onChange={(e) => updateField("personalInfo.gender", e.target.value)}
         />
       </div>
-
-      {/* Summary đã tách ra section riêng, có thể bỏ ở đây hoặc giữ tùy ý, 
-          nhưng trong Sidebar mới tôi đã tách Summary ra riêng nên ở đây bỏ đi cho gọn */}
     </div>
   );
 };

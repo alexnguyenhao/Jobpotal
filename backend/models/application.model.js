@@ -28,7 +28,24 @@ const applicationSchema = new mongoose.Schema(
       ref: "CV",
       default: null,
     },
+
+    aiScore: {
+      type: Number,
+      default: null,
+      min: 0,
+      max: 100,
+    },
+    aiFeedback: {
+      type: String,
+      default: "",
+    },
+    matchStatus: {
+      type: String,
+      enum: ["Pending", "High", "Medium", "Low", "Failed"],
+      default: "Pending",
+    },
   },
   { timestamps: true }
 );
+
 export const Application = mongoose.model("Application", applicationSchema);

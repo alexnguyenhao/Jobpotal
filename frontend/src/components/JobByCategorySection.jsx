@@ -31,21 +31,16 @@ const JobByCategorySection = () => {
   const [direction, setDirection] = useState(0);
   const [loadingJobs, setLoadingJobs] = useState(false);
 
-  // 1. Gom nhóm danh mục
   const groupedCategories = [];
   if (categories) {
     for (let i = 0; i < categories.length; i += ITEMS_PER_GROUP) {
       groupedCategories.push(categories.slice(i, i + ITEMS_PER_GROUP));
     }
   }
-
-  // 2. Fetch Jobs khi chuyển slide
   useEffect(() => {
     const fetchJobs = async () => {
       const currentGroup = groupedCategories[index];
       if (!currentGroup) return;
-
-      // Kiểm tra xem đã có data trong cache chưa
       const missingData = currentGroup.some((cat) => !jobsByCategory[cat._id]);
 
       if (missingData) {
@@ -56,7 +51,6 @@ const JobByCategorySection = () => {
           currentGroup.map(async (cat) => {
             if (!newJobsMap[cat._id]) {
               const res = await getJobByCategory(cat._id);
-              // Lấy tối đa 3 job để hiển thị đẹp
               newJobsMap[cat._id] = res ? res.slice(0, 3) : [];
             }
           })
@@ -178,7 +172,6 @@ const JobByCategorySection = () => {
                   {/* Job List */}
                   <div className="p-4 space-y-3 flex-1 bg-white">
                     {loadingJobs && !jobsByCategory[cat._id] ? (
-                      // Skeleton Loading
                       [1, 2, 3].map((i) => (
                         <div key={i} className="flex gap-3 p-2">
                           <Skeleton className="w-10 h-10 rounded-md" />
@@ -188,8 +181,7 @@ const JobByCategorySection = () => {
                           </div>
                         </div>
                       ))
-                    ) : // Real Data
-                    jobsByCategory[cat._id]?.length > 0 ? (
+                    ) : jobsByCategory[cat._id]?.length > 0 ? (
                       jobsByCategory[cat._id].map((job) => (
                         <div
                           key={job._id}
@@ -199,7 +191,7 @@ const JobByCategorySection = () => {
                           <Avatar className="h-10 w-10 rounded-lg border bg-white mt-1">
                             <AvatarImage
                               src={job.company?.logo}
-                              objectFit="contain"
+                              className="object-cover"
                             />
                             <AvatarFallback className="rounded-lg bg-gray-100">
                               <Building2 size={16} className="text-gray-400" />
@@ -264,7 +256,6 @@ const JobByCategorySection = () => {
   );
 };
 
-// Helper format lương gọn
 const formatSalary = (salary) => {
   if (!salary || salary.isNegotiable) return "Negotiable";
   const { min, max, currency } = salary;

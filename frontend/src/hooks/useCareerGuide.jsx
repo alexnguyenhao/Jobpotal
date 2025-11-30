@@ -16,8 +16,6 @@ const API = CAREER_GUIDE_API_END_POINT;
 
 export default function useCareerGuide() {
   const dispatch = useDispatch();
-
-  // Lấy state từ Redux
   const { myGuides, publicGuides, singleGuide, loading, error } = useSelector(
     (state) => state.careerGuide
   );

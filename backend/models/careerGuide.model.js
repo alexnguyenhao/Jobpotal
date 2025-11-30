@@ -6,20 +6,18 @@ const careerGuideSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true, // Tối ưu tìm kiếm theo tên
+      index: true,
     },
-    // URL thân thiện: vi-du-ve-tieu-de
     slug: {
       type: String,
       required: true,
-      unique: true, // Bắt buộc duy nhất
-      index: true, // Tối ưu query
+      unique: true,
+      index: true,
     },
     thumbnail: {
       type: String,
       default: "",
     },
-    // Mô tả ngắn để hiện ở danh sách bài viết (tránh load full content)
     excerpt: {
       type: String,
       maxLength: 300,
@@ -37,7 +35,7 @@ const careerGuideSchema = new mongoose.Schema(
         "others",
       ],
       default: "job-search",
-      index: true, // Tối ưu khi filter theo category
+      index: true,
     },
     content: {
       type: String,
@@ -55,29 +53,24 @@ const careerGuideSchema = new mongoose.Schema(
       default: null,
     },
 
-    tags: [{ type: String }], // Có thể đánh index text ở dưới nếu cần search fulltext
+    tags: [{ type: String }],
 
-    // Thống kê & Tương tác
     views: {
       type: Number,
       default: 0,
     },
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Mảng user đã like (tùy chọn)
-
-    // UX features
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     readingTime: {
-      type: Number, // Tính bằng phút (ví dụ: 5 phút)
+      type: Number,
       default: 0,
     },
 
-    // Trạng thái & Quản lý
     isPublished: {
       type: Boolean,
       default: true,
-      index: true, // Để lọc nhanh các bài đã public
+      index: true,
     },
     isFeatured: {
-      // Ghim bài viết lên đầu/banner
       type: Boolean,
       default: false,
     },
@@ -89,7 +82,6 @@ const careerGuideSchema = new mongoose.Schema(
   }
 );
 
-// Tạo Text Index để hỗ trợ chức năng tìm kiếm bài viết
 careerGuideSchema.index({ title: "text", content: "text", tags: "text" });
 
 export const CareerGuide = mongoose.model("CareerGuide", careerGuideSchema);

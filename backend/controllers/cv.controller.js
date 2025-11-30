@@ -83,8 +83,6 @@ export const getCVById = async (req, res) => {
 
   if (!cv)
     return res.status(404).json({ success: false, message: "CV not found" });
-
-  // If not public, only owner can view
   if (!cv.isPublic && cv.user.toString() !== req.id) {
     return res
       .status(403)
@@ -106,8 +104,6 @@ export const updateCV = async (req, res) => {
     const cv = await CV.findById(cvId);
     if (!cv)
       return res.status(404).json({ success: false, message: "CV not found" });
-
-    // ❗ MUST check permission
     if (cv.user.toString() !== userId) {
       return res.status(403).json({
         success: false,

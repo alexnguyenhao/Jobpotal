@@ -27,7 +27,6 @@ const CVView = () => {
     operations,
     interests,
     styleConfig,
-
   } = useSelector((state) => state.cv);
 
   const [loading, setLoading] = useState(true);
@@ -49,7 +48,6 @@ const CVView = () => {
     );
   }
 
-  // Gộp lại thành cvData
   const cvData = {
     _id: meta._id,
     title: meta.title,
@@ -72,7 +70,6 @@ const CVView = () => {
     styleConfig,
   };
 
-  // SHARE CV
   const handleShare = async () => {
     const url = await shareCV(cvData._id);
     if (url) {
@@ -83,7 +80,6 @@ const CVView = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      {/* HEADER ACTIONS */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="outline" onClick={() => navigate(-1)}>
           <ArrowLeft size={18} className="mr-2" /> Quay lại
@@ -94,15 +90,10 @@ const CVView = () => {
             <Share2 size={18} className="mr-1" /> Chia sẻ
           </Button>
 
-          {/* Nút export PDF mới */}
           <PDFExport targetId="cv-print-area" filename={cvData.title} />
         </div>
       </div>
-
-      {/* CV TITLE */}
       <h1 className="text-3xl font-bold mb-4">{cvData.title}</h1>
-
-      {/* PREVIEW A4 */}
       <div className="flex justify-center">
         <LivePreview cvData={cvData} />
       </div>

@@ -112,14 +112,12 @@ const appRouter = createBrowserRouter([
     ],
   },
 
-  // ✅ Routes KHÔNG dùng layout (Auth pages)
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <Signup /> },
   { path: "/verify-email", element: <Verification /> },
   { path: "/reset-password", element: <ResetPassword /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
 
-  // ✅ ADMIN SYSTEM ROUTES
   {
     path: "/admin/login",
     element: <AdminLogin />,
@@ -169,15 +167,13 @@ const appRouter = createBrowserRouter([
         path: "jobs/:id",
         element: <JobDetail />,
       },
-
-      // --- Career Guides Management ---
       {
         path: "career-guides",
         element: <CareerGuideHome />,
       },
       {
         path: "career-guides/create",
-        element: <CareerGuideCreate />, // Bây giờ nó sẽ render đúng form create
+        element: <CareerGuideCreate />,
       },
       {
         path: "career-guides/edit/:id",

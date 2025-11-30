@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -19,11 +18,9 @@ import {
 } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import {
-  Edit2,
   MoreHorizontal,
   Search,
   Trash2,
-  Eye,
   Building2,
   Ban,
   Verified,
@@ -66,13 +63,13 @@ const AdminJobsTable = () => {
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-50">
             <TableRow>
               <TableHead className="w-[80px]">Logo</TableHead>
-              <TableHead>Company Name</TableHead>
-              <TableHead>Job Title</TableHead>
+              <TableHead className="w-[200px]">Company Name</TableHead>
+              <TableHead className="w-[250px]">Job Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date Posted</TableHead>
               <TableHead className="text-right">Action</TableHead>
@@ -82,7 +79,7 @@ const AdminJobsTable = () => {
             {filteredJobs?.length <= 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center h-24 text-gray-500"
                 >
                   No jobs found.
@@ -98,7 +95,7 @@ const AdminJobsTable = () => {
                     <Avatar className="h-10 w-10 border border-gray-200 bg-white">
                       <AvatarImage
                         src={job.company?.logo}
-                        className="object-contain p-1"
+                        className="object-cover p-1"
                       />
                       <AvatarFallback className="bg-gray-100 text-gray-400">
                         <Building2 size={20} />
@@ -106,26 +103,29 @@ const AdminJobsTable = () => {
                     </Avatar>
                   </TableCell>
 
-                  <TableCell className="font-medium text-gray-700">
+                  <TableCell className="max-w-[150px]">
                     <span
-                      className="font-semibold text-gray-900 truncate"
+                      className="font-semibold text-gray-900 truncate block"
+                      title={job.company?.name || "Unknown Company"}
                       onClick={() => navigate(`/admin/jobs/${job._id}`)}
                     >
                       {job.company?.name || "Unknown Company"}
                     </span>
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className="max-w-[200px]">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-gray-900">
+                      <span
+                        className="font-semibold text-gray-900 truncate block"
+                        title={job.title}
+                      >
                         {job.title}
                       </span>
-                      {/* Hiển thị thêm badge role/type nếu có */}
                       <div className="flex gap-1 mt-1">
-                        {/* Ví dụ hiển thị JobType nếu data có */}
                         {job.jobType && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] px-1 py-0 h-5 border-blue-200 text-blue-600 bg-blue-50"
+                            className="text-[10px] px-1 py-0 h-5 border-blue-200 text-blue-600 bg-blue-50 whitespace-nowrap"
                           >
                             {job.jobType}
                           </Badge>
@@ -133,25 +133,23 @@ const AdminJobsTable = () => {
                       </div>
                     </div>
                   </TableCell>
-                  {job?.status === "Open" ? (
-                    <TableCell>
+
+                  <TableCell>
+                    {job?.status === "Open" ? (
                       <Badge className="bg-green-500 text-white hover:bg-green-500/80">
                         Open
                       </Badge>
-                    </TableCell>
-                  ) : (
-                    <TableCell>
+                    ) : (
                       <Badge className="bg-gray-500 text-white hover:bg-gray-500/80">
                         Closed
                       </Badge>
-                    </TableCell>
-                  )}
-                  {/* Ngày tạo */}
-                  <TableCell className="text-gray-500 text-sm">
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
                     {job?.createdAt ? job.createdAt.split("T")[0] : "N/A"}
                   </TableCell>
 
-                  {/* Hành động */}
                   <TableCell className="text-right">
                     <Popover>
                       <PopoverTrigger asChild>
@@ -161,7 +159,6 @@ const AdminJobsTable = () => {
                       </PopoverTrigger>
                       <PopoverContent className="w-40 p-0" align="end">
                         <div className="flex flex-col text-sm">
-                          {/* Xem Applicants */}
                           <div
                             className="flex items-center gap-2 cursor-pointer w-full p-2.5 hover:bg-gray-100 transition-colors"
                             onClick={() => toggleJobStatus(job._id)}
@@ -176,7 +173,6 @@ const AdminJobsTable = () => {
                             </span>
                           </div>
 
-                          {/* Xóa Job */}
                           <div
                             className="flex items-center gap-2 cursor-pointer w-full p-2.5 hover:bg-red-50 text-red-600 transition-colors"
                             onClick={() => console.log("Delete job:", job._id)}

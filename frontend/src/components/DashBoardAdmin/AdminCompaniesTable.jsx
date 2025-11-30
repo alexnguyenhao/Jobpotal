@@ -98,7 +98,7 @@ const Companies = () => {
                         <Avatar className="h-12 w-12 border border-gray-100 bg-white shadow-sm rounded-lg">
                           <AvatarImage
                             src={company.logo}
-                            className="object-contain p-1"
+                            className="object-cover p-1"
                           />
                           <AvatarFallback className="rounded-lg bg-purple-50 text-[#6A38C2] font-bold">
                             {company.name[0]?.toUpperCase()}

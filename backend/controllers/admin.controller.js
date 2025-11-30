@@ -196,7 +196,7 @@ export const getCompanyById = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id).populate("profile ");
+    const user = await User.findById(id).populate("profile");
     if (!user)
       return res
         .status(404)

@@ -137,7 +137,7 @@ const JobDetail = () => {
                 <Avatar className="h-20 w-20 rounded-xl border-2 border-white/20 bg-white">
                   <AvatarImage
                     src={job.company?.logo}
-                    className="object-contain p-1"
+                    className="object-cover p-1"
                   />
                   <AvatarFallback className="rounded-xl bg-white text-slate-900 font-bold text-2xl">
                     {job.company?.name?.charAt(0)}

@@ -339,104 +339,105 @@ const NavBar = () => {
                     </Avatar>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-60 p-2 mr-4" align="end">
-                    <div className="flex items-center gap-3 px-3 py-3 border-b border-gray-100 mb-1">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={user?.profilePhoto} />
-                        <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
+                  <PopoverContent
+                    className="w-72 p-0 border-gray-100 shadow-xl rounded-xl"
+                    align="end"
+                  >
+                    {/* 1. Header Section */}
+                    <div className="flex items-center gap-3 px-4 py-4 bg-gray-50/80 border-b border-gray-100 rounded-t-xl">
+                      <Avatar className="w-10 h-10 border border-gray-200">
+                        <AvatarImage
+                          src={user?.profilePhoto}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-[#6A38C2] text-white font-bold">
+                          {user?.fullName?.[0]?.toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col overflow-hidden">
                         <span className="font-semibold text-gray-900 truncate text-sm">
                           {user?.fullName}
                         </span>
-                        <span className="text-xs text-gray-500 capitalize">
-                          {user?.role}
+                        <span className="text-xs text-gray-500 capitalize font-medium">
+                          {user?.role === "recruiter"
+                            ? "Recruiter Account"
+                            : "Student Account"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="space-y-0.5 mt-2">
+                    {/* 2. Menu Items */}
+                    <div className="p-2">
+                      {/* Common Settings Group */}
+                      <div className="flex flex-col gap-1">
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
+                        >
+                          <User2 size={18} className="text-gray-400" />
+                          View Profile
+                        </Link>
+
+                        <Link
+                          to="/setting-account"
+                          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
+                        >
+                          <Settings size={18} className="text-gray-400" />
+                          Account Settings
+                        </Link>
+                      </div>
+                      {/* Student Specific Links */}
                       {user?.role === "student" && (
                         <>
-                          <div>
-                            <h1 className="font-semibold text-gray-900 text-sm">
-                              Manage Account
-                            </h1>
-                            <Link
-                              to="/profile"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
-                            >
-                              <User2 size={16} /> Profile
-                            </Link>
-                            <Link
-                              to="/setting-account"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
-                            >
-                              <Settings size={16} /> Setting Account
-                            </Link>
-                          </div>
-                          <div>
-                            <h1 className="font-semibold text-gray-900 text-sm">
-                              Manage CV
-                            </h1>
+                          <div className="h-px bg-gray-100 my-2 mx-1" />{" "}
+                          {/* Divider */}
+                          <div className="flex flex-col gap-1">
                             <Link
                               to="/cv/list"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
                             >
-                              <FileText size={16} /> CV List
-                            </Link>
-                          </div>
-                          <div>
-                            <h1 className="font-semibold text-gray-900 text-sm">
-                              Manage Job
-                            </h1>
-                            <Link
-                              to="/saved-jobs"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
-                            >
-                              <Heart size={16} /> Saved Jobs
+                              <FileText size={18} className="text-gray-400" />
+                              My CVs
                             </Link>
                             <Link
                               to="/applied-jobs"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
                             >
-                              <Briefcase size={16} /> Applied Jobs
+                              <Briefcase size={18} className="text-gray-400" />
+                              Applied Jobs
                             </Link>
-                          </div>
-                          <div>
-                            <h1 className="font-semibold text-gray-900 text-sm">
-                              Notifications
-                            </h1>
                             <Link
-                              to="/notifications"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                              to="/saved-jobs"
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
                             >
-                              <Bell size={16} /> Notifications
+                              <Heart size={18} className="text-gray-400" />
+                              Saved Jobs
                             </Link>
                           </div>
                         </>
                       )}
+                      {/* Recruiter Specific Links (Add more if needed) */}
                       {user?.role === "recruiter" && (
                         <>
+                          <div className="h-px bg-gray-100 my-2 mx-1" />
                           <Link
                             to="/notifications"
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-[#6A38C2] transition-colors"
                           >
-                            <Bell size={16} /> Notifications
-                          </Link>
-                          <Link
-                            to="/setting-account"
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
-                          >
-                            <Settings size={16} /> Setting Account
+                            <Bell size={18} className="text-gray-400" />
+                            Notifications
                           </Link>
                         </>
                       )}
+                      {/* Logout Section */}
+                      <div className="h-px bg-gray-100 my-2 mx-1" />{" "}
+                      {/* Divider */}
                       <button
                         onClick={logoutHandler}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors mt-1"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                       >
-                        <LogOut size={16} /> Logout
+                        <LogOut size={18} />
+                        Log out
                       </button>
                     </div>
                   </PopoverContent>

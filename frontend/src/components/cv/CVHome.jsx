@@ -97,9 +97,7 @@ const CVHome = () => {
 
   return (
     <div className="w-full min-h-screen bg-white font-sans">
-      {/* ================= HERO SECTION ================= */}
       <section className="relative w-full bg-gradient-to-b from-purple-50 via-white to-white py-20 lg:py-32 overflow-hidden">
-        {/* Background Decor */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-30 pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
           <div className="absolute top-20 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
@@ -131,7 +129,6 @@ const CVHome = () => {
             <Button
               size="lg"
               className="bg-[#6A38C2] hover:bg-[#582bb6] text-white font-bold px-8 h-14 rounded-full text-lg shadow-lg hover:shadow-xl transition-all"
-              // ✅ FIX: Thêm ?template=modern để tránh lỗi loading mãi mãi
               onClick={() =>
                 handleAction(() => navigate("/cv/builder?template=modern"))
               }
@@ -151,7 +148,6 @@ const CVHome = () => {
         </div>
       </section>
 
-      {/* ================= FEATURES GRID ================= */}
       <section className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -173,7 +169,6 @@ const CVHome = () => {
         </div>
       </section>
 
-      {/* ================= TEMPLATES SECTION ================= */}
       <section className="py-20 bg-gray-50/50 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -192,9 +187,7 @@ const CVHome = () => {
                 key={template.id}
                 className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-200 transition-all duration-300"
               >
-                {/* Image Container */}
                 <div className="relative h-[400px] w-full bg-gray-100 overflow-hidden">
-                  {/* Badge */}
                   {template.badge && (
                     <div className="absolute top-4 left-4 z-10">
                       <Badge className="bg-[#6A38C2] hover:bg-[#6A38C2] text-white">
@@ -209,7 +202,6 @@ const CVHome = () => {
                     className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   />
 
-                  {/* Overlay Actions (Show on Hover) */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
                     <Button
                       onClick={() => handlePreview(template.id)}
@@ -220,7 +212,6 @@ const CVHome = () => {
                       <Eye className="w-5 h-5" />
                     </Button>
                     <Button
-                      // ✅ FIX: Đã dùng đúng template ID
                       onClick={() => handleUseTemplate(template.id)}
                       className="bg-[#6A38C2] hover:bg-[#582bb6] rounded-full px-6"
                     >
@@ -229,7 +220,6 @@ const CVHome = () => {
                   </div>
                 </div>
 
-                {/* Card Footer */}
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900">
                     {template.name}
@@ -244,7 +234,6 @@ const CVHome = () => {
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS ================= */}
       <section className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12">How it works</h2>
@@ -278,7 +267,6 @@ const CVHome = () => {
         </div>
       </section>
 
-      {/* ================= CTA BOTTOM ================= */}
       <section className="py-24 bg-black text-white text-center">
         <div className="max-w-3xl mx-auto px-6">
           <Sparkles className="w-10 h-10 text-yellow-400 mx-auto mb-6" />
@@ -293,7 +281,6 @@ const CVHome = () => {
           <Button
             size="lg"
             className="bg-white text-black hover:bg-gray-100 font-bold px-10 h-14 rounded-full text-lg"
-            // ✅ FIX: Thêm ?template=modern để tránh lỗi loading mãi mãi
             onClick={() =>
               handleAction(() => navigate("/cv/builder?template=modern"))
             }
@@ -302,8 +289,6 @@ const CVHome = () => {
           </Button>
         </div>
       </section>
-
-      {/* Preview Modal */}
       <TemplatePreviewModal
         open={openPreview}
         onClose={() => setOpenPreview(false)}

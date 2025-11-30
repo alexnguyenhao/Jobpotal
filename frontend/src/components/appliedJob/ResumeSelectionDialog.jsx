@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,13 @@ export default function ResumeSelectionDialog({
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setCoverLetter("");
+      setSelectedOption(null);
+    }
+  }, [open]);
 
   const handleConfirmApply = () => {
     if (!selectedOption) return;

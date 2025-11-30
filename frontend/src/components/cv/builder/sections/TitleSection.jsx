@@ -8,7 +8,7 @@ const TitleSection = ({ cvData, updateField }) => {
       <Textarea
         rows={3}
         value={cvData.title}
-        onChange={(e) => updateField("title", e.target.value)}
+        onChange={(e) => updateField("meta.title", e.target.value)}
         placeholder="Your professional title..."
       />
     </div>

@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { toast } from "sonner"; // Vẫn giữ để toast lỗi load job nếu cần
+import { toast } from "sonner";
 
-import { JOB_API_END_POINT } from "@/utils/constant"; // Bỏ APPLICATION_API_END_POINT
+import { JOB_API_END_POINT } from "@/utils/constant";
 import { setSingleJob } from "@/redux/jobSlice";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
 import useCV from "@/hooks/useCV";
-import useApplyJob from "@/hooks/useApplyJob"; // <--- IMPORT HOOK MỚI
+import useApplyJob from "@/hooks/useApplyJob";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -28,13 +28,11 @@ import {
   Building2,
   CheckCircle2,
   Heart,
-  ArrowLeft,
   Share2,
   Flag,
   MonitorPlay,
   Hourglass,
 } from "lucide-react";
-
 const InfoBox = ({ icon, label, value, className = "" }) => (
   <div className={`flex items-center gap-3 ${className}`}>
     <div className="p-2.5 rounded-full bg-white/10 shrink-0 text-white md:bg-purple-50 md:text-[#6A38C2]">
@@ -67,16 +65,24 @@ const SectionTitle = ({ title }) => (
   </h3>
 );
 
+// --- Main Component ---
 const JobDescription = () => {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Redux & Hooks
   const { singleJob } = useSelector((s) => s.job);
   const { user } = useSelector((s) => s.auth);
   const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
   const { cvs, fetchMyCVs } = useCV();
   const { applyJob, isApplying } = useApplyJob();
-  const [isApplied, setIsApplied] = useState(false);
+
+  // Local State
+  // Thay đổi: Dùng count thay vì boolean isApplied
+  const [applicationCount, setApplicationCount] = useState(0);
+  const MAX_APPLY_LIMIT = 3;
+
   const [isExpired, setIsExpired] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -84,12 +90,15 @@ const JobDescription = () => {
 
   const hasFetchedCVs = useRef(false);
 
+  // Fetch CVs khi có user
   useEffect(() => {
     if (user && !hasFetchedCVs.current) {
       hasFetchedCVs.current = true;
       fetchMyCVs();
     }
   }, [user]);
+
+  // Fetch Job Details & Check Application Status
   useEffect(() => {
     const fetchJob = async () => {
       setLoading(true);
@@ -104,12 +113,15 @@ const JobDescription = () => {
           setIsExpired(new Date(job.applicationDeadline) < new Date());
 
           if (user) {
-            setIsApplied(
-              job.applications?.some((a) => a.applicant === user._id)
+            // Logic MỚI: Đếm số lần user này đã nộp đơn vào job này
+            const myApplications = job.applications?.filter(
+              (a) => a.applicant === user._id
             );
+            setApplicationCount(myApplications?.length || 0);
           }
         }
       } catch (err) {
+        console.error(err);
         toast.error("Failed to load job details");
       } finally {
         setLoading(false);
@@ -119,19 +131,28 @@ const JobDescription = () => {
     fetchJob();
   }, [jobId, user, dispatch]);
 
+  // Check Saved Status
   useEffect(() => {
     if (!user) return;
     setIsSaved(savedJobs?.some((j) => (j._id || j).toString() === jobId));
   }, [savedJobs, jobId, user]);
 
+  // Handle Apply Logic
   const handleApplyWrapper = async (cvId, coverLetter) => {
+    // Gọi hook applyJob
     const success = await applyJob(jobId, cvId, coverLetter, singleJob, user);
+
     if (success) {
-      setIsApplied(true);
+      // Nếu thành công, tăng biến đếm lên 1 để cập nhật UI ngay lập tức
+      setApplicationCount((prev) => prev + 1);
       setOpenResumeDialog(false);
+      toast.success(
+        `Application sent! (${applicationCount + 1}/${MAX_APPLY_LIMIT})`
+      );
     }
   };
 
+  // Handle Save/Unsave Logic
   const handleSaveToggle = () => {
     if (!user) return navigate("/login");
 
@@ -168,9 +189,11 @@ const JobDescription = () => {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] pb-20">
+      {/* Header Section */}
       <div className="bg-white shadow-sm pt-8 pb-8 md:pt-10 md:pb-12 px-4 md:px-0 mb-6 border-b border-gray-100">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Logo */}
             <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 bg-white border border-gray-100 shadow-md rounded-xl p-2 flex items-center justify-center overflow-hidden">
               <Avatar className="h-full w-full rounded-none">
                 <AvatarImage
@@ -183,6 +206,7 @@ const JobDescription = () => {
               </Avatar>
             </div>
 
+            {/* Title & Actions */}
             <div className="flex-1 w-full">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">
                 {title}
@@ -221,16 +245,21 @@ const JobDescription = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2">
+                {/* --- UPDATED APPLY BUTTON --- */}
                 <Button
                   className={`h-11 px-10 text-base font-bold rounded-lg flex-1 md:flex-none shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]
                             ${
-                              isApplied || isExpired
+                              applicationCount >= MAX_APPLY_LIMIT || isExpired
                                 ? "bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200"
                                 : "bg-[#6A38C2] hover:bg-[#582bb6] text-white"
                             }`}
-                  disabled={isApplied || isExpired || isApplying}
+                  disabled={
+                    applicationCount >= MAX_APPLY_LIMIT ||
+                    isExpired ||
+                    isApplying
+                  }
                   onClick={() =>
-                    !isApplied &&
+                    applicationCount < MAX_APPLY_LIMIT &&
                     !isExpired &&
                     (user ? setOpenResumeDialog(true) : navigate("/login"))
                   }
@@ -238,10 +267,12 @@ const JobDescription = () => {
                   <Share2 className="w-4 h-4 mr-2" />
                   {isApplying
                     ? "Applying..."
-                    : isApplied
-                    ? "Applied Successfully"
                     : isExpired
                     ? "Job Closed"
+                    : applicationCount >= MAX_APPLY_LIMIT
+                    ? "Max Applications Reached" // Đã đủ 3 lần
+                    : applicationCount > 0
+                    ? `Reapply (${applicationCount}/${MAX_APPLY_LIMIT})` // Nút Reapply
                     : "Apply Now"}
                 </Button>
 
@@ -266,7 +297,9 @@ const JobDescription = () => {
         </div>
       </div>
 
+      {/* Main Content Layout */}
       <div className="max-w-6xl mx-auto px-4 md:px-0 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Details */}
         <div className="lg:col-span-8 space-y-6">
           <Card className="border-none shadow-sm rounded-xl overflow-hidden">
             <CardContent className="p-6 md:p-8">
@@ -321,9 +354,7 @@ const JobDescription = () => {
           </Card>
         </div>
 
-        {/* ... Sidebar ... */}
         <div className="lg:col-span-4 space-y-6">
-          {/* ... (Giữ nguyên nội dung sidebar) ... */}
           <Card className="border-none shadow-sm rounded-xl bg-white top-24">
             <CardContent className="p-6">
               <h4 className="font-bold text-gray-900 mb-5 text-lg">
@@ -456,7 +487,6 @@ const JobDescription = () => {
   );
 };
 
-// ... (Giữ nguyên JobSkeletonTopCVStyle) ...
 const JobSkeletonTopCVStyle = () => (
   <div className="min-h-screen bg-[#F0F2F5] pb-20">
     <div className="bg-white pt-10 pb-12 mb-6 shadow-sm">

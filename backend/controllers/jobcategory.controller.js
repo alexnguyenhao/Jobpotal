@@ -1,6 +1,5 @@
 import { JobCategory } from "../models/jobCategory.model.js";
 
-// Tạo mới category
 export const createJobCategory = async (req, res) => {
   try {
     const { name, description, icon } = req.body;
@@ -26,7 +25,6 @@ export const createJobCategory = async (req, res) => {
   }
 };
 
-// Lấy tất cả category
 export const getAllJobCategories = async (req, res) => {
   try {
     const categories = await JobCategory.find();
@@ -36,7 +34,6 @@ export const getAllJobCategories = async (req, res) => {
   }
 };
 
-// Lấy 1 category theo id
 export const getJobCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -52,7 +49,6 @@ export const getJobCategoryById = async (req, res) => {
   }
 };
 
-// Cập nhật category
 export const updateJobCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -75,7 +71,6 @@ export const updateJobCategory = async (req, res) => {
   }
 };
 
-// Xóa category
 export const deleteJobCategory = async (req, res) => {
   try {
     const { id } = req.params;

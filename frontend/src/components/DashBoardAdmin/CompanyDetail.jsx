@@ -168,10 +168,7 @@ const CompanyDetail = () => {
           <div className="bg-slate-900 text-white p-8 md:p-12">
             <div className="flex flex-col md:flex-row items-start gap-6">
               <Avatar className="h-24 w-24 rounded-2xl border-4 border-white/10 bg-white shadow-xl">
-                <AvatarImage
-                  src={company.logo}
-                  className="object-contain p-1"
-                />
+                <AvatarImage src={company.logo} className="object-cover p-1" />
                 <AvatarFallback className="rounded-2xl bg-slate-800 text-white font-bold text-3xl">
                   {company.name?.charAt(0)}
                 </AvatarFallback>
