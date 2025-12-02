@@ -4,13 +4,11 @@ import bcrypt from "bcryptjs";
 import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
 import { Application } from "../models/application.model.js";
-import { CareerGuide } from "../models/careerGuide.model.js";
 import { User } from "../models/user.model.js";
 import { Notification } from "../models/notification.model.js";
 import { sendEmail } from "../libs/send-email.js";
 import { getReceiverSocketId, io } from "../socket.js";
 import { companyStatusTemplate } from "../templates/companyStatusTemplate.js";
-import e from "cors";
 import { jobStatusTemplate } from "../templates/jobStatusTemplate.js";
 import { userStatusTemplate } from "../templates/userStatusTemplate.js";
 

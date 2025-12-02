@@ -6,7 +6,7 @@ import {
   Briefcase,
   Building2,
   FileText,
-  Settings,
+  List,
   ShieldCheck,
   BarChart3,
   X,
@@ -22,8 +22,8 @@ const AdminSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { path: "/admin/companies", label: "Companies", icon: Building2 },
     { path: "/admin/applications", label: "Applications", icon: FileText },
     { path: "/admin/career-guides", label: "Career Guides", icon: FileText },
-    { path: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-    { path: "/admin/settings", label: "Settings", icon: Settings },
+    { path: "/admin/category", label: "Category", icon: List },
+    // { path: "/admin/settings", label: "Settings", icon: Settings },
   ];
 
   const SidebarContent = () => (

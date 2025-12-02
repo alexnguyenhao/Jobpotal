@@ -56,8 +56,7 @@ import AdminUsersTable from "./components/DashBoardAdmin/AdminUsersTable.jsx";
 import AdminJobsTable from "./components/DashBoardAdmin/AdminJobsTable.jsx";
 import AdminCompaniesTable from "./components/DashBoardAdmin/AdminCompaniesTable.jsx";
 import AdminApplicationsTable from "./components/DashBoardAdmin/AdminApplicationsTable.jsx";
-import Analytics from "./components/DashBoardAdmin/Analytics.jsx";
-import Setting from "./components/DashBoardAdmin/Setting.jsx";
+import CategoryTable from "./components/DashBoardAdmin/CategoryTable.jsx";
 
 // Admin Details
 import UserDetail from "./components/DashBoardAdmin/UserDetail.jsx";
@@ -151,9 +150,7 @@ const appRouter = createBrowserRouter([
         path: "applications",
         element: <AdminApplicationsTable />,
       },
-
-      { path: "analytics", element: <Analytics /> },
-      { path: "settings", element: <Setting /> },
+      { path: "category", element: <CategoryTable /> },
 
       {
         path: "users/:id",
