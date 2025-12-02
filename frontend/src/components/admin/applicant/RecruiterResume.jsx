@@ -21,12 +21,26 @@ import {
   Share2,
   CheckCircle2,
   Calendar,
+  Zap, // Added for Operations
+  Heart, // Added for Interests
+  Github, // Social
+  Linkedin, // Social
+  Twitter, // Social
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-// --- Helper Components ---
+// --- Helper Functions & Components ---
+
+const getSocialIcon = (platform) => {
+  if (!platform) return Globe;
+  const p = platform.toLowerCase();
+  if (p.includes("github")) return Github;
+  if (p.includes("linkedin")) return Linkedin;
+  if (p.includes("twitter")) return Twitter;
+  return Globe;
+};
 
 const SectionHeader = ({ title, icon: Icon }) => (
   <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3 mt-8 first:mt-0 print:mt-6 print:border-gray-300">
@@ -138,7 +152,7 @@ const RecruiterResume = () => {
         `}
       </style>
 
-      {/* --- NEW HEADER (MATCHING YOUR DESIGN) --- */}
+      {/* --- HEADER ACTIONS --- */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between no-print shadow-sm">
         <div className="flex items-center gap-4">
           <Button
@@ -153,7 +167,6 @@ const RecruiterResume = () => {
           <div>
             <h1 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               Applicant Profile
-              {/* Optional: Show status badge */}
               <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                 Active
               </span>
@@ -173,7 +186,6 @@ const RecruiterResume = () => {
             Share
           </Button>
 
-          {/* Primary Action Button */}
           <Button
             type="button"
             className="bg-[#6A38C2] hover:bg-[#5a2ea6] text-white"
@@ -187,7 +199,6 @@ const RecruiterResume = () => {
 
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="max-w-5xl mx-auto mt-8 px-4 md:px-0">
-        {/* CV CARD */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden print-container min-h-[800px]">
           {/* CV HEADER BACKGROUND */}
           <div className="bg-slate-900 text-white p-8 md:p-12 print:bg-white print:text-black print:border-b-2 print:border-gray-800 print:p-0 print:pb-6 print:mb-6">
@@ -199,8 +210,30 @@ const RecruiterResume = () => {
                 <p className="text-lg text-purple-300 font-medium print:text-gray-600 print:font-bold">
                   {p.title || "Open to Opportunities"}
                 </p>
+
+                {/* Social Links (UPDATED to match StudentResume) */}
+                {p.socialLinks?.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-4 print:hidden">
+                    {p.socialLinks.map((link, i) => {
+                      const Icon = getSocialIcon(link.platform);
+                      return (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white border border-white/20"
+                          title={link.platform}
+                        >
+                          <Icon size={16} />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
+              {/* Contact Info */}
               <div className="grid grid-cols-1 gap-2 text-sm text-gray-300 print:text-gray-800 print:text-right">
                 {user.email && (
                   <div className="flex items-center gap-2 md:justify-end">
@@ -223,19 +256,24 @@ const RecruiterResume = () => {
                     <span>{user.address}</span>
                   </div>
                 )}
-                {p.website && (
-                  <div className="flex items-center gap-2 md:justify-end">
-                    <Globe size={16} className="text-purple-400 print:hidden" />
-                    <a
-                      href={p.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="hover:underline text-purple-200 print:text-black"
-                    >
-                      Portfolio Link
-                    </a>
-                  </div>
-                )}
+                {/* Fallback for static website if socialLinks array is empty */}
+                {p.website &&
+                  (!p.socialLinks || p.socialLinks.length === 0) && (
+                    <div className="flex items-center gap-2 md:justify-end">
+                      <Globe
+                        size={16}
+                        className="text-purple-400 print:hidden"
+                      />
+                      <a
+                        href={p.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:underline text-purple-200 print:text-black"
+                      >
+                        Portfolio Link
+                      </a>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -255,7 +293,7 @@ const RecruiterResume = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:gap-8">
               {/* LEFT COLUMN (Experience & Projects) - 8 Cols */}
               <div className="lg:col-span-8 space-y-10">
-                {/* WORK EXPERIENCE */}
+                {/* 1. WORK EXPERIENCE */}
                 <section>
                   <SectionHeader title="Work Experience" icon={Briefcase} />
                   {p.workExperience?.length > 0 ? (
@@ -283,7 +321,7 @@ const RecruiterResume = () => {
                             {job.company}
                           </p>
 
-                          <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                          <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed text-justify">
                             {job.description}
                           </p>
                         </div>
@@ -294,7 +332,7 @@ const RecruiterResume = () => {
                   )}
                 </section>
 
-                {/* PROJECTS */}
+                {/* 2. PROJECTS */}
                 <section>
                   <SectionHeader title="Projects" icon={FolderGit2} />
                   {p.projects?.length > 0 ? (
@@ -305,9 +343,17 @@ const RecruiterResume = () => {
                           className="bg-gray-50/50 hover:bg-gray-50 p-5 rounded-xl border border-gray-100 transition-colors print:bg-white print:border-gray-300 print:break-inside-avoid"
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-gray-900 text-sm">
-                              {proj.title}
-                            </h3>
+                            <div>
+                              <h3 className="font-bold text-gray-900 text-sm">
+                                {proj.title}
+                              </h3>
+                              <span className="text-xs text-gray-400">
+                                {formatDate(proj.startDate)} -{" "}
+                                {proj.endDate
+                                  ? formatDate(proj.endDate)
+                                  : "Present"}
+                              </span>
+                            </div>
                             {proj.link && (
                               <a
                                 href={proj.link}
@@ -324,20 +370,20 @@ const RecruiterResume = () => {
                             <div className="flex flex-wrap gap-1.5 mb-3">
                               {(Array.isArray(proj.technologies)
                                 ? proj.technologies
-                                : [proj.technologies]
+                                : String(proj.technologies).split(",")
                               ).map((tech, idx) => (
                                 <Badge
                                   key={idx}
                                   variant="secondary"
                                   className="bg-white border-gray-200 text-gray-600 hover:bg-white text-[10px] font-normal px-2 print:border-gray-400"
                                 >
-                                  {tech}
+                                  {tech.trim()}
                                 </Badge>
                               ))}
                             </div>
                           )}
 
-                          <p className="text-sm text-gray-600 leading-relaxed">
+                          <p className="text-sm text-gray-600 leading-relaxed text-justify">
                             {proj.description}
                           </p>
                         </div>
@@ -347,30 +393,68 @@ const RecruiterResume = () => {
                     <EmptyState text="No projects provided." />
                   )}
                 </section>
+
+                {/* 3. OPERATIONS / ACTIVITIES (Added to match StudentResume) */}
+                {p.operations?.length > 0 && (
+                  <section>
+                    <SectionHeader title="Leadership & Activities" icon={Zap} />
+                    <div className="space-y-6">
+                      {p.operations.map((op, i) => (
+                        <div key={i} className="group print:break-inside-avoid">
+                          <div className="flex justify-between items-baseline mb-1">
+                            <h3 className="font-bold text-gray-900 text-sm">
+                              {op.position}{" "}
+                              <span className="font-normal text-gray-500">
+                                at {op.title}
+                              </span>
+                            </h3>
+                            <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                              {formatDate(op.startDate)} —{" "}
+                              {op.endDate ? formatDate(op.endDate) : "Present"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                            {op.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
 
               {/* RIGHT COLUMN (Skills, Edu, Lang) - 4 Cols */}
               <div className="lg:col-span-4 space-y-10">
-                {/* SKILLS */}
+                {/* 4. SKILLS (Updated Logic) */}
                 <section className="print:break-inside-avoid">
                   <SectionHeader title="Skills" icon={Star} />
                   {p.skills?.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {p.skills.map((s, i) => (
-                        <Badge
-                          key={i}
-                          className="bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium border border-gray-200 px-3 py-1.5 rounded-md print:border-gray-400 print:text-black print:bg-white"
-                        >
-                          {s}
-                        </Badge>
-                      ))}
+                      {p.skills.map((s, i) => {
+                        // Handle both object skills and string skills
+                        const name = typeof s === "object" ? s.name : s;
+                        const level = typeof s === "object" ? s.level : null;
+                        return (
+                          <div
+                            key={i}
+                            className="bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium border border-gray-200 px-3 py-1.5 rounded-md print:border-gray-400 print:text-black print:bg-white text-xs"
+                          >
+                            <span className="block">{name}</span>
+                            {level && (
+                              <span className="block text-[10px] text-gray-400 font-normal uppercase mt-0.5">
+                                {level}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <EmptyState text="No skills listed." />
                   )}
                 </section>
 
-                {/* EDUCATION */}
+                {/* 5. EDUCATION */}
                 <section className="print:break-inside-avoid">
                   <SectionHeader title="Education" icon={GraduationCap} />
                   {p.education?.length > 0 ? (
@@ -386,6 +470,11 @@ const RecruiterResume = () => {
                           <p className="text-sm text-[#6A38C2] font-semibold mt-1 print:text-black">
                             {edu.degree}
                           </p>
+                          {edu.major && (
+                            <p className="text-xs text-gray-500 italic mt-0.5">
+                              {edu.major}
+                            </p>
+                          )}
                           <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-400 font-medium">
                             <Calendar size={12} />
                             {formatDate(edu.startDate)} -{" "}
@@ -399,7 +488,7 @@ const RecruiterResume = () => {
                   )}
                 </section>
 
-                {/* LANGUAGES */}
+                {/* 6. LANGUAGES */}
                 <section className="print:break-inside-avoid">
                   <SectionHeader title="Languages" icon={Languages} />
                   {p.languages?.length > 0 ? (
@@ -423,7 +512,7 @@ const RecruiterResume = () => {
                   )}
                 </section>
 
-                {/* CERTIFICATIONS */}
+                {/* 7. CERTIFICATIONS */}
                 {(p.certifications?.length > 0 ||
                   p.achievements?.length > 0) && (
                   <section className="print:break-inside-avoid">
@@ -441,6 +530,9 @@ const RecruiterResume = () => {
                             />
                             {cert.organization}
                           </p>
+                          <p className="text-[10px] text-gray-400 mt-1 ml-4">
+                            {formatDate(cert.dateIssued)}
+                          </p>
                         </div>
                       ))}
                       {p.achievements?.map((ach, i) => (
@@ -457,6 +549,31 @@ const RecruiterResume = () => {
                     </div>
                   </section>
                 )}
+
+                {/* 8. INTERESTS (Added to match StudentResume) */}
+                {p.interests &&
+                  (typeof p.interests === "string" ||
+                    Array.isArray(p.interests)) && (
+                    <section className="print:break-inside-avoid">
+                      <SectionHeader title="Interests" icon={Heart} />
+                      <div className="flex flex-wrap gap-2">
+                        {(Array.isArray(p.interests)
+                          ? p.interests
+                          : p.interests.split(",")
+                        ).map((int, i) => {
+                          if (!int.trim()) return null;
+                          return (
+                            <span
+                              key={i}
+                              className="px-2 py-1 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600 font-medium shadow-sm print:shadow-none print:border-gray-400"
+                            >
+                              {int.trim()}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
               </div>
             </div>
           </div>

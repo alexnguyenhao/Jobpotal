@@ -7,6 +7,4 @@ export const updateProfileSchema = z.object({
   address: z.string().min(5, "Address is required"),
   bio: z.string().optional(),
   careerObjective: z.string().optional(),
-  skills: z.string().optional(),
-  file: z.any().optional(),
 });

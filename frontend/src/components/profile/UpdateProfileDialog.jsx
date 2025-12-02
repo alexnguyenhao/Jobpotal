@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; // Đảm bảo bạn đã có component này
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormField,
@@ -38,7 +38,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Icons
 import {
   Loader2,
   User2,
@@ -62,32 +61,22 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       fullName: user?.fullName || "",
-      dateOfBirth: user?.dateOfBirth ? user.dateOfBirth.split("T")[0] : "", // Fix date format
+      dateOfBirth: user?.dateOfBirth ? user.dateOfBirth.split("T")[0] : "",
       gender: user?.gender || "male",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       address: user?.address || "",
       bio: user?.bio || "",
-      skills: user?.profile?.skills?.join(", ") || "",
       careerObjective: user?.profile?.careerObjective || "",
-      file: null,
     },
   });
-
-  // Watch file để hiển thị tên file khi chọn
-  const fileValue = form.watch("file");
 
   const onSubmit = async (data) => {
     const formData = new FormData();
 
     Object.keys(data).forEach((key) => {
-      if (key === "file") {
-        if (data.file) formData.append("file", data.file);
-      } else {
-        // Tránh gửi giá trị null/undefined
-        if (data[key] !== null && data[key] !== undefined) {
-          formData.append(key, data[key]);
-        }
+      if (data[key] !== null && data[key] !== undefined) {
+        formData.append(key, data[key]);
       }
     });
 
@@ -117,7 +106,6 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] bg-white p-0 gap-0 rounded-2xl overflow-hidden flex flex-col">
-        {/* --- HEADER --- */}
         <DialogHeader className="px-6 py-4 bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
           <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <div className="p-2 bg-purple-100 rounded-full text-[#6A38C2]">
@@ -130,11 +118,9 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
           </DialogDescription>
         </DialogHeader>
 
-        {/* --- SCROLLABLE FORM --- */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* SECTION 1: PERSONAL INFO */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2">
                   <User2 size={16} className="text-[#6A38C2]" /> Personal
@@ -243,8 +229,6 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                   />
                 </div>
               </div>
-
-              {/* SECTION 2: PROFESSIONAL */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mt-2">
                   <Briefcase size={16} className="text-[#6A38C2]" />{" "}
@@ -291,83 +275,10 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="skills"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Skills</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="React, Node.js, Design (comma separated)"
-                          {...field}
-                        />
-                      </FormControl>
-                      <p className="text-xs text-gray-500">
-                        Separate skills with commas (,)
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* SECTION 3: RESUME UPLOAD */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mt-2">
-                  <FileText size={16} className="text-[#6A38C2]" /> Resume / CV
-                </h3>
-
-                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => form.setValue("file", e.target.files?.[0])}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                  />
-
-                  <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                    <UploadCloud className="w-6 h-6 text-[#6A38C2]" />
-                  </div>
-
-                  {fileValue ? (
-                    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-                      <FileText size={16} />
-                      {fileValue.name}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault(); // Prevent opening file dialog
-                          form.setValue("file", null);
-                        }}
-                        className="z-30 p-1 hover:bg-red-100 rounded-full text-red-500 ml-2"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium text-gray-700">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF (MAX. 5MB)
-                      </p>
-                      {user?.resume && (
-                        <p className="text-xs text-blue-600 mt-3 font-medium bg-blue-50 px-3 py-1 rounded-full">
-                          Current: {user.resumeOriginalName || "View Resume"}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
               </div>
             </form>
           </Form>
         </div>
-
-        {/* --- FOOTER --- */}
         <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100">
           <Button
             variant="outline"

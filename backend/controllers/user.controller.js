@@ -392,23 +392,25 @@ export const updateProfile = async (req, res) => {
     const {
       fullName,
       email,
+      title,
       phoneNumber,
       address,
       dateOfBirth,
       gender,
       bio,
-      title,
-      skills,
       careerObjective,
+      skills,
       workExperience,
       education,
       certifications,
       languages,
       achievements,
-      company,
       projects,
       operations,
       interests,
+      socialLinks,
+
+      company,
     } = req.body;
 
     const file = req.file;
@@ -424,13 +426,13 @@ export const updateProfile = async (req, res) => {
         .status(404)
         .json({ message: "Profile not found", success: false });
 
+    // 1. Update User Info
     if (file) {
       const fileUri = getDataURI(file);
       const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
         access_mode: "public",
       });
-      user.resume = cloudResponse.secure_url;
-      user.resumeOriginalName = file.originalname;
+      user.profilePhoto = cloudResponse.secure_url;
     }
 
     if (fullName) user.fullName = fullName;
@@ -440,50 +442,56 @@ export const updateProfile = async (req, res) => {
     if (dateOfBirth) user.dateOfBirth = dateOfBirth;
     if (gender) user.gender = gender;
     if (bio !== undefined) user.bio = bio;
-    if (title !== undefined) profile.title = title;
-    if (skills !== undefined)
-      profile.skills = Array.isArray(skills)
-        ? skills
-        : skills.split(",").map((s) => s.trim());
-
-    if (careerObjective !== undefined)
-      profile.careerObjective = careerObjective;
-    if (workExperience !== undefined)
-      profile.workExperience = Array.isArray(workExperience)
-        ? workExperience
-        : JSON.parse(workExperience);
-    if (education !== undefined)
-      profile.education = Array.isArray(education)
-        ? education
-        : JSON.parse(education);
-    if (certifications !== undefined)
-      profile.certifications = Array.isArray(certifications)
-        ? certifications
-        : JSON.parse(certifications);
-    if (languages !== undefined)
-      profile.languages = Array.isArray(languages)
-        ? languages
-        : JSON.parse(languages);
-    if (achievements !== undefined)
-      profile.achievements = Array.isArray(achievements)
-        ? achievements
-        : JSON.parse(achievements);
-    if (projects !== undefined)
-      profile.projects = Array.isArray(projects)
-        ? projects
-        : JSON.parse(projects);
-    if (operations !== undefined)
-      profile.operations = Array.isArray(operations)
-        ? operations
-        : JSON.parse(operations);
-    if (interests !== undefined) {
-      profile.interests = interests;
-    }
-
     if (company !== undefined && user.role === "recruiter")
       user.company = company;
 
     await user.save();
+    const parseJsonIfNeeded = (data) => {
+      if (typeof data === "string") {
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          return [];
+        }
+      }
+      return data;
+    };
+
+    if (title !== undefined) profile.title = title;
+    if (careerObjective !== undefined)
+      profile.careerObjective = careerObjective;
+    if (interests !== undefined) profile.interests = interests;
+    if (socialLinks !== undefined)
+      profile.socialLinks = parseJsonIfNeeded(socialLinks);
+    if (workExperience !== undefined)
+      profile.workExperience = parseJsonIfNeeded(workExperience);
+    if (education !== undefined)
+      profile.education = parseJsonIfNeeded(education);
+    if (certifications !== undefined)
+      profile.certifications = parseJsonIfNeeded(certifications);
+    if (languages !== undefined)
+      profile.languages = parseJsonIfNeeded(languages);
+    if (achievements !== undefined)
+      profile.achievements = parseJsonIfNeeded(achievements);
+    if (projects !== undefined) profile.projects = parseJsonIfNeeded(projects);
+    if (operations !== undefined)
+      profile.operations = parseJsonIfNeeded(operations);
+    if (skills !== undefined) {
+      const parsedSkills = parseJsonIfNeeded(skills);
+      if (Array.isArray(parsedSkills) && parsedSkills.length > 0) {
+        if (typeof parsedSkills[0] === "string") {
+          profile.skills = parsedSkills.map((s) => ({
+            name: s,
+            level: "Intermediate",
+          }));
+        } else {
+          profile.skills = parsedSkills;
+        }
+      } else {
+        profile.skills = [];
+      }
+    }
+
     await profile.save();
 
     const updatedUser = await User.findById(userId)

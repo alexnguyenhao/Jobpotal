@@ -9,7 +9,6 @@ import { APPLICATION_API_END_POINT } from "@/utils/constant";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -31,14 +30,12 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
-// Icons
 import {
   MoreHorizontal,
   Check,
   X,
-  FileText,
-  User,
   Calendar,
   Mail,
   Phone,
@@ -46,20 +43,24 @@ import {
   Bot,
   Sparkles,
   Loader2,
-  ScanSearch, // Icon mới cho action scan
+  ScanSearch,
+  LayoutTemplate,
+  Paperclip,
+  ExternalLink,
+  AlertCircle,
+  User,
 } from "lucide-react";
 
-// --- COMPONENT CON: APPLICANT ROW (Xử lý logic từng dòng) ---
 const ApplicantRow = ({ item, statusHandler }) => {
-  // State riêng cho từng ứng viên để cập nhật AI real-time
   const [aiData, setAiData] = useState({
     aiScore: item.aiScore,
     aiFeedback: item.aiFeedback,
     matchStatus: item.matchStatus,
   });
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const navigate = useNavigate();
 
-  // Hàm gọi API khi bấm nút AI Scan
+  // --- HÀM GỌI AI ---
   const handleAnalyze = async () => {
     try {
       setIsLoadingAI(true);
@@ -70,7 +71,7 @@ const ApplicantRow = ({ item, statusHandler }) => {
       );
 
       if (res.data.success) {
-        setAiData(res.data.data); // Cập nhật ngay lập tức không cần F5
+        setAiData(res.data.data);
         toast.success("AI Analysis completed!");
       }
     } catch (error) {
@@ -81,9 +82,8 @@ const ApplicantRow = ({ item, statusHandler }) => {
     }
   };
 
-  // Helper render Badge hoặc Nút bấm
+  // --- UI BADGE AI ---
   const renderAiBadge = () => {
-    // 1. Chưa có điểm -> Hiện nút bấm
     if (aiData.aiScore === null || aiData.aiScore === undefined) {
       return (
         <Button
@@ -102,8 +102,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
         </Button>
       );
     }
-
-    // 2. Đã có điểm -> Hiện Badge kết quả
     let badgeStyle = "bg-gray-100 text-gray-700 border-gray-200";
     if (aiData.matchStatus === "High")
       badgeStyle =
@@ -169,9 +167,69 @@ const ApplicantRow = ({ item, statusHandler }) => {
     );
   };
 
+  // --- HÀM RENDER LINK CV (ĐÃ SỬA LOGIC) ---
+  const renderCVLink = () => {
+    const snapshot = item.cvSnapshot;
+
+    if (!snapshot) {
+      return (
+        <span className="text-gray-400 text-xs italic">Snapshot Missing</span>
+      );
+    }
+
+    // 1. Kiểm tra nếu là CV Upload (Check kiểu mới fileData hoặc kiểu cũ resume)
+    // Ưu tiên lấy từ fileData
+    const pdfUrl = snapshot.fileData?.url || snapshot.resume;
+    const pdfName =
+      snapshot.fileData?.originalName ||
+      snapshot.resumeOriginalName ||
+      "Resume.pdf";
+
+    if (snapshot.type === "upload" || pdfUrl) {
+      return (
+        <a
+          href={pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 font-medium text-sm transition-colors px-2.5 py-1 rounded-md border border-red-100"
+        >
+          <Paperclip size={14} />
+          <span className="truncate max-w-[100px]" title={pdfName}>
+            {pdfName}
+          </span>
+        </a>
+      );
+    }
+
+    // 2. Nếu là CV Builder -> Link sang trang view CV chi tiết
+    // (Dùng cvId để view live version, hoặc sau này có thể làm trang view snapshot riêng)
+    const originalCVId = item.cvId?._id || item.cvId;
+
+    if (!originalCVId) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-gray-400 text-xs italic"
+          title="Original CV has been deleted"
+        >
+          <AlertCircle size={12} /> CV Unavailable
+        </span>
+      );
+    }
+
+    return (
+      <Link
+        to={`/cv/view/${originalCVId}`}
+        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium text-sm transition-colors px-2.5 py-1 rounded-md border border-blue-100"
+      >
+        <LayoutTemplate size={14} />
+        <span>Web Resume</span>
+        <ExternalLink size={10} className="opacity-50" />
+      </Link>
+    );
+  };
+
   return (
     <TableRow className="hover:bg-slate-50/80 transition-colors group border-b border-gray-100">
-      {/* 1. CANDIDATE */}
       <TableCell className="py-4 pl-6">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border border-gray-200 bg-white shadow-sm">
@@ -183,21 +241,16 @@ const ApplicantRow = ({ item, statusHandler }) => {
               {item?.applicant?.fullName?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <Link
-              to={`/recruiter/applicants/resume/${item?.applicant?._id}`}
-              className="font-semibold text-gray-900 hover:text-[#6A38C2] transition-colors block"
-            >
+          <div className="cursor-pointer">
+            <span className="font-semibold text-gray-900 block">
               {item?.applicant?.fullName || "Unknown Candidate"}
-            </Link>
+            </span>
             <span className="text-xs text-gray-400 font-mono">
               ID: {item._id.slice(-6)}
             </span>
           </div>
         </div>
       </TableCell>
-
-      {/* 2. CONTACT */}
       <TableCell>
         <div className="flex flex-col gap-1.5 text-sm text-gray-600">
           <div className="flex items-center gap-2">
@@ -216,36 +269,13 @@ const ApplicantRow = ({ item, statusHandler }) => {
         </div>
       </TableCell>
 
-      {/* 🔥 3. CỘT AI MATCH (QUAN TRỌNG) */}
+      {/* AI Badge */}
       <TableCell>{renderAiBadge()}</TableCell>
 
-      {/* 4. RESUME */}
-      <TableCell>
-        {item.cv ? (
-          <Link
-            to={`/cv/view/${item.cv._id}`}
-            className="inline-flex items-center gap-1.5 text-[#6A38C2] hover:text-[#5a2ea6] hover:underline font-medium text-sm transition-colors bg-purple-50 px-2.5 py-1 rounded-md border border-purple-100"
-          >
-            <FileText size={14} /> <span>Online CV</span>
-          </Link>
-        ) : item?.applicant?.resume ? (
-          <a
-            href={item?.applicant?.resume}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm transition-colors bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100"
-          >
-            <FileText size={14} />
-            <span className="truncate max-w-[80px]">
-              {item.applicant.resumeOriginalName || "PDF"}
-            </span>
-          </a>
-        ) : (
-          <span className="text-gray-400 text-xs italic">No Resume</span>
-        )}
-      </TableCell>
+      {/* CV Link (Đã update) */}
+      <TableCell>{renderCVLink()}</TableCell>
 
-      {/* 5. COVER LETTER */}
+      {/* Cover Letter */}
       <TableCell>
         {item.coverLetter ? (
           <Dialog>
@@ -275,7 +305,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
         )}
       </TableCell>
 
-      {/* 6. DATE */}
       <TableCell>
         <div className="flex items-center gap-2 text-gray-500 text-sm">
           <Calendar size={14} />
@@ -283,7 +312,7 @@ const ApplicantRow = ({ item, statusHandler }) => {
         </div>
       </TableCell>
 
-      {/* 7. STATUS */}
+      {/* Status Badge */}
       <TableCell>
         <Badge
           variant="secondary"
@@ -301,7 +330,7 @@ const ApplicantRow = ({ item, statusHandler }) => {
         </Badge>
       </TableCell>
 
-      {/* 8. ACTIONS - Đã thêm hành động AI Scan vào đây */}
+      {/* Actions */}
       <TableCell className="text-right pr-6">
         <Popover>
           <PopoverTrigger asChild>
@@ -315,7 +344,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
           </PopoverTrigger>
           <PopoverContent className="w-48 p-1" align="end">
             <div className="space-y-0.5">
-              {/* Thêm nút AI Scan vào danh sách hành động */}
               <div
                 onClick={handleAnalyze}
                 className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-purple-50 text-purple-700 rounded-md cursor-pointer transition-colors font-medium border-b border-gray-100 mb-1"
@@ -350,7 +378,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
   );
 };
 
-// --- MAIN TABLE COMPONENT ---
 const ApplicantsTable = () => {
   const { applicants, statusHandler } = useUpdateApplication();
 

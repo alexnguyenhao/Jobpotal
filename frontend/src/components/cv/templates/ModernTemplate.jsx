@@ -1,46 +1,44 @@
 import React from "react";
-import { formatDate } from "../../../utils/formatDate";
+import { formatDate, formatRange } from "../../../utils/formatDate";
 
 const ModernTemplate = ({ data }) => {
-  // Fallback dữ liệu nếu undefined
+  // Safe check data
   const info = data?.personalInfo || {};
   const s = data?.styleConfig || {};
 
-  const wrapperStyle = {
-    backgroundColor: s.backgroundColor || "#ffffff",
-    color: s.textColor || "#333",
-    borderRadius: s.borderRadius || 0,
-    overflow: "hidden",
-    boxShadow:
-      s.shadowLevel === 0
-        ? "none"
-        : s.shadowLevel === 1
-        ? "0 2px 6px rgba(0,0,0,0.1)"
-        : s.shadowLevel === 2
-        ? "0 4px 12px rgba(0,0,0,0.15)"
-        : "0 8px 25px rgba(0,0,0,0.25)",
-  };
+  // Data Arrays
+  const skills = data?.skills || [];
+  const languages = data?.languages || [];
+  const education = data?.education || [];
+  const experience = data?.workExperience || [];
+  const projects = data?.projects || [];
+  const certifications = data?.certifications || [];
+  const achievements = data?.achievements || [];
+  const operations = data?.operations || []; // Hoạt động/Operations
+  const interests = data?.interests || "";
 
-  // Padding config
-  const spacing =
-    s.spacing === "tight" ? "p-6" : s.spacing === "wide" ? "p-12" : "p-8";
+  // Style Variables
+  const primary = s.primaryColor || "#2B4CFF";
+  const wrapperStyle = {
+    fontFamily: s.fontFamily || "sans-serif",
+    fontSize: s.fontSizeClass || "text-base", // text-sm, text-base
+    lineHeight: "1.5",
+    color: s.textColor || "#333",
+    backgroundColor: s.backgroundColor || "#fff",
+  };
 
   return (
     <div
-      // SỬA: Dùng max-w-[210mm] và min-h-[297mm] để chuẩn khổ A4
-      className={`w-full max-w-[210mm] min-h-[297mm] mx-auto flex ${s.fontFamily} ${s.fontSizeClass}`}
+      className="w-full max-w-[210mm] min-h-[297mm] mx-auto flex shadow-lg"
       style={wrapperStyle}
     >
-      {/* LEFT SIDEBAR */}
+      {/* --- LEFT SIDEBAR --- */}
       <aside
-        className={`w-1/3 text-white ${spacing} flex flex-col`}
-        style={{
-          background: `linear-gradient(180deg, ${s.primaryColor || "#333"}, ${
-            (s.primaryColor || "#333") + "AA"
-          })`,
-        }}
+        className="w-[35%] text-white p-6 flex flex-col gap-6"
+        style={{ background: primary }}
       >
-        <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg flex-shrink-0">
+        {/* Avatar */}
+        <div className="w-32 h-32 mx-auto rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0">
           <img
             src={info.profilePhoto || "https://via.placeholder.com/150"}
             alt="Avatar"
@@ -48,122 +46,184 @@ const ModernTemplate = ({ data }) => {
           />
         </div>
 
-        <h1 className="text-2xl font-bold mt-6 text-center leading-tight">
-          {info.fullName}
-        </h1>
+        {/* Contact Info (FULL) */}
+        <div className="space-y-3 text-sm">
+          <h3 className="text-lg font-bold border-b border-white/30 pb-1 mb-2">
+            Contact
+          </h3>
 
-        {info.position && (
-          <p className="text-center text-sm opacity-90 mt-2 font-medium">
-            {info.position}
-          </p>
-        )}
-
-        <div className="mt-8 text-sm opacity-95 space-y-3">
           {info.email && (
-            <p className="break-words">
-              <b>Email:</b> <br /> {info.email}
-            </p>
+            <div className="break-words">
+              <span className="font-bold opacity-70 block text-xs">Email</span>
+              {info.email}
+            </div>
           )}
+
           {info.phone && (
-            <p>
-              <b>Phone:</b> <br /> {info.phone}
-            </p>
+            <div>
+              <span className="font-bold opacity-70 block text-xs">Phone</span>
+              {info.phone}
+            </div>
           )}
-          {info.dateOfBirth && (
-            <p>
-              <b>DOB:</b> <br /> {formatDate(info.dateOfBirth)}
-            </p>
-          )}
+
           {info.address && (
-            <p>
-              <b>Address:</b> <br /> {info.address}
-            </p>
+            <div>
+              <span className="font-bold opacity-70 block text-xs">
+                Address
+              </span>
+              {info.address}
+            </div>
+          )}
+
+          {info.dateOfBirth && (
+            <div>
+              <span className="font-bold opacity-70 block text-xs">
+                Date of Birth
+              </span>
+              {formatDate(info.dateOfBirth)}
+            </div>
+          )}
+
+          {info.gender && (
+            <div>
+              <span className="font-bold opacity-70 block text-xs">Gender</span>
+              <span className="capitalize">{info.gender}</span>
+            </div>
           )}
         </div>
 
-        {/* Skills in Sidebar */}
-        {data.skills?.length > 0 && (
-          <div className="mt-10">
-            <h3 className="text-lg font-semibold border-b border-white/30 pb-1 mb-3">
+        {/* Skills */}
+        {skills.length > 0 && (
+          <div>
+            <h3 className="text-lg font-bold border-b border-white/30 pb-1 mb-2">
               Skills
             </h3>
             <div className="flex flex-wrap gap-2">
-              {data.skills.map((skill, i) => (
+              {skills.map((sk, i) => (
                 <span
                   key={i}
-                  className="px-2 py-1 rounded text-xs font-semibold"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    color: "#fff",
-                  }}
+                  className="bg-white/20 px-2 py-1 rounded text-xs font-medium"
                 >
-                  {skill}
+                  {typeof sk === "object" ? sk.name : sk}
+                  {/* Nếu có level thì hiển thị luôn */}
+                  {typeof sk === "object" && sk.level ? ` (${sk.level})` : ""}
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {data.languages?.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold border-b border-white/30 pb-1 mb-3">
+        {/* Languages */}
+        {languages.length > 0 && (
+          <div>
+            <h3 className="text-lg font-bold border-b border-white/30 pb-1 mb-2">
               Languages
             </h3>
-            <ul className="space-y-1 text-sm">
-              {data.languages.map((l, i) => (
+            <ul className="space-y-2 text-sm">
+              {languages.map((l, i) => (
                 <li key={i} className="flex justify-between">
                   <span>{l.language}</span>
-                  <span className="opacity-70 italic">{l.proficiency}</span>
+                  <span className="opacity-80 italic text-xs border border-white/30 px-1 rounded">
+                    {l.proficiency}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
         )}
+
+        {/* Certifications (Đẩy sang trái cho đỡ trống) */}
+        {certifications.length > 0 && (
+          <div>
+            <h3 className="text-lg font-bold border-b border-white/30 pb-1 mb-2">
+              Certifications
+            </h3>
+            <ul className="space-y-3 text-sm">
+              {certifications.map((cert, i) => (
+                <li key={i}>
+                  <div className="font-bold">{cert.name}</div>
+                  <div className="text-xs opacity-80">{cert.organization}</div>
+                  {cert.dateIssued && (
+                    <div className="text-xs opacity-60 italic">
+                      {formatDate(cert.dateIssued)}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Interests */}
+        {interests && (
+          <div>
+            <h3 className="text-lg font-bold border-b border-white/30 pb-1 mb-2">
+              Interests
+            </h3>
+            <p className="text-sm opacity-90 whitespace-pre-line">
+              {interests}
+            </p>
+          </div>
+        )}
       </aside>
 
-      {/* RIGHT MAIN CONTENT */}
-      <main className={`w-2/3 ${spacing} bg-white`}>
-        {/* SUMMARY */}
+      {/* --- RIGHT MAIN CONTENT --- */}
+      <main className="w-[65%] p-8 bg-white flex flex-col gap-6">
+        {/* Header */}
+        <div className="border-b-2 pb-4" style={{ borderColor: primary }}>
+          <h1
+            className="text-4xl font-bold uppercase tracking-wide"
+            style={{ color: primary }}
+          >
+            {info.fullName || "Your Name"}
+          </h1>
+          <p className="text-xl font-medium mt-1 text-gray-600 uppercase tracking-wider">
+            {info.position}
+          </p>
+        </div>
+
+        {/* Summary */}
         {info.summary && (
-          <section className="mb-8">
+          <section>
             <h2
-              className="text-xl font-bold mb-3 uppercase tracking-wide"
-              style={{ color: s.primaryColor }}
+              className="text-lg font-bold uppercase mb-2 flex items-center gap-2"
+              style={{ color: primary }}
             >
               Profile
             </h2>
-            <p className="opacity-80 text-justify leading-relaxed">
+            <p className="text-sm text-justify leading-relaxed whitespace-pre-line text-gray-700">
               {info.summary}
             </p>
           </section>
         )}
 
-        {/* EXPERIENCE */}
-        {data.workExperience?.length > 0 && (
-          <section className="mb-8">
+        {/* Work Experience */}
+        {experience.length > 0 && (
+          <section>
             <h2
-              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderColor: s.primaryColor + "33",
-              }}
+              className="text-lg font-bold uppercase mb-4"
+              style={{ color: primary }}
             >
               Work Experience
             </h2>
-
             <div className="space-y-5">
-              {data.workExperience.map((exp, i) => (
-                <div key={i}>
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-bold text-lg">{exp.position}</h3>
-                    <span className="text-sm opacity-60 whitespace-nowrap ml-2">
-                      {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+              {experience.map((exp, i) => (
+                <div
+                  key={i}
+                  className="relative pl-4 border-l-2 border-gray-200"
+                >
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="font-bold text-gray-900 text-base">
+                      {exp.position}
+                    </h3>
+                    <span className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600 whitespace-nowrap ml-2">
+                      {formatRange(exp.startDate, exp.endDate)}
                     </span>
                   </div>
-                  <p className="text-sm font-semibold opacity-80 mb-1">
+                  <div className="text-sm font-semibold italic text-gray-600 mb-2">
                     {exp.company}
-                  </p>
-                  <p className="text-sm opacity-80 whitespace-pre-line">
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
                     {exp.description}
                   </p>
                 </div>
@@ -172,68 +232,138 @@ const ModernTemplate = ({ data }) => {
           </section>
         )}
 
-        {/* EDUCATION */}
-        {data.education?.length > 0 && (
-          <section className="mb-8">
+        {/* Education */}
+        {education.length > 0 && (
+          <section>
             <h2
-              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderColor: s.primaryColor + "33",
-              }}
+              className="text-lg font-bold uppercase mb-4"
+              style={{ color: primary }}
             >
               Education
             </h2>
-            {data.education.map((edu, i) => (
-              <div key={i} className="mb-4">
-                <div className="flex justify-between items-baseline">
-                  <h3 className="font-bold text-base">{edu.school}</h3>
-                  <span className="text-sm opacity-60">
-                    {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
-                  </span>
+            <div className="space-y-4">
+              {education.map((edu, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-gray-900 font-bold">
+                    <span>{edu.school}</span>
+                    <span className="text-xs font-normal text-gray-500 whitespace-nowrap ml-2">
+                      {formatRange(edu.startDate, edu.endDate)}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    {edu.degree} {edu.major && <span>• {edu.major}</span>}
+                  </div>
+                  {edu.description && (
+                    <p className="text-xs text-gray-500 mt-1 italic">
+                      {edu.description}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm font-medium">
-                  {edu.degree} {edu.major && `- ${edu.major}`}
-                </p>
-                <p className="text-sm opacity-80 mt-1">{edu.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </section>
         )}
 
-        {/* PROJECTS */}
-        {data.projects?.length > 0 && (
-          <section className="mb-8">
+        {/* Projects */}
+        {projects.length > 0 && (
+          <section>
             <h2
-              className="text-xl font-bold mb-4 uppercase tracking-wide border-b-2 pb-1"
-              style={{
-                color: s.primaryColor,
-                borderColor: s.primaryColor + "33",
-              }}
+              className="text-lg font-bold uppercase mb-4"
+              style={{ color: primary }}
             >
               Projects
             </h2>
-            {data.projects.map((proj, i) => (
-              <div key={i} className="mb-4">
-                <div className="flex justify-between">
-                  <h3 className="font-bold">{proj.name}</h3>
-                  {proj.link && (
-                    <a
-                      href={proj.link}
-                      className="text-xs text-blue-600 underline"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Link
-                    </a>
+            <div className="space-y-4">
+              {projects.map((proj, i) => (
+                <div
+                  key={i}
+                  className="bg-gray-50 p-3 rounded border border-gray-100"
+                >
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="font-bold text-gray-800">{proj.title}</h3>
+                    {proj.link && (
+                      <a
+                        href={proj.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Live Link ↗
+                      </a>
+                    )}
+                  </div>
+                  {proj.technologies?.length > 0 && (
+                    <p className="text-xs text-gray-500 mb-2 italic">
+                      Stack: {proj.technologies.join(" • ")}
+                    </p>
                   )}
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {proj.description}
+                  </p>
                 </div>
-                <p className="text-xs italic opacity-70 mb-1">
-                  {proj.technologies}
-                </p>
-                <p className="text-sm opacity-80">{proj.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Operations / Activities */}
+        {operations.length > 0 && (
+          <section>
+            <h2
+              className="text-lg font-bold uppercase mb-4"
+              style={{ color: primary }}
+            >
+              Activities & Operations
+            </h2>
+            <div className="space-y-3">
+              {operations.map((op, i) => (
+                <div key={i}>
+                  <div className="flex justify-between font-semibold text-gray-800 text-sm">
+                    <span>{op.title}</span>
+                    <span className="text-xs font-normal text-gray-500">
+                      {formatRange(op.startDate, op.endDate)}
+                    </span>
+                  </div>
+                  {op.position && (
+                    <div className="text-xs font-bold text-gray-500 mb-1">
+                      {op.position}
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {op.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Achievements */}
+        {achievements.length > 0 && (
+          <section>
+            <h2
+              className="text-lg font-bold uppercase mb-4"
+              style={{ color: primary }}
+            >
+              Achievements
+            </h2>
+            <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
+              {achievements.map((ach, i) => (
+                <li key={i}>
+                  <span className="font-bold">{ach.title}</span>
+                  {ach.year && (
+                    <span className="text-xs text-gray-500 ml-1">
+                      ({ach.year})
+                    </span>
+                  )}
+                  {ach.description && (
+                    <span className="block pl-5 text-gray-600 text-xs">
+                      {ach.description}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </main>

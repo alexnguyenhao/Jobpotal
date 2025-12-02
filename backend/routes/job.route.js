@@ -3,6 +3,7 @@ import {
   postJob,
   getAllJobs,
   getJobById,
+  getJobFitAnalysis,
   getAdminJobs,
   updateJob,
   deleteJob,
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get("/get", getAllJobs);
 router.get("/search", searchJobs);
 router.get("/get/:id", getJobById);
+router.get("/get/:id/analyze", isAuthenticated, getJobFitAnalysis);
 router.get("/company/:companyId", getJobsByCompany);
 router.get("/category/:categoryId", getJobsByCategory);
 router.get("/recruiter/get", isAuthenticated, getAdminJobs);

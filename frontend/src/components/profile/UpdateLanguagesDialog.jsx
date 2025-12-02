@@ -154,12 +154,12 @@ export default function UpdateLanguagesDialog({ open, setOpen }) {
                           <SelectValue placeholder="Select proficiency" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Beginner">Beginner</SelectItem>
-                          <SelectItem value="Intermediate">
-                            Intermediate
+                          <SelectItem value="Basic">Basic</SelectItem>
+                          <SelectItem value="Conversational">
+                            Conversational
                           </SelectItem>
-                          <SelectItem value="Advanced">Advanced</SelectItem>
                           <SelectItem value="Fluent">Fluent</SelectItem>
+                          <SelectItem value="Native">Native</SelectItem>
                         </SelectContent>
                       </Select>
                     )}

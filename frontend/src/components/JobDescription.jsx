@@ -13,8 +13,9 @@ import useApplyJob from "@/hooks/useApplyJob";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import ResumeSelectionDialog from "./appliedJob/ResumeSelectionDialog";
 import { formatLocation } from "@/utils/formatLocation";
 import { formatSalary } from "@/utils/formatSalary";
@@ -32,7 +33,14 @@ import {
   Flag,
   MonitorPlay,
   Hourglass,
+  Brain,
+  Sparkles,
+  AlertTriangle,
+  Lightbulb,
+  XCircle,
 } from "lucide-react";
+
+// --- Sub Components for Layout ---
 const InfoBox = ({ icon, label, value, className = "" }) => (
   <div className={`flex items-center gap-3 ${className}`}>
     <div className="p-2.5 rounded-full bg-white/10 shrink-0 text-white md:bg-purple-50 md:text-[#6A38C2]">
@@ -65,6 +73,166 @@ const SectionTitle = ({ title }) => (
   </h3>
 );
 
+const JobFitAnalysisCard = ({ analysis, loading, user }) => {
+  if (!user) {
+    return (
+      <Card className="border-none shadow-sm rounded-xl bg-gradient-to-br from-purple-50 to-white overflow-hidden mb-6">
+        <CardContent className="p-6 flex flex-col items-center text-center">
+          <div className="p-3 bg-purple-100 rounded-full mb-3">
+            <Brain className="w-8 h-8 text-[#6A38C2]" />
+          </div>
+          <h4 className="font-bold text-gray-900 mb-2">
+            AI Job Match Analysis
+          </h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Login to see how well your profile matches this job description
+            using AI.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Card className="border-none shadow-sm rounded-xl mb-6">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-20 w-full rounded-lg" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!analysis) return null; // Or show error state
+
+  const { fitScore, matchLabel, summary, strengths, missingSkills, advice } =
+    analysis;
+
+  // Determine color based on score
+  let scoreColor = "text-red-500";
+  let bgColor = "bg-red-50";
+  let progressColor = "bg-red-500";
+
+  if (fitScore >= 80) {
+    scoreColor = "text-emerald-600";
+    bgColor = "bg-emerald-50";
+    progressColor = "bg-emerald-500";
+  } else if (fitScore >= 50) {
+    scoreColor = "text-amber-500";
+    bgColor = "bg-amber-50";
+    progressColor = "bg-amber-500";
+  }
+
+  return (
+    <Card className="border-none shadow-md rounded-xl bg-white overflow-hidden mb-6 ring-1 ring-gray-100">
+      <div
+        className={`p-4 border-b border-gray-100 flex items-center justify-between ${bgColor}`}
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className={`w-5 h-5 ${scoreColor}`} />
+          <h4 className={`font-bold ${scoreColor}`}>AI Match Analysis</h4>
+        </div>
+        <Badge
+          variant="outline"
+          className={`${scoreColor} bg-white border-current font-bold`}
+        >
+          {matchLabel}
+        </Badge>
+      </div>
+
+      <CardContent className="p-5 space-y-5">
+        {/* Score Section */}
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 flex items-center justify-center rounded-full border-4 border-gray-100">
+            {/* Simple circular progress visualization */}
+            <svg className="absolute w-full h-full transform -rotate-90">
+              <circle
+                cx="30"
+                cy="30"
+                r="28"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="transparent"
+                className={scoreColor}
+                strokeDasharray={175}
+                strokeDashoffset={175 - (175 * fitScore) / 100}
+                style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
+              />
+            </svg>
+            <span className={`text-lg font-bold ${scoreColor}`}>
+              {fitScore}%
+            </span>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-700 italic">
+              "{summary}"
+            </p>
+          </div>
+        </div>
+
+        {/* Details Accordion-like structure */}
+        <div className="space-y-3">
+          {/* Strengths */}
+          {strengths?.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Matched
+                Skills
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {strengths.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Missing Skills */}
+          {missingSkills?.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                <XCircle className="w-3 h-3 text-red-500" /> Missing / To
+                Improve
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {missingSkills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] px-2 py-1 rounded bg-red-50 text-red-700 border border-red-100 font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Advice */}
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-800 leading-relaxed">
+                <span className="font-bold">AI Tip:</span> {advice}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // --- Main Component ---
 const JobDescription = () => {
   const { id: jobId } = useParams();
@@ -79,7 +247,6 @@ const JobDescription = () => {
   const { applyJob, isApplying } = useApplyJob();
 
   // Local State
-  // Thay đổi: Dùng count thay vì boolean isApplied
   const [applicationCount, setApplicationCount] = useState(0);
   const MAX_APPLY_LIMIT = 3;
 
@@ -88,9 +255,13 @@ const JobDescription = () => {
   const [loading, setLoading] = useState(true);
   const [openResumeDialog, setOpenResumeDialog] = useState(false);
 
+  // --- NEW: AI Analysis State ---
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
   const hasFetchedCVs = useRef(false);
 
-  // Fetch CVs khi có user
+  // 1. Fetch CVs
   useEffect(() => {
     if (user && !hasFetchedCVs.current) {
       hasFetchedCVs.current = true;
@@ -98,7 +269,7 @@ const JobDescription = () => {
     }
   }, [user]);
 
-  // Fetch Job Details & Check Application Status
+  // 2. Fetch Job Details (Initial Load)
   useEffect(() => {
     const fetchJob = async () => {
       setLoading(true);
@@ -113,7 +284,6 @@ const JobDescription = () => {
           setIsExpired(new Date(job.applicationDeadline) < new Date());
 
           if (user) {
-            // Logic MỚI: Đếm số lần user này đã nộp đơn vào job này
             const myApplications = job.applications?.filter(
               (a) => a.applicant === user._id
             );
@@ -131,19 +301,47 @@ const JobDescription = () => {
     fetchJob();
   }, [jobId, user, dispatch]);
 
-  // Check Saved Status
+  // 3. --- NEW: Fetch AI Analysis (Lazy Load) ---
+  useEffect(() => {
+    const fetchAiAnalysis = async () => {
+      if (!user || !jobId) return; // Only analyze if logged in
+
+      setIsAiLoading(true);
+      try {
+        // Gọi API endpoint mới
+        const res = await axios.get(
+          `${JOB_API_END_POINT}/get/${jobId}/analyze`,
+          {
+            withCredentials: true,
+          }
+        );
+        if (res.data.success) {
+          setAiAnalysis(res.data.aiAnalysis);
+        }
+      } catch (err) {
+        console.error("Failed to fetch AI analysis", err);
+        // Không toast lỗi ở đây để tránh làm phiền user nếu AI lỗi nhẹ
+      } finally {
+        setIsAiLoading(false);
+      }
+    };
+
+    // Chỉ gọi khi Job ID đã sẵn sàng và user đã đăng nhập
+    if (singleJob?._id === jobId && user) {
+      fetchAiAnalysis();
+    }
+  }, [jobId, user, singleJob]); // Dependency: Chạy khi job đã load xong
+
+  // 4. Check Saved Status
   useEffect(() => {
     if (!user) return;
     setIsSaved(savedJobs?.some((j) => (j._id || j).toString() === jobId));
   }, [savedJobs, jobId, user]);
 
-  // Handle Apply Logic
   const handleApplyWrapper = async (cvId, coverLetter) => {
-    // Gọi hook applyJob
     const success = await applyJob(jobId, cvId, coverLetter, singleJob, user);
 
     if (success) {
-      // Nếu thành công, tăng biến đếm lên 1 để cập nhật UI ngay lập tức
       setApplicationCount((prev) => prev + 1);
       setOpenResumeDialog(false);
       toast.success(
@@ -152,7 +350,6 @@ const JobDescription = () => {
     }
   };
 
-  // Handle Save/Unsave Logic
   const handleSaveToggle = () => {
     if (!user) return navigate("/login");
 
@@ -245,7 +442,6 @@ const JobDescription = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2">
-                {/* --- UPDATED APPLY BUTTON --- */}
                 <Button
                   className={`h-11 px-10 text-base font-bold rounded-lg flex-1 md:flex-none shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]
                             ${
@@ -270,12 +466,13 @@ const JobDescription = () => {
                     : isExpired
                     ? "Job Closed"
                     : applicationCount >= MAX_APPLY_LIMIT
-                    ? "Max Applications Reached" // Đã đủ 3 lần
+                    ? "Max Applications Reached"
                     : applicationCount > 0
-                    ? `Reapply (${applicationCount}/${MAX_APPLY_LIMIT})` // Nút Reapply
+                    ? `Reapply (${applicationCount}/${MAX_APPLY_LIMIT})`
                     : "Apply Now"}
                 </Button>
 
+                {/* Save Button */}
                 <Button
                   variant="outline"
                   className={`h-11 px-6 rounded-lg border-gray-300 font-semibold flex-1 md:flex-none hover:bg-purple-50 hover:text-[#6A38C2] hover:border-purple-200 transition-all ${
@@ -296,10 +493,7 @@ const JobDescription = () => {
           </div>
         </div>
       </div>
-
-      {/* Main Content Layout */}
       <div className="max-w-6xl mx-auto px-4 md:px-0 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Details */}
         <div className="lg:col-span-8 space-y-6">
           <Card className="border-none shadow-sm rounded-xl overflow-hidden">
             <CardContent className="p-6 md:p-8">
@@ -353,9 +547,14 @@ const JobDescription = () => {
             </CardContent>
           </Card>
         </div>
-
         <div className="lg:col-span-4 space-y-6">
-          <Card className="border-none shadow-sm rounded-xl bg-white top-24">
+          <JobFitAnalysisCard
+            analysis={aiAnalysis}
+            loading={isAiLoading}
+            user={user}
+          />
+
+          <Card className="border-none shadow-sm rounded-xl bg-white">
             <CardContent className="p-6">
               <h4 className="font-bold text-gray-900 mb-5 text-lg">
                 General Information
@@ -430,6 +629,7 @@ const JobDescription = () => {
                   <a
                     href={company?.website}
                     target="_blank"
+                    rel="noreferrer"
                     className="text-xs text-gray-500 hover:text-[#6A38C2] flex items-center gap-1 mt-1"
                   >
                     <Globe size={10} /> Visit website
@@ -473,7 +673,6 @@ const JobDescription = () => {
           </div>
         </div>
       </div>
-
       <ResumeSelectionDialog
         open={openResumeDialog}
         setOpen={setOpenResumeDialog}
@@ -481,7 +680,6 @@ const JobDescription = () => {
         onSelectResume={(cvId, coverLetter) =>
           handleApplyWrapper(cvId, coverLetter)
         }
-        onSelectProfile={(text) => handleApplyWrapper(null, text)}
       />
     </div>
   );

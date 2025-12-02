@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Thêm useSearchParams
 import { useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +14,7 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectSearch } from "./shared/SelectSearch"; // Component của bạn
+import { SelectSearch } from "./shared/SelectSearch";
 
 // Icons
 import {
@@ -30,6 +30,7 @@ import { provinces } from "@/utils/constant";
 
 const JobFilterBar = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // Hook lấy params từ URL
   const { categories } = useSelector((store) => store.category);
   const { companies } = useSelector((store) => store.company);
 
@@ -49,6 +50,21 @@ const JobFilterBar = () => {
     },
   });
 
+  // --- 1. ĐỒNG BỘ DỮ LIỆU TỪ URL VÀO FORM ---
+  useEffect(() => {
+    if (searchParams.toString()) {
+      setValue("title", searchParams.get("keyword") || "");
+      setValue("location", searchParams.get("location") || "");
+      setValue("category", searchParams.get("category") || "");
+      setValue("jobType", searchParams.get("jobType") || "");
+      setValue("seniorityLevel", searchParams.get("seniorityLevel") || "");
+      setValue("salaryMin", searchParams.get("salaryMin") || "");
+      setValue("salaryMax", searchParams.get("salaryMax") || "");
+      setValue("experience", searchParams.get("experience") || "");
+      setValue("company", searchParams.get("company") || "");
+    }
+  }, [searchParams, setValue]);
+
   const onSubmit = (data) => {
     const params = new URLSearchParams();
     Object.entries(data).forEach(([key, val]) => {
@@ -65,27 +81,30 @@ const JobFilterBar = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4">
+    <div className="w-full max-w-6xl mx-auto space-y-4 pt-4">
+      {/* Tăng max-w lên 6xl để chứa đủ 3 cột thoải mái hơn */}
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* --- MAIN BAR (Designed like Hero Section) --- */}
         <div className="bg-white p-2 rounded-2xl md:rounded-full shadow-xl shadow-purple-100/50 border border-slate-200/60 flex flex-col md:flex-row items-center gap-2 md:gap-0 relative z-20 transition-all duration-300 hover:shadow-purple-200/60">
-          
+          {/* 1. KEYWORD INPUT */}
           <div className="flex items-center px-4 w-full md:flex-1 h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
             <Search className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <Input
-              placeholder="Search job title, keyword, or company..."
+              placeholder="Search job title, keyword..."
               className="border-none shadow-none focus-visible:ring-0 px-0 text-slate-700 placeholder:text-slate-400 bg-transparent font-medium h-auto text-base"
               {...register("title")}
             />
           </div>
 
+          {/* 2. CATEGORY SELECT (Moved Up Here) */}
           <div className="flex items-center px-4 w-full md:w-[240px] h-12 md:h-auto border-b md:border-b-0 md:border-r border-slate-100">
-            <MapPin className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
+            <Briefcase className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <SelectSearch
-                items={provinces.map((p) => ({ _id: p, name: p }))}
-                value={watch("location")}
-                onChange={(v) => setValue("location", v)}
-                placeholder="All Locations"
+                items={categories}
+                value={watch("category")}
+                onChange={(v) => setValue("category", v)}
+                placeholder="Category"
                 labelKey="name"
                 valueKey="_id"
                 className="border-none shadow-none p-0 h-auto text-slate-700 font-medium bg-transparent focus:ring-0 w-full"
@@ -93,6 +112,23 @@ const JobFilterBar = () => {
             </div>
           </div>
 
+          {/* 3. LOCATION SELECT */}
+          <div className="flex items-center px-4 w-full md:w-[220px] h-12 md:h-auto border-b md:border-b-0 border-slate-100 md:border-none">
+            <MapPin className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <SelectSearch
+                items={provinces.map((p) => ({ _id: p, name: p }))}
+                value={watch("location")}
+                onChange={(v) => setValue("location", v)}
+                placeholder="Location"
+                labelKey="name"
+                valueKey="_id"
+                className="border-none shadow-none p-0 h-auto text-slate-700 font-medium bg-transparent focus:ring-0 w-full"
+              />
+            </div>
+          </div>
+
+          {/* 4. ACTION BUTTONS */}
           <div className="flex items-center gap-2 p-1 w-full md:w-auto justify-end md:justify-start">
             <Button
               type="button"
@@ -108,7 +144,6 @@ const JobFilterBar = () => {
               <span className="hidden sm:inline">Filters</span>
             </Button>
 
-            
             <Button
               type="submit"
               className="w-full md:w-auto rounded-xl md:rounded-full bg-[#6A38C2] hover:bg-[#5a2ea6] text-white px-8 h-12 font-bold text-base shadow-lg shadow-purple-200 transition-all hover:scale-105"
@@ -118,6 +153,7 @@ const JobFilterBar = () => {
           </div>
         </div>
 
+        {/* --- ADVANCED FILTERS --- */}
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
@@ -129,20 +165,7 @@ const JobFilterBar = () => {
             >
               <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 relative z-10">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Category */}
-                  <FilterGroup
-                    label="Category"
-                    icon={<Briefcase className="w-4 h-4" />}
-                  >
-                    <SelectSearch
-                      items={categories}
-                      value={watch("category")}
-                      onChange={(v) => setValue("category", v)}
-                      placeholder="Select Category"
-                      labelKey="name"
-                      valueKey="_id"
-                    />
-                  </FilterGroup>
+                  {/* Category đã được đưa lên trên, xóa khỏi đây */}
 
                   {/* Job Type */}
                   <FilterGroup

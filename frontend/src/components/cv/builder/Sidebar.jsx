@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -5,6 +6,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import {
   User,
   BookOpen,
@@ -15,6 +17,8 @@ import {
   Trophy,
   FileText,
   LayoutTemplate,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import PersonalInfoSection from "./sections/PersonalInfoSection";
@@ -29,172 +33,178 @@ import AchievementsSection from "./sections/AchievementsSection";
 import TitleSection from "./sections/TitleSection";
 import OperationsSection from "./sections/OperationsSection";
 import InterestsSection from "./sections/InterestsSection";
-const Sidebar = ({ cvData, updateField }) => {
+
+const Sidebar = ({ cvData, updateField, isCollapsed, onToggle }) => {
+  const [activeSection, setActiveSection] = useState("title");
+
+  const sections = [
+    {
+      id: "title",
+      title: "CV Title",
+      icon: LayoutTemplate,
+      component: TitleSection,
+    },
+    {
+      id: "personal",
+      title: "Personal Information",
+      icon: User,
+      component: PersonalInfoSection,
+    },
+    {
+      id: "summary",
+      title: "Professional Summary",
+      icon: FileText,
+      component: SummarySection,
+    },
+    {
+      id: "experience",
+      title: "Work Experience",
+      icon: Briefcase,
+      component: ExperienceSection,
+    },
+    {
+      id: "education",
+      title: "Education",
+      icon: BookOpen,
+      component: EducationSection,
+    },
+    {
+      id: "skills",
+      title: "Skills",
+      icon: Code,
+      component: SkillsSection,
+    },
+    {
+      id: "projects",
+      title: "Projects",
+      icon: LayoutTemplate,
+      component: ProjectsSection,
+    },
+    {
+      id: "certifications",
+      title: "Certifications",
+      icon: Award,
+      component: CertificationsSection,
+    },
+    {
+      id: "languages",
+      title: "Languages",
+      icon: Languages,
+      component: LanguagesSection,
+    },
+    {
+      id: "achievements",
+      title: "Achievements",
+      icon: Trophy,
+      component: AchievementsSection,
+    },
+    {
+      id: "operations",
+      title: "Operations",
+      icon: LayoutTemplate,
+      component: OperationsSection,
+    },
+    {
+      id: "interests",
+      title: "Interests",
+      icon: LayoutTemplate,
+      component: InterestsSection,
+    },
+  ];
+
   return (
-    <div className="w-full md:w-[380px] bg-white border-r h-full flex flex-col">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-bold text-gray-800">CV Editor</h2>
-        <p className="text-xs text-gray-500">Customize your resume details</p>
+    <div className="h-full flex flex-col bg-white">
+      <div
+        className={`p-4 border-b flex items-center ${
+          isCollapsed ? "justify-center" : "justify-between"
+        }`}
+      >
+        {!isCollapsed && (
+          <div className="overflow-hidden whitespace-nowrap">
+            <h2 className="text-xl font-bold text-gray-800">CV Editor</h2>
+            <p className="text-xs text-gray-500">Customize your resume</p>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggle}
+          className="text-gray-500 hover:text-[#6A38C2] shrink-0"
+        >
+          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </Button>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 pb-20">
-          <Accordion type="single" collapsible className="w-full space-y-2">
-            <AccordionItem value="title" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
-                  CV Title
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <TitleSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="personal" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <User size={18} className="text-[#6A38C2]" />
-                  Personal Information
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <PersonalInfoSection
-                  cvData={cvData}
-                  updateField={updateField}
-                />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="summary" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <FileText size={18} className="text-[#6A38C2]" />
-                  Professional Summary
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <SummarySection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem
-              value="experience"
-              className="border rounded-lg px-2"
+        {isCollapsed ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            {sections.map(({ id, title, icon: Icon }) => (
+              <Button
+                key={id}
+                variant="ghost"
+                size="icon"
+                className={`rounded-xl w-10 h-10 transition-all ${
+                  activeSection === id
+                    ? "bg-[#6A38C2] text-white shadow-md hover:bg-[#5b30a6] hover:text-white"
+                    : "text-gray-500 hover:bg-purple-50 hover:text-[#6A38C2]"
+                }`}
+                title={title}
+                onClick={() => {
+                  onToggle();
+                  setActiveSection(id);
+                }}
+              >
+                <Icon size={20} />
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 pb-20">
+            <Accordion
+              type="single"
+              collapsible
+              className="w-full space-y-2"
+              value={activeSection}
+              onValueChange={setActiveSection}
             >
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Briefcase size={18} className="text-[#6A38C2]" />
-                  Work Experience
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <ExperienceSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="education" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <BookOpen size={18} className="text-[#6A38C2]" />
-                  Education
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <EducationSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="skills" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Code size={18} className="text-[#6A38C2]" />
-                  Skills
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <SkillsSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="projects" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
-                  Projects
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <ProjectsSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem
-              value="certifications"
-              className="border rounded-lg px-2"
-            >
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Award size={18} className="text-[#6A38C2]" />
-                  Certifications
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <CertificationsSection
-                  cvData={cvData}
-                  updateField={updateField}
-                />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="languages" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Languages size={18} className="text-[#6A38C2]" />
-                  Languages
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <LanguagesSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem
-              value="achievements"
-              className="border rounded-lg px-2"
-            >
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Trophy size={18} className="text-[#6A38C2]" />
-                  Achievements
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <AchievementsSection
-                  cvData={cvData}
-                  updateField={updateField}
-                />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem
-              value="operations"
-              className="border rounded-lg px-2"
-            >
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
-                  Operations
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <OperationsSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="interests" className="border rounded-lg px-2">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <LayoutTemplate size={18} className="text-[#6A38C2]" />
-                  Interests
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <InterestsSection cvData={cvData} updateField={updateField} />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
+              {sections.map(
+                ({ id, title, icon: Icon, component: Component }) => (
+                  <AccordionItem
+                    key={id}
+                    value={id}
+                    className="border rounded-lg px-2 bg-white data-[state=open]:border-[#6A38C2]/30 data-[state=open]:shadow-sm transition-all"
+                  >
+                    <AccordionTrigger className="hover:no-underline py-3 px-1 group">
+                      <div className="flex items-center gap-3 text-sm font-semibold">
+                        <div
+                          className={`p-1.5 rounded-md transition-colors ${
+                            activeSection === id
+                              ? "bg-[#6A38C2]/10 text-[#6A38C2]"
+                              : "text-gray-400 group-hover:text-[#6A38C2] group-hover:bg-[#6A38C2]/5"
+                          }`}
+                        >
+                          <Icon size={18} />
+                        </div>
+                        <span
+                          className={`transition-colors ${
+                            activeSection === id
+                              ? "text-[#6A38C2]"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {title}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 px-1 pb-4">
+                      <Component cvData={cvData} updateField={updateField} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )
+              )}
+            </Accordion>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );

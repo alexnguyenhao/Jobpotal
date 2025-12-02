@@ -4,12 +4,18 @@ import { useDispatch, useSelector } from "react-redux";
 
 // Hooks & Actions
 import useCV from "@/hooks/useCV";
-import { clearCVState } from "@/redux/cvSlice"; // Bỏ comment nếu bạn đã tạo action này
+import { clearCVState } from "@/redux/cvSlice";
 
 // Components
 import ApplicantPreview from "@/components/admin/applicant/ApplicantPreview.jsx";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  FileText,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const ApplicantCVView = () => {
@@ -18,13 +24,12 @@ const ApplicantCVView = () => {
   const dispatch = useDispatch();
   const { getCVForRecruiter, loading } = useCV();
 
-  // Lấy state từ Redux
   const cvState = useSelector((state) => state.cv);
 
-  // 1. Gom nhóm dữ liệu (Memoize để tối ưu hiệu năng)
+  // 1. Merge Data từ Redux
   const cvData = useMemo(
     () => ({
-      ...cvState.meta,
+      ...cvState.meta, // Bao gồm _id, title, resume, resumeOriginalName
       personalInfo: cvState.personalInfo,
       education: cvState.education,
       workExperience: cvState.workExperience,
@@ -33,6 +38,8 @@ const ApplicantCVView = () => {
       languages: cvState.languages,
       achievements: cvState.achievements,
       projects: cvState.projects,
+      operations: cvState.operations,
+      interests: cvState.interests,
       styleConfig: cvState.styleConfig,
     }),
     [cvState]
@@ -47,15 +54,12 @@ const ApplicantCVView = () => {
       });
     }
 
-    // Cleanup: Reset redux khi rời trang này để tránh dính dữ liệu cũ
     return () => {
       dispatch(clearCVState());
     };
-  }, [id, dispatch, navigate]);
+  }, [id, dispatch, navigate]); // Bỏ getCVForRecruiter khỏi dependency để tránh loop
 
-  // --- RENDER ---
-
-  // Loading State
+  // 3. Loading State
   if (loading || !cvState?.meta?._id) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
@@ -64,6 +68,9 @@ const ApplicantCVView = () => {
       </div>
     );
   }
+
+  // 4. Kiểm tra loại CV (Nếu có link resume -> Là Uploaded PDF)
+  const isPdf = !!cvData.resume;
 
   return (
     <div className="min-h-screen bg-gray-100/80 pb-20">
@@ -77,7 +84,7 @@ const ApplicantCVView = () => {
               className="text-gray-600 hover:text-[#6A38C2] hover:bg-purple-50"
               onClick={() => navigate(-1)}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Applicants
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
 
             <div className="h-6 w-[1px] bg-gray-300 hidden md:block"></div>
@@ -86,30 +93,71 @@ const ApplicantCVView = () => {
               <h1 className="text-lg font-bold text-gray-900 leading-none">
                 {cvData.personalInfo?.fullName || "Applicant Name"}
               </h1>
-              <span className="text-xs text-gray-500">
-                Applied for: {cvState.meta?.jobTitle || "Job Position"}
+              <span className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                {isPdf ? (
+                  <>
+                    <FileText size={12} className="text-red-500" />
+                    PDF File:{" "}
+                    <span className="font-medium">
+                      {cvData.resumeOriginalName}
+                    </span>
+                  </>
+                ) : (
+                  `Template: ${cvData.template || "Standard"}`
+                )}
               </span>
             </div>
           </div>
 
-          {/* Nếu muốn thêm nút hành động khác (ví dụ: Duyệt/Loại nhanh) thì đặt ở đây */}
-          <div className="flex gap-2">
-            <Button variant="outline" className="text-red-600">
-              Reject
-            </Button>
-            <Button className="bg-[#6A38C2]">Shortlist</Button>
-          </div>
+          {/* Action Buttons (Chỉ hiện cho PDF hoặc khi cần thiết) */}
+          {isPdf && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => window.open(cvData.resume, "_blank")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" /> Open in New Tab
+              </Button>
+              <Button
+                size="sm"
+                className="bg-[#6A38C2] hover:bg-[#5a2ea6] h-9"
+                onClick={() => {
+                  // Tải file
+                  const link = document.createElement("a");
+                  link.href = cvData.resume;
+                  link.target = "_blank";
+                  link.download = cvData.resumeOriginalName || "resume.pdf";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" /> Download
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* --- MAIN CONTENT (PREVIEW) --- */}
+      {/* --- MAIN CONTENT --- */}
       <div className="flex justify-center mt-8 px-4">
-        {/* Giữ chiều rộng tương đương A4 (khoảng 210mm ~ 800px) 
-            để đảm bảo CV hiển thị đúng như lúc ứng viên thiết kế 
-        */}
-        <div className="w-full max-w-[210mm] bg-white shadow-xl rounded-sm min-h-[297mm]">
-          <ApplicantPreview cvData={cvData} />
-        </div>
+        {isPdf ? (
+          // --- CASE 1: PDF VIEWER ---
+          <div className="w-full max-w-6xl h-[85vh] bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+            <iframe
+              src={`${cvData.resume}#toolbar=0`}
+              className="w-full h-full"
+              title="Resume PDF"
+            />
+          </div>
+        ) : (
+          // --- CASE 2: BUILDER PREVIEW ---
+          <div className="w-full max-w-[210mm] bg-white shadow-xl rounded-sm min-h-[297mm]">
+            <ApplicantPreview cvData={cvData} />
+          </div>
+        )}
       </div>
     </div>
   );

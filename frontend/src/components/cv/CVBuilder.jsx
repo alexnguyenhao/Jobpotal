@@ -1,19 +1,20 @@
-import React, { useEffect, useRef, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, {
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useState,
+} from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import useCV from "@/hooks/useCV";
-
-// Redux Actions
 import { updateLocalCVState, updateMeta, clearCVState } from "@/redux/cvSlice";
-
-// Components
 import TopBar from "@/components/cv/builder/TopBar";
 import Sidebar from "@/components/cv/builder/Sidebar";
 import LivePreview from "@/components/cv/builder/LivePreview";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Debounce helper
 const debounce = (func, delay) => {
   let timer;
   return (...args) => {
@@ -24,10 +25,14 @@ const debounce = (func, delay) => {
 
 const CVBuilder = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Hook điều hướng
   const { createCV, getCV, updateCV } = useCV();
   const [searchParams] = useSearchParams();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const cvState = useSelector((state) => state.cv);
+
+  // Gom nhóm dữ liệu từ Redux để truyền xuống các component con
   const cvData = useMemo(
     () => ({
       ...cvState.meta,
@@ -61,6 +66,8 @@ const CVBuilder = () => {
 
   const hasInitialized = useRef(false);
   const isSaving = useRef(false);
+
+  // Hàm save auto (debounce 800ms)
   const debouncedSave = useMemo(
     () =>
       debounce((id, data) => {
@@ -68,9 +75,11 @@ const CVBuilder = () => {
         updateCV(id, data).finally(() => {
           isSaving.current = false;
         });
-      }, 800), // Delay 800ms
+      }, 800),
     []
   );
+
+  // --- 1. KHỞI TẠO DỮ LIỆU ---
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -94,10 +103,15 @@ const CVBuilder = () => {
       dispatch(clearCVState());
     };
   }, []);
+  useEffect(() => {
+    if (cvState.meta?._id && cvState.meta?.type === "upload") {
+      toast.info("This is an uploaded file. Redirecting to viewer...");
+      navigate(`/cv/view/${cvState.meta._id}`);
+    }
+  }, [cvState.meta, navigate]);
   const updateField = useCallback(
     (path, value) => {
       dispatch(updateLocalCVState({ path, value }));
-
       if (cvData._id) {
         const dataToSave = JSON.parse(JSON.stringify(cvData));
         const keys = path.split(".");
@@ -107,11 +121,13 @@ const CVBuilder = () => {
           ref = ref[keys[i]];
         }
         ref[keys[keys.length - 1]] = value;
+
         debouncedSave(cvData._id, dataToSave);
       }
     },
     [cvData, dispatch, debouncedSave]
   );
+
   const handleTemplateChange = (newTemplate) => {
     dispatch(updateMeta({ template: newTemplate }));
     if (cvData._id) {
@@ -119,6 +135,8 @@ const CVBuilder = () => {
       toast.success("Template updated!");
     }
   };
+
+  // --- RENDER LOADING ---
   if (cvState.loading || !cvData._id) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-gray-50 text-gray-500">
@@ -128,6 +146,7 @@ const CVBuilder = () => {
     );
   }
 
+  // --- RENDER GIAO DIỆN CHÍNH ---
   return (
     <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
       <TopBar
@@ -138,9 +157,21 @@ const CVBuilder = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-full md:w-[400px] lg:w-[450px] bg-white border-r border-gray-200 h-full overflow-y-auto z-10 shadow-lg">
-          <Sidebar cvData={cvData} updateField={updateField} />
+        {/* Sidebar bên trái */}
+        <div
+          className={`bg-white border-r border-gray-200 h-full overflow-y-auto z-10 shadow-lg transition-all duration-300 ease-in-out ${
+            isSidebarCollapsed ? "w-[80px]" : "w-full md:w-[400px] lg:w-[450px]"
+          }`}
+        >
+          <Sidebar
+            cvData={cvData}
+            updateField={updateField}
+            isCollapsed={isSidebarCollapsed}
+            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
         </div>
+
+        {/* Live Preview bên phải */}
         <div className="flex-1 h-full bg-gray-100 overflow-y-auto p-4 md:p-8 flex justify-center">
           <LivePreview cvData={cvData} />
         </div>

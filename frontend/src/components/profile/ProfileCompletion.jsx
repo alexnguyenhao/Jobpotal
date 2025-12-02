@@ -3,19 +3,20 @@ import React from "react";
 const ProfileCompletion = ({ profile }) => {
   if (!profile) return null;
 
-  // Danh sách các trường cần kiểm tra
+  // Danh sách các trường cần kiểm tra (đã cập nhật theo Model mới)
   const checks = [
     !!profile.title,
     profile.education?.length > 0,
     profile.workExperience?.length > 0,
-    profile.certifications?.length > 0,
-    profile.languages?.length > 0,
-    profile.achievements?.length > 0,
-    profile.projects?.length > 0,
     profile.skills?.length > 0,
-    profile.operations?.length > 0,
-    profile.interests?.length > 0,
-    !!profile.careerObjective,
+    profile.socialLinks?.length > 0, // Mới thêm
+    profile.careerObjective, // Mới thêm
+    profile.projects?.length > 0,
+    profile.languages?.length > 0,
+    // Các trường optional hơn
+    profile.certifications?.length > 0,
+    profile.achievements?.length > 0,
+    profile.interests?.length > 0 || !!profile.interests, // Support cả string và array
   ];
 
   // Tính toán %
@@ -25,9 +26,9 @@ const ProfileCompletion = ({ profile }) => {
 
   // Cấu hình màu sắc và thông điệp
   const getStatus = (pct) => {
-    if (pct < 40) return { color: "text-red-500", msg: "Start Building" };
-    if (pct < 70) return { color: "text-yellow-500", msg: "Keep Going" };
-    if (pct < 100) return { color: "text-blue-500", msg: "Almost There" };
+    if (pct < 30) return { color: "text-red-500", msg: "Just Started" };
+    if (pct < 60) return { color: "text-yellow-500", msg: "Getting There" };
+    if (pct < 90) return { color: "text-blue-500", msg: "Strong Profile" };
     return { color: "text-green-500", msg: "Excellent!" };
   };
 
@@ -35,7 +36,7 @@ const ProfileCompletion = ({ profile }) => {
 
   // Cấu hình SVG
   const radius = 18;
-  const circumference = 2 * Math.PI * radius; // ~113.097
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (completion / 100) * circumference;
 
   return (
@@ -43,16 +44,14 @@ const ProfileCompletion = ({ profile }) => {
       {/* Circular Progress */}
       <div className="relative w-10 h-10 flex-shrink-0">
         <svg className="w-full h-full transform -rotate-90">
-          {/* Background Circle */}
           <circle
             cx="20"
             cy="20"
             r={radius}
-            stroke="#e5e7eb" // gray-200
+            stroke="#e5e7eb"
             strokeWidth="3"
             fill="transparent"
           />
-          {/* Progress Circle */}
           <circle
             cx="20"
             cy="20"
@@ -63,11 +62,10 @@ const ProfileCompletion = ({ profile }) => {
             className={`${color} transition-all duration-1000 ease-out`}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round" // Bo tròn đầu nét vẽ
+            strokeLinecap="round"
           />
         </svg>
 
-        {/* Percentage Text */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-[10px] font-bold text-gray-700">
             {completion}%
@@ -75,7 +73,6 @@ const ProfileCompletion = ({ profile }) => {
         </div>
       </div>
 
-      {/* Text Info */}
       <div className="flex flex-col">
         <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">
           Profile Strength

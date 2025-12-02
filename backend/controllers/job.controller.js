@@ -1,5 +1,7 @@
 import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
+import { Profile } from "../models/profile.model.js";
+import { analyzeJobFitForStudent } from "../utils/aiService.js";
 export const postJob = async (req, res) => {
   try {
     const {
@@ -225,11 +227,68 @@ export const getJobById = async (req, res) => {
     });
   }
 };
+export const getJobFitAnalysis = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const userId = req.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "You need to login to use this feature.",
+        success: false,
+      });
+    }
+
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({
+        message: "Job not found.",
+        success: false,
+      });
+    }
+
+    const userProfile = await Profile.findOne({ user: userId });
+    if (!userProfile) {
+      return res.status(400).json({
+        message:
+          "You need to update your profile (Profile) to use this feature.",
+        success: false,
+      });
+    }
+
+    const requirementsText = Array.isArray(job.requirements)
+      ? job.requirements.join(", ")
+      : job.requirements;
+
+    const fullJobContext = `
+      Job Title: ${job.title}
+      Description: ${job.description}
+      Requirements: ${requirementsText}
+      Experience Level: ${job.experienceLevel}
+    `;
+    const aiAnalysis = await analyzeJobFitForStudent(
+      userProfile,
+      fullJobContext
+    );
+
+    return res.status(200).json({
+      success: true,
+      aiAnalysis,
+    });
+  } catch (err) {
+    console.error("❌ Get Job Fit Analysis Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
 export const getAdminJobs = async (req, res) => {
   try {
     const adminId = req.id;
     const jobs = await Job.find({ created_by: adminId })
       .populate("company category")
+      .populate("applications")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ jobs, success: true });
@@ -241,6 +300,7 @@ export const getAdminJobs = async (req, res) => {
     });
   }
 };
+
 export const updateJob = async (req, res) => {
   try {
     const jobId = req.params.id;

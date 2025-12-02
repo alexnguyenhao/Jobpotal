@@ -11,17 +11,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Đảm bảo bạn có component này hoặc dùng input type checkbox
 import { USER_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
 import { GraduationCap, Plus, Trash2 } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { educationSchema } from "@/lib/educationSchema";
+import { z } from "zod";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "@/redux/authSlice";
 import DatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
+
+const educationSchema = z.object({
+  education: z.array(
+    z.object({
+      school: z.string().min(1, "School name is required"),
+      degree: z.string().optional(),
+      major: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional().nullable(),
+      isCurrent: z.boolean().default(false),
+    })
+  ),
+});
 
 export default function UpdateEducationDialog({ open, setOpen }) {
   const { user } = useSelector((state) => state.auth);
@@ -33,6 +48,8 @@ export default function UpdateEducationDialog({ open, setOpen }) {
     handleSubmit,
     reset,
     register,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(educationSchema),
@@ -43,12 +60,18 @@ export default function UpdateEducationDialog({ open, setOpen }) {
     control,
     name: "education",
   });
+
   useEffect(() => {
     if (open) {
       reset({
         education:
           user?.profile?.education?.length > 0
-            ? user.profile.education
+            ? user.profile.education.map((edu) => ({
+                ...edu,
+                startDate: edu.startDate ? edu.startDate.split("T")[0] : "",
+                endDate: edu.endDate ? edu.endDate.split("T")[0] : "",
+                isCurrent: edu.isCurrent || false,
+              }))
             : [
                 {
                   school: "",
@@ -56,6 +79,7 @@ export default function UpdateEducationDialog({ open, setOpen }) {
                   major: "",
                   startDate: "",
                   endDate: "",
+                  isCurrent: false,
                 },
               ],
       });
@@ -65,10 +89,15 @@ export default function UpdateEducationDialog({ open, setOpen }) {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
+      // Xử lý logic: Nếu isCurrent = true thì gửi endDate = null
+      const formattedData = data.education.map((edu) => ({
+        ...edu,
+        endDate: edu.isCurrent ? null : edu.endDate,
+      }));
 
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
-        { education: data.education },
+        { education: formattedData },
         { withCredentials: true }
       );
 
@@ -95,126 +124,139 @@ export default function UpdateEducationDialog({ open, setOpen }) {
             Update Education
           </DialogTitle>
           <DialogDescription className="text-gray-500">
-            Add, edit, or remove your academic background below.
+            Add, edit, or remove your academic background.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-2">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="relative border border-gray-200 bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 space-y-4"
-              >
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
-                  disabled={fields.length === 1}
+            {fields.map((field, index) => {
+              const isCurrent = watch(`education.${index}.isCurrent`);
+              return (
+                <div
+                  key={field.id}
+                  className="relative border border-gray-200 bg-white rounded-xl p-5 shadow-sm hover:shadow-md space-y-4"
                 >
-                  <Trash2 size={18} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
 
-                {/* School */}
-                <div className="space-y-2">
-                  <Label>School / University</Label>
-                  <Input
-                    {...register(`education.${index}.school`)}
-                    placeholder="e.g. Harvard University"
-                  />
-                  {errors.education?.[index]?.school && (
-                    <p className="text-xs text-red-500">
-                      {errors.education[index].school.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Degree */}
-                <div className="space-y-2">
-                  <Label>Degree</Label>
-                  <Input
-                    {...register(`education.${index}.degree`)}
-                    placeholder="e.g. Bachelor's"
-                  />
-                  {errors.education?.[index]?.degree && (
-                    <p className="text-xs text-red-500">
-                      {errors.education[index].degree.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Major */}
-                <div className="space-y-2">
-                  <Label>Major / Field of Study</Label>
-                  <Input
-                    {...register(`education.${index}.major`)}
-                    placeholder="e.g. Software Engineering"
-                  />
-                  {errors.education?.[index]?.major && (
-                    <p className="text-xs text-red-500">
-                      {errors.education[index].major.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Years */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label>Start Date</Label>
-                    <Controller
-                      control={control}
-                      name={`education.${index}.startDate`}
-                      render={({ field }) => (
-                        <DatePicker
-                          selected={field.value ? parseISO(field.value) : null}
-                          onChange={(date) =>
-                            field.onChange(
-                              date ? format(date, "yyyy-MM-dd") : ""
-                            )
-                          }
-                          dateFormat="dd-MM-yyyy"
-                          placeholderText="choice start date"
-                          className="w-full border border-gray-200 rounded-md px-3 py-2 focus:ring-[#6A38C2]/50 focus:border-[#6A38C2]"
-                          locale={vi}
-                        />
-                      )}
+                  {/* School */}
+                  <div className="space-y-2">
+                    <Label>School / University</Label>
+                    <Input
+                      {...register(`education.${index}.school`)}
+                      placeholder="e.g. Harvard University"
                     />
-                    {errors.education?.[index]?.startDate && (
+                    {errors.education?.[index]?.school && (
                       <p className="text-xs text-red-500">
-                        {errors.education[index].startDate.message}
+                        {errors.education[index].school.message}
                       </p>
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <Label>End Date</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Degree</Label>
+                      <Input
+                        {...register(`education.${index}.degree`)}
+                        placeholder="e.g. Bachelor's"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Major</Label>
+                      <Input
+                        {...register(`education.${index}.major`)}
+                        placeholder="e.g. CS"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label>Start Date</Label>
+                      <Controller
+                        control={control}
+                        name={`education.${index}.startDate`}
+                        render={({ field }) => (
+                          <DatePicker
+                            selected={
+                              field.value ? parseISO(field.value) : null
+                            }
+                            onChange={(date) =>
+                              field.onChange(
+                                date ? format(date, "yyyy-MM-dd") : ""
+                              )
+                            }
+                            dateFormat="dd-MM-yyyy"
+                            className="w-full border border-gray-200 rounded-md px-3 py-2"
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className={isCurrent ? "text-gray-400" : ""}>
+                        End Date
+                      </Label>
+                      <Controller
+                        control={control}
+                        name={`education.${index}.endDate`}
+                        render={({ field }) => (
+                          <DatePicker
+                            selected={
+                              field.value ? parseISO(field.value) : null
+                            }
+                            onChange={(date) =>
+                              field.onChange(
+                                date ? format(date, "yyyy-MM-dd") : ""
+                              )
+                            }
+                            dateFormat="dd-MM-yyyy"
+                            disabled={isCurrent}
+                            className={`w-full border border-gray-200 rounded-md px-3 py-2 ${
+                              isCurrent ? "bg-gray-100 cursor-not-allowed" : ""
+                            }`}
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Is Current Checkbox */}
+                  <div className="flex items-center space-x-2">
                     <Controller
                       control={control}
-                      name={`education.${index}.endDate`}
+                      name={`education.${index}.isCurrent`}
                       render={({ field }) => (
-                        <DatePicker
-                          selected={field.value ? parseISO(field.value) : null}
-                          onChange={(date) =>
-                            field.onChange(
-                              date ? format(date, "yyyy-MM-dd") : ""
-                            )
-                          }
-                          dateFormat="dd-MM-yyyy"
-                          placeholderText="Choice end date"
-                          className="w-full border border-gray-200 rounded-md px-3 py-2 focus:ring-[#6A38C2]/50 focus:border-[#6A38C2]"
-                          locale={vi}
+                        <input
+                          type="checkbox"
+                          id={`isCurrent-${index}`}
+                          checked={field.value}
+                          onChange={(e) => {
+                            field.onChange(e.target.checked);
+                            if (e.target.checked)
+                              setValue(`education.${index}.endDate`, null);
+                          }}
+                          className="w-4 h-4 text-[#6A38C2] rounded border-gray-300 focus:ring-[#6A38C2]"
                         />
                       )}
                     />
-                    {errors.education?.[index]?.endDate && (
-                      <p className="text-xs text-red-500">
-                        {errors.education[index].endDate.message}
-                      </p>
-                    )}
+                    <Label
+                      htmlFor={`isCurrent-${index}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      Currently studying here
+                    </Label>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <DialogFooter className="flex justify-between mt-6 pt-4 border-t">
@@ -228,13 +270,13 @@ export default function UpdateEducationDialog({ open, setOpen }) {
                   major: "",
                   startDate: "",
                   endDate: "",
+                  isCurrent: false,
                 })
               }
               className="flex items-center gap-2 border-[#6A38C2]/30 text-[#6A38C2]"
             >
               <Plus size={16} /> Add Education
             </Button>
-
             <Button
               type="submit"
               disabled={loading}

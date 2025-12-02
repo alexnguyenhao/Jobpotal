@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom"; // IMPORT THÊM
 import useCareerGuide from "@/hooks/useCareerGuide";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,10 +16,24 @@ import { categories } from "@/utils/constant";
 
 const CareerGuide = () => {
   const { publicGuides, loading, fetchPublicGuides } = useCareerGuide();
+  const [searchParams] = useSearchParams(); // Hook để lấy params từ URL
 
-  const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState("all");
+  // Khởi tạo state từ URL (nếu có)
+  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "all"
+  );
 
+  // 1. Lắng nghe sự thay đổi của URL (ví dụ: khi bấm Back hoặc bấm Tag từ trang khác tới)
+  useEffect(() => {
+    const urlKeyword = searchParams.get("keyword") || "";
+    const urlCategory = searchParams.get("category") || "all";
+
+    if (urlKeyword !== keyword) setKeyword(urlKeyword);
+    if (urlCategory !== category) setCategory(urlCategory);
+  }, [searchParams]);
+
+  // 2. Fetch API khi keyword hoặc category thay đổi (Debounce search)
   useEffect(() => {
     const params = {
       keyword: keyword.trim(),
@@ -34,7 +49,7 @@ const CareerGuide = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* --- HERO SECTION (Đồng bộ style) --- */}
+      {/* --- HERO SECTION --- */}
       <div className="bg-white border-b border-gray-100 py-16 md:py-24 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-30 pointer-events-none">
@@ -58,7 +73,7 @@ const CareerGuide = () => {
             to help you land your dream job.
           </p>
 
-          {/* --- SEARCH BAR (Rounded Pill Style) --- */}
+          {/* --- SEARCH BAR --- */}
           <div className="max-w-3xl mx-auto bg-white p-2 rounded-full shadow-xl border border-gray-100 flex flex-col md:flex-row items-center gap-2">
             {/* Search Input */}
             <div className="relative flex-grow w-full md:w-auto">
@@ -92,7 +107,7 @@ const CareerGuide = () => {
               </Select>
             </div>
 
-            {/* Search Button (Visual only as search is automatic) */}
+            {/* Search Button */}
             <div className="w-full md:w-auto">
               <button className="w-full md:w-12 h-12 bg-[#6A38C2] hover:bg-[#5b30a6] text-white rounded-full flex items-center justify-center transition-all shadow-md">
                 <Search className="h-5 w-5" />
@@ -106,7 +121,9 @@ const CareerGuide = () => {
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="flex items-center gap-2 mb-8">
           <BookOpen className="text-[#6A38C2]" />
-          <h2 className="text-2xl font-bold text-gray-900">Latest Articles</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {keyword ? `Results for "${keyword}"` : "Latest Articles"}
+          </h2>
         </div>
 
         {/* Loading Skeleton */}

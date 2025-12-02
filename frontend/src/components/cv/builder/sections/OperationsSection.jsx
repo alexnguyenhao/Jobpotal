@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const OperationsSection = ({ cvData, updateField }) => {
   const handleEdit = (index, key, val) => {
@@ -36,38 +36,50 @@ const OperationsSection = ({ cvData, updateField }) => {
 
       {cvData.operations.map((item, i) => (
         <div key={i} className="mb-4 p-3 border rounded-lg bg-gray-50">
-          <Input
-            className="mb-2"
-            placeholder="Title"
-            value={item.title}
-            onChange={(e) => handleEdit(i, "title", e.target.value)}
-          />
-
-          <Input
-            className="mb-2"
-            placeholder="Position"
-            value={item.position}
-            onChange={(e) => handleEdit(i, "position", e.target.value)}
-          />
-
-          <Input
-            className="mb-2"
-            placeholder="Description"
-            value={item.description}
-            onChange={(e) => handleEdit(i, "description", e.target.value)}
-          />
-
-          <div className="flex gap-2">
+          <div className="mb-2">
+            <Label className="text-xs text-gray-500">Title</Label>
             <Input
-              placeholder="Start"
-              value={item.startDate}
-              onChange={(e) => handleEdit(i, "startDate", e.target.value)}
+              placeholder="Title"
+              value={item.title}
+              onChange={(e) => handleEdit(i, "title", e.target.value)}
             />
+          </div>
+
+          <div className="mb-2">
+            <Label className="text-xs text-gray-500">Position</Label>
             <Input
-              placeholder="End"
-              value={item.endDate}
-              onChange={(e) => handleEdit(i, "endDate", e.target.value)}
+              placeholder="Position"
+              value={item.position}
+              onChange={(e) => handleEdit(i, "position", e.target.value)}
             />
+          </div>
+
+          <div className="mb-2">
+            <Label className="text-xs text-gray-500">Description</Label>
+            <Input
+              placeholder="Description"
+              value={item.description}
+              onChange={(e) => handleEdit(i, "description", e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-gray-500">Start Date</Label>
+              <Input
+                type="date"
+                value={item.startDate ? item.startDate.split("T")[0] : ""}
+                onChange={(e) => handleEdit(i, "startDate", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">End Date</Label>
+              <Input
+                type="date"
+                value={item.endDate ? item.endDate.split("T")[0] : ""}
+                onChange={(e) => handleEdit(i, "endDate", e.target.value)}
+              />
+            </div>
           </div>
           <button
             onClick={() => handleDelete(i)}

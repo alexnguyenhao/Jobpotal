@@ -4,7 +4,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  User2,
   Calendar,
   Briefcase,
   GraduationCap,
@@ -13,39 +12,56 @@ import {
   Star,
   FolderGit2,
   ExternalLink,
-  Heart, // Import icon trái tim cho Interests
-  Zap,   // Import icon cho Operations
+  Heart,
+  Zap,
+  Github,
+  Linkedin,
+  Globe,
+  Twitter,
+  LayoutTemplate,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// --- Helper Components ---
-
-const SectionHeader = ({ title, icon: Icon }) => (
-  <div className="flex items-center gap-2 mb-4 border-b border-gray-200 pb-2">
-    <div className="p-1.5 bg-purple-50 rounded-md text-[#6A38C2]">
-      <Icon size={20} />
-    </div>
-    <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide">
-      {title}
-    </h2>
-  </div>
-);
-
-const EmptyState = ({ text }) => (
-  <div className="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-center">
-    <p className="text-gray-400 text-sm italic">{text}</p>
-  </div>
-);
+// --- Helper Functions & Components ---
 
 const formatDate = (str) => {
   if (!str) return "";
   try {
     const d = new Date(str);
+    if (isNaN(d.getTime())) return str;
     return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   } catch (e) {
     return str;
   }
 };
+
+const getSocialIcon = (platform) => {
+  if (!platform) return Globe;
+  const p = platform.toLowerCase();
+  if (p.includes("github")) return Github;
+  if (p.includes("linkedin")) return Linkedin;
+  if (p.includes("twitter")) return Twitter;
+  return Globe;
+};
+
+const SectionHeader = ({ title, icon: Icon, className = "" }) => (
+  <div
+    className={`flex items-center gap-3 mb-4 border-b-2 border-gray-100 pb-2 ${className}`}
+  >
+    <div className="p-1.5 bg-[#6A38C2]/10 rounded-lg text-[#6A38C2] print:bg-transparent print:p-0">
+      <Icon size={20} />
+    </div>
+    <h2 className="text-lg font-bold text-gray-800 uppercase tracking-wider print:text-black">
+      {title}
+    </h2>
+  </div>
+);
+
+const DateRange = ({ start, end, isCurrent }) => (
+  <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100 print:bg-transparent print:border-none print:p-0 print:text-gray-600">
+    {formatDate(start)} — {isCurrent || !end ? "Present" : formatDate(end)}
+  </span>
+);
 
 // --- Main Component ---
 
@@ -54,8 +70,8 @@ const StudentResume = () => {
 
   if (!user) {
     return (
-      <div className="p-20 text-center text-gray-500 font-medium">
-        No user profile found. Please login again.
+      <div className="flex items-center justify-center min-h-[400px] text-gray-400 font-medium italic">
+        Please log in to view your resume.
       </div>
     );
   }
@@ -63,287 +79,365 @@ const StudentResume = () => {
   const p = user.profile || {};
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white shadow-xl rounded-none md:rounded-lg my-8 min-h-[297mm] overflow-hidden print:shadow-none print:my-0 print:rounded-none">
-      {/* --- HEADER --- */}
-      <header className="bg-[#6A38C2] text-white p-8 md:p-12 text-center print:bg-gray-800 print:text-black">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 uppercase">
-          {user.fullName}
-        </h1>
-        <p className="text-lg md:text-xl font-light opacity-90 tracking-wide mb-4">
-          {p.title || "Professional Title"}
-        </p>
+    <div className="bg-gray-100/50 py-8 print:py-0 print:bg-white">
+      <div
+        id="resume-content"
+        className="max-w-[210mm] mx-auto bg-white shadow-2xl rounded-xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none min-h-[297mm]"
+      >
+        {/* === HEADER === */}
+        <header className="bg-[#6A38C2] text-white p-10 print:bg-white print:text-black print:p-0 print:pb-6 print:border-b-2 print:border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none">
+                {user.fullName}
+              </h1>
+              <p className="text-xl text-purple-100 font-medium mt-2 tracking-wide print:text-gray-600">
+                {p.title || "Professional Title"}
+              </p>
+            </div>
 
-        {/* Contact Info Grid */}
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm opacity-90 mt-4">
-          {user.email && (
-            <span className="flex items-center gap-1.5">
-              <Mail size={14} /> {user.email}
-            </span>
-          )}
-          {user.phoneNumber && (
-            <span className="flex items-center gap-1.5">
-              <Phone size={14} /> {user.phoneNumber}
-            </span>
-          )}
-          {user.address && (
-            <span className="flex items-center gap-1.5">
-              <MapPin size={14} /> {user.address}
-            </span>
-          )}
-          {user.dateOfBirth && (
-            <span className="flex items-center gap-1.5">
-              <Calendar size={14} />{" "}
-              {new Date(user.dateOfBirth).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-      </header>
+            {/* Social Links (Right Side of Header) */}
+            {p.socialLinks?.length > 0 && (
+              <div className="flex flex-wrap gap-3 print:hidden">
+                {p.socialLinks.map((link, i) => {
+                  const Icon = getSocialIcon(link.platform);
+                  return (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white border border-white/20"
+                      title={link.platform}
+                    >
+                      <Icon size={18} />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-      {/* --- MAIN CONTENT --- */}
-      <div className="p-8 md:p-12 space-y-10">
-        {/* SUMMARY */}
-        {(user.bio || p.careerObjective) && (
-          <section>
-            <SectionHeader title="Professional Summary" icon={User2} />
-            <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-              {user.bio || p.careerObjective}
-            </p>
-          </section>
-        )}
+          {/* Contact Info Bar */}
+          <div className="mt-8 pt-6 border-t border-white/20 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-purple-50 print:text-gray-700 print:border-gray-200 print:mt-4 print:pt-4">
+            {user.email && (
+              <div className="flex items-center gap-2">
+                <Mail size={14} /> {user.email}
+              </div>
+            )}
+            {user.phoneNumber && (
+              <div className="flex items-center gap-2">
+                <Phone size={14} /> {user.phoneNumber}
+              </div>
+            )}
+            {user.address && (
+              <div className="flex items-center gap-2">
+                <MapPin size={14} /> {user.address}
+              </div>
+            )}
+            {p.socialLinks?.map((link, i) => (
+              <a
+                key={i}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden print:flex items-center gap-2 text-gray-700 underline"
+              >
+                <Globe size={14} /> {link.platform}
+              </a>
+            ))}
+          </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {/* LEFT COLUMN (Main Info - Experience, Projects, Operations) */}
-          <div className="md:col-span-2 space-y-10">
-            {/* EXPERIENCE */}
-            <section>
-              <SectionHeader title="Experience" icon={Briefcase} />
-              {p.workExperience?.length > 0 ? (
+        <div className="p-10 grid grid-cols-1 md:grid-cols-12 gap-10 print:p-0 print:mt-8 print:block">
+          {/* === LEFT COLUMN (Main Content) === */}
+          <div className="md:col-span-8 space-y-8 print:w-full">
+            {/* 1. SUMMARY */}
+            {(user.bio || p.careerObjective) && (
+              <section>
+                <SectionHeader
+                  title="Professional Summary"
+                  icon={LayoutTemplate}
+                />
+                <p className="text-gray-700 leading-relaxed text-sm text-justify">
+                  {p.careerObjective || user.bio}
+                </p>
+              </section>
+            )}
+
+            {/* 2. WORK EXPERIENCE */}
+            {p.workExperience?.length > 0 && (
+              <section>
+                <SectionHeader title="Work Experience" icon={Briefcase} />
                 <div className="space-y-6">
                   {p.workExperience.map((job, i) => (
                     <div
                       key={i}
-                      className="relative pl-4 border-l-2 border-gray-200"
+                      className="relative pl-5 border-l-2 border-gray-200 print:border-l-0 print:pl-0"
                     >
-                      <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#6A38C2]" />
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-1">
-                        <h3 className="font-bold text-gray-900 text-lg">
+                      {/* Timeline Dot (Screen only) */}
+                      <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-white border-[3px] border-[#6A38C2] print:hidden" />
+
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                        <h3 className="text-lg font-bold text-gray-900">
                           {job.position}
                         </h3>
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded whitespace-nowrap mt-1 sm:mt-0">
-                          {formatDate(job.startDate)} -{" "}
-                          {job.endDate ? formatDate(job.endDate) : "Present"}
-                        </span>
+                        <DateRange
+                          start={job.startDate}
+                          end={job.endDate}
+                          isCurrent={job.isCurrent}
+                        />
                       </div>
-                      <p className="text-sm font-semibold text-[#6A38C2] mb-2">
+                      <div className="text-[#6A38C2] font-semibold text-sm mb-2 print:text-black">
                         {job.company}
-                      </p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                      </div>
+                      <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed text-justify">
                         {job.description}
                       </p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <EmptyState text="No work experience listed." />
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* PROJECTS */}
-            <section>
-              <SectionHeader title="Projects" icon={FolderGit2} />
-              {p.projects?.length > 0 ? (
-                <div className="grid gap-4">
+            {/* 3. PROJECTS */}
+            {p.projects?.length > 0 && (
+              <section>
+                <SectionHeader title="Projects" icon={FolderGit2} />
+                <div className="space-y-5">
                   {p.projects.map((proj, i) => (
                     <div
                       key={i}
-                      className="bg-gray-50 rounded-lg p-4 border border-gray-100"
+                      className="bg-gray-50 rounded-xl p-5 border border-gray-100 print:bg-transparent print:border print:border-gray-300 print:p-4 print:break-inside-avoid"
                     >
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-gray-800">{proj.name}</h3>
-                        {proj.link && (
-                          <a
-                            href={proj.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[#6A38C2] hover:underline text-xs flex items-center gap-1"
-                          >
-                            Link <ExternalLink size={10} />
-                          </a>
-                        )}
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                            {proj.title}
+                            {proj.link && (
+                              <a
+                                href={proj.link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-gray-400 hover:text-[#6A38C2] print:hidden"
+                              >
+                                <ExternalLink size={14} />
+                              </a>
+                            )}
+                          </h3>
+                          {proj.link && (
+                            <a
+                              href={proj.link}
+                              className="text-xs text-[#6A38C2] hover:underline hidden print:block"
+                            >
+                              {proj.link}
+                            </a>
+                          )}
+                        </div>
+                        <DateRange
+                          start={proj.startDate}
+                          end={proj.endDate}
+                          isCurrent={proj.isWorking}
+                        />
                       </div>
-                      {proj.technologies && proj.technologies.length > 0 && (
-                        <p className="text-xs text-gray-500 font-medium mb-2 mt-1">
-                          Stack:{" "}
-                          {Array.isArray(proj.technologies)
-                            ? proj.technologies.join(", ")
-                            : proj.technologies}
-                        </p>
+
+                      {proj.technologies?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {(Array.isArray(proj.technologies)
+                            ? proj.technologies
+                            : proj.technologies.split(",")
+                          ).map((tech, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-bold text-gray-600 uppercase tracking-wide print:border-gray-400"
+                            >
+                              {tech.trim()}
+                            </span>
+                          ))}
+                        </div>
                       )}
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 leading-relaxed text-justify">
                         {proj.description}
                       </p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <EmptyState text="Add personal or academic projects." />
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* OPERATIONS / ACTIVITIES */}
-            <section>
-              <SectionHeader title="Activities & Operations" icon={Zap} />
-              {p.operations?.length > 0 ? (
-                <div className="space-y-6">
+            {/* 4. OPERATIONS / ACTIVITIES */}
+            {p.operations?.length > 0 && (
+              <section>
+                <SectionHeader title="Leadership & Activities" icon={Zap} />
+                <div className="space-y-4">
                   {p.operations.map((op, i) => (
-                    <div
-                      key={i}
-                      className="relative pl-4 border-l-2 border-gray-200"
-                    >
-                      <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#6A38C2]" />
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-1">
-                        <h3 className="font-bold text-gray-900 text-lg">
-                          {op.position}
+                    <div key={i} className="group">
+                      <div className="flex justify-between items-baseline">
+                        <h3 className="font-bold text-gray-900">
+                          {op.position}{" "}
+                          <span className="font-normal text-gray-500">
+                            at {op.title}
+                          </span>
                         </h3>
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded whitespace-nowrap mt-1 sm:mt-0">
-                          {formatDate(op.startDate)} -{" "}
-                          {op.endDate ? formatDate(op.endDate) : "Present"}
-                        </span>
+                        <DateRange
+                          start={op.startDate}
+                          end={op.endDate}
+                          isCurrent={op.isCurrent}
+                        />
                       </div>
-                      <p className="text-sm font-semibold text-[#6A38C2] mb-2">
-                        {op.title} {/* Ví dụ: Tên tổ chức, tên chiến dịch */}
-                      </p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                      <p className="text-sm text-gray-600 mt-1 text-justify">
                         {op.description}
                       </p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <EmptyState text="Add extracurricular activities or operations." />
-              )}
-            </section>
+              </section>
+            )}
           </div>
 
-          {/* RIGHT COLUMN (Side Info) */}
-          <div className="md:col-span-1 space-y-10">
-            {/* EDUCATION */}
-            <section>
-              <SectionHeader title="Education" icon={GraduationCap} />
-              {p.education?.length > 0 ? (
+          {/* === RIGHT COLUMN (Side Info) === */}
+          <div className="md:col-span-4 space-y-9 print:w-full print:mt-8 print:grid print:grid-cols-2 print:gap-8 print:space-y-0">
+            {/* 1. EDUCATION */}
+            {p.education?.length > 0 && (
+              <section className="print:col-span-2">
+                <SectionHeader title="Education" icon={GraduationCap} />
                 <div className="space-y-5">
                   {p.education.map((edu, i) => (
                     <div key={i}>
-                      <h3 className="font-bold text-gray-900 text-sm">
+                      <h3 className="font-bold text-gray-900 leading-tight">
                         {edu.school}
                       </h3>
-                      <p className="text-sm text-[#6A38C2] font-medium">
+                      <p className="text-[#6A38C2] font-medium text-sm mt-0.5 print:text-black">
                         {edu.degree}
                       </p>
                       {edu.major && (
-                        <p className="text-xs text-gray-500 italic">
+                        <p className="text-xs text-gray-500 italic mb-1">
                           {edu.major}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatDate(edu.startDate)} -{" "}
-                        {edu.endDate ? formatDate(edu.endDate) : "Present"}
-                      </p>
+                      <DateRange
+                        start={edu.startDate}
+                        end={edu.endDate}
+                        isCurrent={edu.isCurrent}
+                      />
                     </div>
                   ))}
                 </div>
-              ) : (
-                <EmptyState text="Add education." />
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* SKILLS */}
-            <section>
-              <SectionHeader title="Skills" icon={Star} />
-              {p.skills?.length > 0 ? (
+            {/* 2. SKILLS */}
+            {p.skills?.length > 0 && (
+              <section>
+                <SectionHeader title="Skills" icon={Star} />
                 <div className="flex flex-wrap gap-2">
-                  {p.skills.map((s, i) => (
-                    <Badge
-                      key={i}
-                      variant="secondary"
-                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 font-normal"
-                    >
-                      {s}
-                    </Badge>
-                  ))}
+                  {p.skills.map((s, i) => {
+                    const name = typeof s === "object" ? s.name : s;
+                    const level = typeof s === "object" ? s.level : null;
+                    return (
+                      <div
+                        key={i}
+                        className="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 print:bg-white print:border-gray-400"
+                      >
+                        <span className="block font-bold">{name}</span>
+                        {level && (
+                          <span className="block text-[10px] text-gray-500 font-normal uppercase mt-0.5">
+                            {level}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
-                <EmptyState text="List your top skills." />
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* LANGUAGES */}
-            <section>
-              <SectionHeader title="Languages" icon={Languages} />
-              {p.languages?.length > 0 ? (
-                <ul className="space-y-2 text-sm text-gray-700">
+            {/* 3. LANGUAGES */}
+            {p.languages?.length > 0 && (
+              <section>
+                <SectionHeader title="Languages" icon={Languages} />
+                <ul className="space-y-3">
                   {p.languages.map((lang, i) => (
                     <li
                       key={i}
-                      className="flex justify-between border-b border-dashed border-gray-200 pb-1"
+                      className="flex justify-between items-center text-sm border-b border-gray-100 pb-2 last:border-0"
                     >
-                      <span className="font-medium">{lang.language}</span>
-                      <span className="text-gray-500 text-xs">
+                      <span className="font-semibold text-gray-800">
+                        {lang.language}
+                      </span>
+                      <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
                         {lang.level || lang.proficiency}
                       </span>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <EmptyState text="Add languages." />
-              )}
-            </section>
+              </section>
+            )}
 
-            {/* CERTIFICATIONS & AWARDS */}
-            <section>
-              <SectionHeader title="Awards & Certs" icon={Award} />
-              {p.certifications?.length > 0 || p.achievements?.length > 0 ? (
-                <div className="space-y-4 text-sm">
-                  {p.certifications?.map((cert, i) => (
-                    <div key={`cert-${i}`}>
-                      <p className="font-bold text-gray-800">{cert.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {cert.organization} • {formatDate(cert.dateIssued)}
+            {/* 4. CERTIFICATIONS */}
+            {p.certifications?.length > 0 && (
+              <section>
+                <SectionHeader title="Certifications" icon={Award} />
+                <div className="space-y-4">
+                  {p.certifications.map((cert, i) => (
+                    <div key={i} className="text-sm">
+                      <p className="font-bold text-gray-800 leading-snug">
+                        {cert.name}
                       </p>
-                    </div>
-                  ))}
-                  {p.achievements?.map((ach, i) => (
-                    <div key={`ach-${i}`}>
-                      <p className="font-bold text-gray-800">{ach.title}</p>
-                      <p className="text-xs text-gray-500">{ach.year}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {cert.organization}
+                      </p>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {formatDate(cert.dateIssued)}
+                        </span>
+                        {cert.url && (
+                          <a
+                            href={cert.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-[#6A38C2] hover:underline flex items-center gap-0.5 print:text-black"
+                          >
+                            View <ExternalLink size={8} />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <EmptyState text="Add awards." />
-              )}
-            </section>
+              </section>
+            )}
 
-             {/* INTERESTS */}
-             <section>
-              <SectionHeader title="Interests" icon={Heart} />
-              {p.interests?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {p.interests.map((int, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600 font-medium"
-                    >
-                      {int}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState text="Add interests." />
+            {/* 5. INTERESTS */}
+            {p.interests &&
+              (typeof p.interests === "string" ||
+                Array.isArray(p.interests)) && (
+                <section>
+                  <SectionHeader title="Interests" icon={Heart} />
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(p.interests)
+                      ? p.interests
+                      : p.interests.split(",")
+                    ).map((int, i) => {
+                      if (!int.trim()) return null;
+                      return (
+                        <span
+                          key={i}
+                          className="px-2 py-1 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600 font-medium shadow-sm print:shadow-none print:border-gray-400"
+                        >
+                          {int.trim()}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
               )}
-            </section>
-
           </div>
+        </div>
+
+        {/* Footer for Print */}
+        <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
+          Generated by JobPortal - {new Date().toLocaleDateString()}
         </div>
       </div>
     </div>

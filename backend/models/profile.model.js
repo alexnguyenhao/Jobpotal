@@ -4,79 +4,102 @@ const profileSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // 🔗 liên kết ngược lại với User
+      ref: "User",
       required: true,
       unique: true,
     },
-    title: { type: String },
-    skills: [{ type: String }],
-    careerObjective: { type: String },
-    workExperience: [
+    title: { type: String, maxLength: 100, trim: true },
+    careerObjective: { type: String, maxLength: 2000, trim: true },
+    socialLinks: [
       {
-        company: { type: String, required: true },
-        position: { type: String, required: true },
-        startDate: { type: String, required: true },
-        endDate: { type: String, required: true },
-
-        description: { type: String, required: true },
+        platform: { type: String, required: true },
+        url: { type: String, required: true },
       },
     ],
-
     education: [
       {
         school: { type: String, required: true },
-        degree: { type: String, required: true },
-        major: { type: String, required: true },
-        startDate: { type: String },
-        endDate: { type: String },
+        degree: String,
+        major: String,
+        startDate: { type: Date },
+        endDate: { type: Date },
+        isCurrent: { type: Boolean, default: false },
+        description: { type: String, maxLength: 1000 },
+      },
+    ],
+
+    workExperience: [
+      {
+        position: { type: String, required: true },
+        company: { type: String, required: true },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        isCurrent: { type: Boolean, default: false },
+        description: { type: String, maxLength: 2000 },
+      },
+    ],
+
+    skills: [
+      {
+        name: { type: String, required: true },
+        level: {
+          type: String,
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+          default: "Intermediate",
+        },
       },
     ],
 
     certifications: [
       {
-        name: { type: String, required: true },
-        organization: { type: String, required: true },
-        dateIssued: { type: Date, required: true },
+        name: String,
+        organization: String,
+        dateIssued: { type: Date },
+        expirationDate: { type: Date },
+        url: String,
       },
     ],
-
     languages: [
       {
-        language: { type: String },
+        language: String,
         proficiency: {
           type: String,
-          enum: ["Beginner", "Intermediate", "Advanced", "Fluent"],
+          enum: ["Basic", "Conversational", "Fluent", "Native"],
+          default: "Basic",
         },
-      },
-    ],
-
-    projects: [
-      {
-        title: { type: String, required: true },
-        description: { type: String, required: true },
-        link: { type: String, required: true },
-        technologies: [{ type: String, default: [] }],
       },
     ],
 
     achievements: [
       {
-        title: { type: String, required: true },
-        description: { type: String, required: true },
-        year: { type: String, required: true },
+        title: String,
+        description: String,
+        date: { type: Date },
       },
     ],
+    projects: [
+      {
+        title: String,
+        description: String,
+        link: String,
+        technologies: [String],
+        startDate: { type: Date },
+        endDate: { type: Date },
+        isWorking: { type: Boolean, default: false },
+      },
+    ],
+
     operations: [
       {
-        title: { type: String, required: true },
-        position: { type: String, required: true },
-        description: { type: String, required: true },
-        startDate: { type: String, required: true },
-        endDate: { type: String, required: true },
+        title: String,
+        position: String,
+        description: String,
+        startDate: { type: Date },
+        endDate: { type: Date },
       },
     ],
-    interests: { type: String },
-    
+
+    interests: { type: String, maxLength: 500, default: "" },
   },
   { timestamps: true }
 );

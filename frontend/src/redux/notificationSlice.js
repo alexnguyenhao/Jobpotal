@@ -11,8 +11,11 @@ const notificationSlice = createSlice({
     },
     addNotification: (state, action) => {
       state.notifications.push(action.payload);
+      state.notifications.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
     },
-    // Update a specific notification to isRead: true
+
     markNotificationAsRead: (state, action) => {
       const notificationId = action.payload;
       const notification = state.notifications.find(
@@ -22,13 +25,13 @@ const notificationSlice = createSlice({
         notification.isRead = true;
       }
     },
-    // Update all notifications to isRead: true
+
     markAllNotificationsAsRead: (state) => {
       state.notifications.forEach((n) => {
         n.isRead = true;
       });
     },
-    // Remove a notification from the array
+
     removeNotification: (state, action) => {
       const notificationId = action.payload;
       state.notifications = state.notifications.filter(

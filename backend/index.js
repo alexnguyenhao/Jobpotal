@@ -1,4 +1,4 @@
-import express from "express"; // Vẫn giữ để dùng các type nếu cần, nhưng app lấy từ socket.js
+import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,8 +16,10 @@ import adminRoute from "./routes/admin.route.js";
 import { app, server } from "./socket.js";
 
 dotenv.config();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
 app.use(cookieParser());
 
 const corsOptions = {
@@ -27,7 +29,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-//api's
 const PORT = process.env.PORT || 3000;
 
 app.use("/api/v1/user", userRoute);
@@ -40,7 +41,6 @@ app.use("/api/v1/career-guides", careerGuideRoute);
 app.use("/api/v1/notification", notificationRoute);
 app.use("/api/v1/admin", adminRoute);
 
-// --- THAY ĐỔI 2: Dùng server.listen thay vì app.listen ---
 server.listen(PORT, () => {
   connectDB();
   console.log(`Server running at port ${PORT}`);

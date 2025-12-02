@@ -1,24 +1,28 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import ProfileSectionItem from "@/components/profile/ProfileSectionItem";
+import ProfileSectionItem from "./ProfileSectionItem";
 import { Plus, Edit3, ArrowRight } from "lucide-react";
 
 const ProfileSections = ({ sections }) => {
-  // 1. Định nghĩa các mục chỉ được phép có 1 Item
+  // 1. Định nghĩa các mục chỉ được phép có 1 Item (String hoặc Object đơn)
+  // Interests bây giờ cũng có thể là string dài hoặc array, tùy cách bạn lưu.
   const SINGLE_ITEM_SECTIONS = ["Professional Title", "Interests"];
 
   return (
     <div className="space-y-10">
       {sections.map((section, idx) => {
-        const hasData = section.data && section.data.length > 0;
+        // Kiểm tra data có tồn tại không
+        // Lưu ý: section.data có thể là mảng [], hoặc string "", hoặc object {}
+        let hasData = false;
+        if (Array.isArray(section.data)) {
+          hasData = section.data.length > 0;
+        } else {
+          hasData = !!section.data;
+        }
 
-        // Kiểm tra xem section hiện tại có phải là dạng "Single Item" không
         const isSingleItem = SINGLE_ITEM_SECTIONS.includes(section.title);
 
-        // Logic hiển thị nút Add/Manage ở góc phải:
-        // - Nếu chưa có data: Luôn hiện nút Add.
-        // - Nếu có data VÀ là Single Item: Hiện nút Edit (hoặc ẩn nút Add đi, ở đây mình để Edit cho tiện).
-        // - Nếu có data VÀ là Multi Item: Hiện nút Manage.
+        // Logic hiển thị nút
         const showAddButton = !hasData || !isSingleItem;
 
         return (
@@ -26,17 +30,15 @@ const ProfileSections = ({ sections }) => {
             {/* --- 1. SECTION HEADER --- */}
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-3">
-                {/* Icon Box */}
                 <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-[#6A38C2]">
                   <section.icon size={20} strokeWidth={2.5} />
                 </div>
 
-                {/* Title & Count */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 leading-none">
                     {section.title}
                   </h3>
-                  {hasData && !isSingleItem && (
+                  {hasData && !isSingleItem && Array.isArray(section.data) && (
                     <p className="text-xs text-gray-400 font-medium mt-1">
                       {section.data.length}{" "}
                       {section.data.length > 1 ? "items" : "item"}
@@ -45,7 +47,6 @@ const ProfileSections = ({ sections }) => {
                 </div>
               </div>
 
-              {/* Action Button (Top Right) */}
               <Button
                 onClick={() => section.openSetter(true)}
                 variant="ghost"
@@ -64,20 +65,26 @@ const ProfileSections = ({ sections }) => {
                 )}
               </Button>
             </div>
+
+            {/* --- 2. CONTENT --- */}
             {hasData ? (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              <div
+                className={`grid grid-cols-1 ${
+                  isSingleItem ? "" : "xl:grid-cols-2"
+                } gap-5`}
+              >
                 {isSingleItem ? (
+                  // Single Item (Title, Interest string)
                   <ProfileSectionItem
                     item={
-                      typeof section.data === "string"
-                        ? section.data
-                        : Array.isArray(section.data)
-                        ? section.data[0] ?? ""
-                        : ""
+                      Array.isArray(section.data)
+                        ? section.data[0]
+                        : section.data
                     }
                     type={section.title}
                   />
                 ) : (
+                  // Multi Item (List)
                   (Array.isArray(section.data) ? section.data : []).map(
                     (item, i) => (
                       <ProfileSectionItem
@@ -88,6 +95,8 @@ const ProfileSections = ({ sections }) => {
                     )
                   )
                 )}
+
+                {/* Nút Add Another (Card to) */}
                 {!isSingleItem && (
                   <button
                     onClick={() => section.openSetter(true)}
@@ -103,7 +112,7 @@ const ProfileSections = ({ sections }) => {
                 )}
               </div>
             ) : (
-              /* --- 3. EMPTY STATE (Khi chưa có dữ liệu) --- */
+              /* --- 3. EMPTY STATE --- */
               <div
                 onClick={() => section.openSetter(true)}
                 className="group cursor-pointer relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-white/50 p-8 hover:border-[#6A38C2]/40 hover:bg-white hover:shadow-sm transition-all duration-300"
@@ -120,7 +129,7 @@ const ProfileSections = ({ sections }) => {
                       <p className="text-sm text-gray-500 max-w-md">
                         {section.title === "Professional Title"
                           ? "Add your professional headline (e.g. Full Stack Developer)."
-                          : `Showcase your ${section.title.toLowerCase()} to stand out.`}
+                          : `Add your ${section.title.toLowerCase()} to complete your profile.`}
                       </p>
                     </div>
                   </div>

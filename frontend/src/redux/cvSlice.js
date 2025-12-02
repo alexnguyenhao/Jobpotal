@@ -1,18 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
-// [Giữ nguyên các imports và Thunks (createAsyncThunk) của bạn]
 
 const initialState = {
   cvs: [],
-  // Tách nhỏ single CV thành nhiều phần
   meta: {
     _id: null,
     title: "",
+    type: "builder",
     template: "",
     isPublic: false,
     shareUrl: "",
     createdAt: null,
     updatedAt: null,
     user: null,
+    fileData: null,
   },
   personalInfo: {
     fullName: "",
@@ -44,7 +44,6 @@ const initialState = {
     borderRadius: 12,
     shadowLevel: 1,
   },
-  // flags
   loading: false,
   saving: false,
   error: null,
@@ -74,15 +73,18 @@ const cvSlice = createSlice({
     setFullCV: (state, action) => {
       const cv = action.payload;
       if (!cv) return;
+
       state.meta = {
         _id: cv._id ?? cv.id ?? state.meta._id,
         title: cv.title ?? state.meta.title,
+        type: cv.type ?? "builder",
         template: cv.template ?? state.meta.template,
         isPublic: !!cv.isPublic,
         shareUrl: cv.shareUrl ?? "",
         createdAt: cv.createdAt ?? state.meta.createdAt,
         updatedAt: cv.updatedAt ?? state.meta.updatedAt,
         user: cv.user ?? state.meta.user,
+        fileData: cv.fileData ?? null,
       };
 
       state.personalInfo = cv.personalInfo ?? state.personalInfo;
@@ -98,7 +100,6 @@ const cvSlice = createSlice({
       state.styleConfig = cv.styleConfig ?? state.styleConfig;
     },
 
-    // ====== Update individual parts (Giữ lại vì chúng là action update array/object) ======
     updateMeta: (state, action) => {
       state.meta = { ...state.meta, ...action.payload };
     },
@@ -106,33 +107,32 @@ const cvSlice = createSlice({
     updatePersonalInfo: (state, action) => {
       state.personalInfo = { ...state.personalInfo, ...action.payload };
     },
-
     updateEducation: (state, action) => {
-      state.education = action.payload; // Thay thế full array
+      state.education = action.payload;
     },
     updateWorkExperience: (state, action) => {
-      state.workExperience = action.payload; // Thay thế full array
+      state.workExperience = action.payload;
     },
     updateSkills: (state, action) => {
-      state.skills = action.payload; // Thay thế full array
+      state.skills = action.payload;
     },
     updateCertifications: (state, action) => {
-      state.certifications = action.payload; // Thay thế full array
+      state.certifications = action.payload;
     },
     updateLanguages: (state, action) => {
-      state.languages = action.payload; // Thay thế full array
+      state.languages = action.payload;
     },
     updateAchievements: (state, action) => {
-      state.achievements = action.payload; // Thay thế full array
+      state.achievements = action.payload;
     },
     updateProjects: (state, action) => {
-      state.projects = action.payload; // Thay thế full array
+      state.projects = action.payload;
     },
     updateOperations: (state, action) => {
-      state.operations = action.payload; // Thay thế full array
+      state.operations = action.payload;
     },
     updateInterests: (state, action) => {
-      state.interests = action.payload; // Thay thế full array
+      state.interests = action.payload;
     },
     updateStyleConfig: (state, action) => {
       state.styleConfig = { ...state.styleConfig, ...action.payload };
@@ -153,12 +153,11 @@ const cvSlice = createSlice({
     setAutoSaveStatus: (state, action) => {
       state.autoSaveStatus = action.payload;
     },
+
     clearCVState: (state) => {
-      // Dùng Object.assign để reset state về initialState an toàn
       Object.assign(state, initialState);
     },
   },
-  // [extraReducers giữ nguyên]
 });
 
 export const {
@@ -176,7 +175,7 @@ export const {
   updateOperations,
   updateInterests,
   updateStyleConfig,
-  updateLocalCVState, // ✅ EXPORT ACTION MỚI
+  updateLocalCVState,
   setLoading,
   setSaving,
   setError,

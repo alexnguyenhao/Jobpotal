@@ -16,14 +16,13 @@ const LivePreview = ({ cvData }) => {
   return (
     <div className="flex-1 overflow-auto bg-gray-100 p-10">
       <div className="flex justify-center">
-        {/* Vùng này sẽ được export PDF */}
         <div
           id="cv-print-area"
           className="bg-white"
           style={{
-            width: "794px", // A4 chuẩn 96 DPI
-            minHeight: "1123px", // A4 chuẩn
-            overflow: "visible", // để xuất PDF full content
+            width: "794px",
+            minHeight: "1123px",
+            overflow: "visible",
             padding: "24px",
           }}
         >

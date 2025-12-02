@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useCV from "@/hooks/useCV";
-
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2 } from "lucide-react";
-
+import { ArrowLeft, Share2, Download } from "lucide-react";
 import LivePreview from "@/components/cv/builder/LivePreview";
 import PDFExport from "@/components/common/PDFExport";
 
@@ -14,88 +12,86 @@ const CVView = () => {
   const navigate = useNavigate();
   const { getCV, shareCV } = useCV();
 
-  const {
-    meta,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    operations,
-    interests,
-    styleConfig,
-  } = useSelector((state) => state.cv);
-
+  const { meta, ...cvSections } = useSelector((state) => state.cv);
   const [loading, setLoading] = useState(true);
 
-  // LOAD CV
   useEffect(() => {
     const load = async () => {
-      await getCV(id);
+      await getCV(id); // Hàm này đã update setFullCV trong hook
       setLoading(false);
     };
     load();
   }, [id]);
 
-  if (loading || !meta._id) {
+  if (loading || !meta?._id) {
     return (
       <div className="w-full h-screen flex items-center justify-center text-gray-500">
-        Đang tải CV...
+        Loading CV...
       </div>
     );
   }
 
+  // Gom dữ liệu
   const cvData = {
-    _id: meta._id,
-    title: meta.title,
-    template: meta.template,
-    isPublic: meta.isPublic,
-    shareUrl: meta.shareUrl,
-    createdAt: meta.createdAt,
-    updatedAt: meta.updatedAt,
-    user: meta.user,
-    personalInfo,
-    education,
-    workExperience,
-    skills,
-    certifications,
-    languages,
-    achievements,
-    projects,
-    operations,
-    interests,
-    styleConfig,
+    ...meta,
+    ...cvSections,
   };
 
   const handleShare = async () => {
     const url = await shareCV(cvData._id);
     if (url) {
       navigator.clipboard.writeText(url);
-      alert("Đã copy link chia sẻ!");
+      alert("Public link copied to clipboard!");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 max-w-6xl mx-auto">
         <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft size={18} className="mr-2" /> Quay lại
+          <ArrowLeft size={18} className="mr-2" /> Back
         </Button>
 
         <div className="flex gap-3">
           <Button variant="outline" onClick={handleShare}>
-            <Share2 size={18} className="mr-1" /> Chia sẻ
+            <Share2 size={18} className="mr-1" /> Share
           </Button>
 
-          <PDFExport targetId="cv-print-area" filename={cvData.title} />
+          {/* Logic nút Download/Export tùy theo loại */}
+          {cvData.type === "builder" ? (
+            <PDFExport targetId="cv-print-area" filename={cvData.title} />
+          ) : (
+            <Button onClick={() => window.open(cvData.fileData?.url, "_blank")}>
+              <Download size={18} className="mr-1" /> Download PDF
+            </Button>
+          )}
         </div>
       </div>
-      <h1 className="text-3xl font-bold mb-4">{cvData.title}</h1>
+
       <div className="flex justify-center">
-        <LivePreview cvData={cvData} />
+        {/* RENDER DỰA TRÊN TYPE */}
+        {cvData.type === "upload" ? (
+          // === VIEW CHO UPLOADED PDF ===
+          <div className="w-full max-w-5xl h-[85vh] bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+            {cvData.fileData?.url ? (
+              <iframe
+                src={`${cvData.fileData.url}#toolbar=0`}
+                className="w-full h-full"
+                title="CV Preview"
+              ></iframe>
+            ) : (
+              <div className="flex items-center justify-center h-full text-red-500">
+                File not found.
+              </div>
+            )}
+          </div>
+        ) : (
+          // === VIEW CHO BUILDER TEMPLATE ===
+          <div className="shadow-2xl">
+            <LivePreview cvData={cvData} />
+          </div>
+        )}
       </div>
     </div>
   );

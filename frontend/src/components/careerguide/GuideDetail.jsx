@@ -32,14 +32,13 @@ const StudentGuideDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // --- SỬA LỖI Ở ĐÂY ---
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
         const data = await fetchGuideDetail(id);
         if (!data) {
-          navigate("/career-guides");
+          navigate("/career-guides"); // Đã kiểm tra: đường dẫn này đúng với router của bạn
         } else {
           setGuide(data);
         }
@@ -55,7 +54,6 @@ const StudentGuideDetail = () => {
     }
   }, [id]);
 
-  // --- HANDLERS ---
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard!");
@@ -68,7 +66,6 @@ const StudentGuideDetail = () => {
     );
   };
 
-  // --- LOADING STATE ---
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
@@ -98,10 +95,9 @@ const StudentGuideDetail = () => {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      {/* --- 1. STICKY NAVBAR (Header) --- */}
+      {/* --- STICKY NAVBAR --- */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Left: Back Button */}
           <Button
             variant="ghost"
             className="text-gray-600 hover:text-[#6A38C2] hover:bg-purple-50 rounded-full pl-2 pr-4 transition-colors group"
@@ -114,7 +110,6 @@ const StudentGuideDetail = () => {
             <span className="font-medium">Back to Guides</span>
           </Button>
 
-          {/* Right: Actions */}
           <div className="flex gap-2">
             <Button
               variant="ghost"
@@ -123,7 +118,6 @@ const StudentGuideDetail = () => {
                 isBookmarked ? "text-[#6A38C2] bg-purple-50" : "text-gray-500"
               }`}
               onClick={handleBookmark}
-              title={isBookmarked ? "Remove Bookmark" : "Bookmark this guide"}
             >
               <Bookmark
                 size={20}
@@ -136,7 +130,6 @@ const StudentGuideDetail = () => {
               size="icon"
               className="rounded-full text-gray-500 hover:bg-gray-100 hover:text-[#6A38C2] transition-colors"
               onClick={handleShare}
-              title="Share this guide"
             >
               <Share2 size={20} />
             </Button>
@@ -144,11 +137,9 @@ const StudentGuideDetail = () => {
         </div>
       </div>
 
-      {/* --- 2. MAIN ARTICLE CONTENT --- */}
+      {/* --- MAIN CONTENT --- */}
       <article className="max-w-3xl mx-auto px-6 mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Article Header Info */}
         <header className="mb-10">
-          {/* Meta Tags */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <Badge className="bg-purple-100 text-[#6A38C2] hover:bg-purple-200 border-none px-3 py-1 text-xs font-bold tracking-wide uppercase rounded-full cursor-pointer">
               {guide.category?.replace("-", " ")}
@@ -164,14 +155,11 @@ const StudentGuideDetail = () => {
             </span>
           </div>
 
-          {/* Title */}
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-8 tracking-tight">
             {guide.title}
           </h1>
 
-          {/* Author & Stats Box */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-5 bg-slate-50 rounded-2xl border border-slate-100">
-            {/* Author */}
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
                 <AvatarImage src={guide.author?.profilePhoto} />
@@ -194,7 +182,6 @@ const StudentGuideDetail = () => {
               </div>
             </div>
 
-            {/* Read Stats */}
             <div className="flex items-center gap-5 text-sm text-gray-500 font-medium border-t sm:border-t-0 border-slate-200 pt-4 sm:pt-0">
               <span className="flex items-center gap-1.5">
                 <Clock size={16} className="text-[#6A38C2]" />{" "}
@@ -208,14 +195,12 @@ const StudentGuideDetail = () => {
           </div>
         </header>
 
-        {/* Excerpt / Summary */}
         {guide.excerpt && (
           <div className="text-lg md:text-xl text-gray-600 italic leading-relaxed mb-10 pl-6 border-l-4 border-[#6A38C2] py-1">
             {guide.excerpt}
           </div>
         )}
 
-        {/* Featured Image */}
         {guide.thumbnail && (
           <figure className="mb-12 group overflow-hidden rounded-2xl shadow-lg border border-gray-100">
             <img
@@ -226,7 +211,6 @@ const StudentGuideDetail = () => {
           </figure>
         )}
 
-        {/* Article Body (Rich Text) */}
         <div
           className="
             prose prose-lg prose-slate max-w-none 
@@ -245,7 +229,6 @@ const StudentGuideDetail = () => {
 
         <Separator className="my-12" />
 
-        {/* Footer Tags */}
         {guide.tags && guide.tags.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-2 mb-4 text-gray-900 font-bold uppercase tracking-wider text-sm">
@@ -253,7 +236,10 @@ const StudentGuideDetail = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               {guide.tags.map((tag, idx) => (
-                <Link to={`/career-guide?keyword=${tag}`} key={idx}>
+                <Link
+                  to={`/career-guides?keyword=${encodeURIComponent(tag)}`}
+                  key={idx}
+                >
                   <Badge
                     variant="outline"
                     className="px-4 py-1.5 text-sm bg-slate-50 text-slate-600 border-slate-200 hover:border-[#6A38C2] hover:text-[#6A38C2] hover:bg-white cursor-pointer transition-all rounded-full font-medium"
