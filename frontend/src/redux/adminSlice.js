@@ -54,9 +54,6 @@ const adminSlice = createSlice({
     setJobs: (state, action) => {
       state.jobs = action.payload;
     },
-    setNotifications: (state, action) => {
-      state.notifications = action.payload;
-    },
     setSelectedUser: (state, action) => {
       state.selectedUser = action.payload;
     },
@@ -73,7 +70,6 @@ export const {
   updateUserInStore,
   updateJobInStore,
   setJobs,
-  setNotifications,
   setSelectedUser,
 } = adminSlice.actions;
 

@@ -15,7 +15,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
+  Building2, // Icon cho thông báo công ty mới
 } from "lucide-react";
+
+// UI Components
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
@@ -29,26 +32,41 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+// Redux & Utils
 import { setUser, logout } from "@/redux/authSlice";
 import { addNotification } from "@/redux/notificationSlice";
 import { ADMIN_API_END_POINT } from "@/utils/constant";
+
+// Hooks
 import useGetAllNotification from "@/hooks/useGetAllNotification";
 import useNotificationActions from "@/hooks/useNotificationActions";
 
+// Cấu hình URL Socket (Nếu chưa có trong constant thì dùng localhost)
+const SOCKET_URL = "http://localhost:8000";
+
 const AdminHeader = ({ setIsSidebarOpen }) => {
   const { user } = useSelector((store) => store.auth);
+  // Lấy notification từ store.notification (dùng chung với user)
   const { notifications = [] } = useSelector((store) => store.notification);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const socketRef = useRef(null);
+
+  // 1. Hook xử lý hành động (Đọc/Xóa)
   const { readAll, readById, deleteNotice } = useNotificationActions();
+
+  // 2. Hook lấy dữ liệu ban đầu (API /get)
   useGetAllNotification();
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // 3. Effect lắng nghe Socket Real-time
   useEffect(() => {
     if (!user) return;
 
-    socketRef.current = io("http://localhost:8000", {
+    socketRef.current = io(SOCKET_URL, {
       withCredentials: true,
       query: { userId: user._id },
       transports: ["websocket"],
@@ -56,6 +74,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
 
     socketRef.current.on("newNotification", (notification) => {
       toast.info(notification.message);
+      // Thêm vào Redux store để UI cập nhật ngay lập tức
       dispatch(addNotification(notification));
     });
 
@@ -66,9 +85,14 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
 
   const logoutHandler = async () => {
     try {
-      const res = await axios.post(`${ADMIN_API_END_POINT}/logout`, {
-        withCredentials: true,
-      });
+      // FIX QUAN TRỌNG: axios.post(url, data, config)
+      // Phải gửi object rỗng {} làm data thì config (credentials) mới hoạt động
+      const res = await axios.post(
+        `${ADMIN_API_END_POINT}/logout`,
+        {},
+        { withCredentials: true }
+      );
+
       if (res.data.success) {
         socketRef.current?.disconnect();
         dispatch(logout());
@@ -84,6 +108,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 px-6 flex items-center justify-between">
+      {/* LEFT: Menu & Search */}
       <div className="flex items-center gap-4">
         <button
           className="md:hidden p-2 text-gray-600"
@@ -102,13 +127,15 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
         </div>
       </div>
 
+      {/* RIGHT: Notifications & Profile */}
       <div className="flex items-center gap-4">
+        {/* NOTIFICATIONS */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="relative text-gray-500 hover:text-[#6A38C2]"
+              className="relative text-gray-500 hover:text-red-600 transition-colors"
             >
               <Bell size={20} />
               {unreadCount > 0 && (
@@ -121,6 +148,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
             className="w-80 p-0 bg-white shadow-xl rounded-xl border border-gray-100 mr-6"
             align="end"
           >
+            {/* Header Notification */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/50 rounded-t-xl">
               <h4 className="font-semibold text-gray-900">Notifications</h4>
               {unreadCount > 0 && (
@@ -130,7 +158,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-gray-500 hover:text-[#6A38C2]"
+                        className="h-6 w-6 text-gray-500 hover:text-red-600"
                         onClick={readAll}
                       >
                         <CheckCheck size={16} />
@@ -143,6 +171,8 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                 </TooltipProvider>
               )}
             </div>
+
+            {/* List Notification */}
             <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
@@ -157,18 +187,24 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                     key={noti._id}
                     onClick={() => !noti.isRead && readById(noti._id)}
                     className={`group relative p-3 flex gap-3 border-b last:border-0 transition-colors cursor-pointer hover:bg-gray-50 ${
-                      !noti.isRead ? "bg-purple-50/60" : "bg-white"
+                      !noti.isRead ? "bg-red-50/40" : "bg-white"
                     }`}
                   >
+                    {/* Icon Type */}
                     <div className="flex-shrink-0 mt-1">
                       <div
                         className={`p-1.5 rounded-full ${
-                          noti.type === "application_status"
+                          noti.type === "new_company"
+                            ? "bg-orange-100 text-orange-600"
+                            : noti.type === "application_status"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {noti.type === "application_status" ? (
+                        {/* Logic hiển thị Icon */}
+                        {noti.type === "new_company" ? (
+                          <Building2 size={14} />
+                        ) : noti.type === "application_status" ? (
                           <CheckCircle2 size={14} />
                         ) : (
                           <AlertCircle size={14} />
@@ -195,6 +231,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                       </span>
                     </div>
 
+                    {/* Delete Button */}
                     <div className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
@@ -209,8 +246,9 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                       </Button>
                     </div>
 
+                    {/* Unread Dot */}
                     {!noti.isRead && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#6A38C2] group-hover:opacity-0 transition-opacity" />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-red-500 group-hover:opacity-0 transition-opacity" />
                     )}
                   </div>
                 ))
@@ -221,6 +259,7 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
 
         <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
+        {/* ADMIN PROFILE */}
         <Popover>
           <PopoverTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
@@ -228,11 +267,15 @@ const AdminHeader = ({ setIsSidebarOpen }) => {
                 <p className="text-sm font-semibold text-gray-900">
                   {user?.fullName || "Admin"}
                 </p>
-                <p className="text-xs text-gray-500">Admin</p>
+                <p className="text-xs text-gray-500">Administrator</p>
               </div>
               <Avatar className="h-9 w-9 border border-gray-200">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage
+                  src={user?.profilePhoto || "https://github.com/shadcn.png"}
+                />
+                <AvatarFallback className="bg-red-600 text-white">
+                  AD
+                </AvatarFallback>
               </Avatar>
             </div>
           </PopoverTrigger>

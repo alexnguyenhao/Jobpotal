@@ -1,6 +1,10 @@
 import { Company } from "../models/company.model.js";
+import { Admin } from "../models/admin.model.js";
+import { Notification } from "../models/notification.model.js";
+import { getReceiverSocketId, io } from "../socket.js";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "cloudinary";
+
 export const registerCompany = async (req, res) => {
   try {
     const { companyName, taxCode } = req.body;
@@ -32,6 +36,26 @@ export const registerCompany = async (req, res) => {
       isVerified: false,
       status: "inactive",
     });
+
+    const admins = await Admin.find({});
+
+    await Promise.all(
+      admins.map(async (admin) => {
+        const notification = await Notification.create({
+          recipient: admin._id,
+          sender: req.id,
+          type: "new_company",
+          message: `New company registration: ${companyName}`,
+          relatedId: company._id,
+        });
+
+        const socketId = getReceiverSocketId(admin._id.toString());
+        if (socketId) {
+          io.to(socketId).emit("newNotification", notification);
+        }
+      })
+    );
+
     return res.status(201).json({
       message: "Register company successfully",
       company,
@@ -67,6 +91,7 @@ export const getCompany = async (req, res) => {
     });
   }
 };
+
 export const getAllCompanies = async (req, res) => {
   try {
     const companies = await Company.find(
@@ -88,6 +113,7 @@ export const getAllCompanies = async (req, res) => {
     });
   }
 };
+
 export const getCompanyById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -146,13 +172,14 @@ export const getCompanyById = async (req, res) => {
       company,
     });
   } catch (error) {
-    console.error("❌ Error fetching company:", error);
+    console.error("Error fetching company:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error while fetching company",
     });
   }
 };
+
 export const updateCompany = async (req, res) => {
   try {
     const {
@@ -222,6 +249,7 @@ export const updateCompany = async (req, res) => {
     });
   }
 };
+
 export const deleteCompany = async (req, res) => {
   try {
     const { id } = req.params;
@@ -239,7 +267,6 @@ export const deleteCompany = async (req, res) => {
         success: false,
       });
     }
-    console.log(`✅ Company deleted: ${company.name} (${company._id})`);
 
     return res.status(200).json({
       message: "Company deleted successfully",
@@ -250,7 +277,7 @@ export const deleteCompany = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Error deleting company:", error.message);
+    console.error("Error deleting company:", error.message);
 
     return res.status(500).json({
       message: "Internal server error while deleting company",

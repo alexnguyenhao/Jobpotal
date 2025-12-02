@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { setNotifications } from "@/redux/notificationSlice";
+import { setNotifications } from "@/redux/notificationSlice"; //
 import { NOTIFICATION_API_END_POINT } from "@/utils/constant.js";
 
 const useGetAllNotification = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
-  const { notifications } = useSelector((store) => store.notification);
-
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -26,7 +24,7 @@ const useGetAllNotification = () => {
     if (user) {
       fetchNotifications();
     }
-  }, [user, dispatch]); 
+  }, [user, dispatch]);
 };
 
 export default useGetAllNotification;
