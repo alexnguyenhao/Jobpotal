@@ -10,6 +10,7 @@ export const CAREER_GUIDE_API_END_POINT =
 export const NOTIFICATION_API_END_POINT =
   "http://localhost:8000/api/v1/notification";
 export const ADMIN_API_END_POINT = "http://localhost:8000/api/v1/admin";
+export const CHAT_API_END_POINT = "http://localhost:8000/api/v1/message";
 export const provinces = [
   "An Giang",
   "Bà Rịa - Vũng Tàu",

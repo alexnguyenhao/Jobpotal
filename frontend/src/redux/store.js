@@ -21,12 +21,13 @@ import cvSlice from "@/redux/cvSlice.js";
 import careerGuideSlice from "@/redux/careerGuideSlice.js";
 import notificationSlice from "@/redux/notificationSlice.js";
 import adminSlice from "@/redux/adminSlice.js";
+import conversationSlice from "@/redux/conversationSlice.js";
 
 const persistConfig = {
   key: "root",
   storage,
   version: 1,
-  whitelist: ["auth"],
+  whitelist: ["auth", "cv", "notification", "conversation"],
 };
 const rootReducer = combineReducers({
   auth: authSlice,
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
   careerGuide: careerGuideSlice,
   notification: notificationSlice,
   admin: adminSlice,
+  conversation: conversationSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

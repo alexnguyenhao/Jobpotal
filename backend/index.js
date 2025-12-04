@@ -12,7 +12,7 @@ import cvRoute from "./routes/cv.route.js";
 import careerGuideRoute from "./routes/careerGuide.route.js";
 import notificationRoute from "./routes/notification.route.js";
 import adminRoute from "./routes/admin.route.js";
-
+import messageRoute from "./routes/message.route.js";
 import { app, server } from "./socket.js";
 
 dotenv.config();
@@ -40,6 +40,7 @@ app.use("/api/v1/cv", cvRoute);
 app.use("/api/v1/career-guides", careerGuideRoute);
 app.use("/api/v1/notification", notificationRoute);
 app.use("/api/v1/admin", adminRoute);
+app.use("/api/v1/message", messageRoute);
 
 server.listen(PORT, () => {
   connectDB();

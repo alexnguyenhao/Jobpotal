@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { toast } from "sonner";
-import { io } from "socket.io-client";
 
 // Icons
 import {
@@ -23,6 +22,7 @@ import {
   Trash2,
   CheckCheck,
   Settings,
+  MessageCircle,
 } from "lucide-react";
 
 // Components
@@ -44,11 +44,11 @@ import {
 import { USER_API_END_POINT } from "@/utils/constant.js";
 import { setUser, logout, setLoading } from "@/redux/authSlice.js";
 import { clearCVState } from "@/redux/cvSlice";
-import { addNotification } from "@/redux/notificationSlice";
 
 // Hooks
 import useGetAllNotification from "@/hooks/useGetAllNotification";
 import useNotificationActions from "@/hooks/useNotificationActions";
+import { useSocketContext } from "@/context/SocketContext";
 
 const NavBar = () => {
   const { user, loading, isAuthenticated } = useSelector((s) => s.auth);
@@ -63,7 +63,8 @@ const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const hasFetched = useRef(false);
-  const socketRef = useRef(null);
+
+  const { socket } = useSocketContext();
 
   useGetAllNotification();
 
@@ -98,25 +99,6 @@ const NavBar = () => {
     checkUser();
   }, [dispatch, isAuthenticated]);
 
-  useEffect(() => {
-    if (!user) return;
-
-    socketRef.current = io("http://localhost:8000", {
-      withCredentials: true,
-      query: { userId: user._id },
-      transports: ["websocket"],
-    });
-
-    socketRef.current.on("newNotification", (notification) => {
-      toast.info(notification.message);
-      dispatch(addNotification(notification));
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, [user, dispatch]);
-
   const logoutHandler = async () => {
     setIsLoggingOut(true);
 
@@ -125,7 +107,6 @@ const NavBar = () => {
         withCredentials: true,
       });
 
-      socketRef.current?.disconnect();
       dispatch(logout());
       dispatch(clearCVState());
 
@@ -217,6 +198,15 @@ const NavBar = () => {
                       )}
                     </Button>
                   </PopoverTrigger>
+                  <Link to="/chat">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative text-gray-600 hover:text-[#6A38C2]"
+                    >
+                      <MessageCircle size={22} />
+                    </Button>
+                  </Link>
 
                   <PopoverContent
                     className="w-80 p-0 bg-white shadow-xl rounded-xl border border-gray-100"
@@ -414,6 +404,17 @@ const NavBar = () => {
                               <Bell size={16} /> Notifications
                             </Link>
                           </div>
+                          <div>
+                            <h1 className="font-semibold text-gray-900 text-sm">
+                              Chat
+                            </h1>
+                            <Link
+                              to="/chat"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#6A38C2] rounded-md transition-colors"
+                            >
+                              <MessageCircle size={16} /> Chat
+                            </Link>
+                          </div>
                         </>
                       )}
                       {user?.role === "recruiter" && (
@@ -453,6 +454,11 @@ const NavBar = () => {
                 {unreadCount > 0 && (
                   <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
                 )}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link to="/chat">
+                <MessageCircle size={22} />
               </Link>
             )}
 

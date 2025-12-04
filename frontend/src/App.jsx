@@ -44,6 +44,7 @@ import Notifications from "@/components/Notifications.jsx";
 import AppliedJobTable from "@/components/AppliedJobTable.jsx";
 import SavedJobTable from "@/components/SavedJobTable.jsx";
 import SettingAccount from "@/components/SettingAccount.jsx";
+import Chat from "@/components/Chat.jsx";
 
 // --- ADMIN IMPORT ---
 import AdminLogin from "@/components/DashBoardAdmin/Auth/AdminLogin.jsx";
@@ -78,6 +79,7 @@ const appRouter = createBrowserRouter([
       { path: "/jobs", element: <Jobs /> },
       { path: "/browse", element: <Browse /> },
       { path: "/notifications", element: <Notifications /> },
+      { path: "/chat", element: <Chat /> },
       { path: "/description/:id", element: <JobDescription /> },
       { path: "/profile", element: <Profile /> },
       { path: "/saved-jobs", element: <SavedJobTable /> },
