@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectSearch } from "./shared/SelectSearch";
-import { Search, MapPin, Briefcase } from "lucide-react";
+// 1. Import thêm icon X
+import { Search, MapPin, Briefcase, X } from "lucide-react";
 import { provinces } from "@/utils/constant";
 
 const JobFilterBar = () => {
@@ -20,6 +21,9 @@ const JobFilterBar = () => {
       category: "",
     },
   });
+
+  // 2. Theo dõi giá trị của title để hiển thị/ẩn nút X
+  const titleValue = watch("title");
 
   useEffect(() => {
     setValue("title", searchParams.get("keyword") || "");
@@ -42,19 +46,37 @@ const JobFilterBar = () => {
     navigate(`/jobs?${currentParams.toString()}`);
   };
 
+  // Hàm xử lý khi click vào nút X
+  const handleClearTitle = () => {
+    setValue("title", "");
+  };
+
   return (
     <div className="w-full">
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="bg-white p-2 rounded-2xl shadow-lg shadow-purple-100/50 border border-slate-200/60 flex flex-col md:flex-row items-center gap-2 md:gap-0 transition-all hover:shadow-purple-200/60">
-          <div className="flex items-center px-4 w-full md:flex-1 h-12 border-b md:border-b-0 md:border-r border-slate-100">
+          {/* --- SEARCH TITLE INPUT --- */}
+          <div className="flex items-center px-4 w-full md:flex-1 h-12 border-b md:border-b-0 md:border-r border-slate-100 group">
             <Search className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
-            <Input
-              placeholder="Search by job title..."
-              className="border-none shadow-none focus-visible:ring-0 px-0 text-slate-700 placeholder:text-slate-400 bg-transparent font-medium text-base"
-              {...register("title")}
-            />
+            <div className="relative w-full flex items-center">
+              <Input
+                placeholder="Search by job title..."
+                className="border-none shadow-none focus-visible:ring-0 px-0 text-slate-700 placeholder:text-slate-400 bg-transparent font-medium text-base w-full pr-8" // pr-8 để tránh text bị đè lên icon X
+                {...register("title")}
+              />
+              {titleValue && (
+                <button
+                  type="button"
+                  onClick={handleClearTitle}
+                  className="absolute right-0 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
           </div>
 
+          {/* --- CATEGORY SELECT --- */}
           <div className="flex items-center px-4 w-full md:w-[240px] h-12 border-b md:border-b-0 md:border-r border-slate-100">
             <Briefcase className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -70,6 +92,7 @@ const JobFilterBar = () => {
             </div>
           </div>
 
+          {/* --- LOCATION SELECT --- */}
           <div className="flex items-center px-4 w-full md:w-[220px] h-12 border-b md:border-b-0 border-slate-100 md:border-none">
             <MapPin className="text-slate-400 w-5 h-5 mr-3 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -85,6 +108,7 @@ const JobFilterBar = () => {
             </div>
           </div>
 
+          {/* --- SUBMIT BUTTON --- */}
           <div className="p-1 w-full md:w-auto">
             <Button
               type="submit"

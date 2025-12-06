@@ -4,14 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { toast } from "sonner";
 
-// Hooks & Redux
 import { JOB_API_END_POINT } from "@/utils/constant";
 import { setSingleJob } from "@/redux/jobSlice";
 import useSavedJobs from "@/hooks/useSavedJobs.jsx";
 import useCV from "@/hooks/useCV";
 import useApplyJob from "@/hooks/useApplyJob";
 
-// UI Components
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +18,6 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResumeSelectionDialog from "./appliedJob/ResumeSelectionDialog";
 
-// Icons
 import {
   MapPin,
   DollarSign,
@@ -32,20 +29,18 @@ import {
   CheckCircle2,
   Heart,
   Share2,
-  Flag,
-  MonitorPlay,
+  Send,
+  RotateCcw,
+  Layers,
+  GraduationCap,
   Hourglass,
   Brain,
   Sparkles,
   Lightbulb,
   XCircle,
   BookOpen,
-  Send,
-  Layers,
-  GraduationCap,
 } from "lucide-react";
 
-// --- HELPERS ---
 const formatLocation = (loc) => {
   if (!loc) return "Remote";
   if (typeof loc === "string") return loc;
@@ -54,22 +49,22 @@ const formatLocation = (loc) => {
 };
 
 const formatSalary = (salary) => {
-  if (!salary) return "Thỏa thuận";
+  if (!salary) return "Negotiable";
   if (typeof salary === "string") return salary;
   const { min, max, currency, isNegotiable } = salary;
-  if (isNegotiable) return "Thỏa thuận";
+  if (isNegotiable) return "Negotiable";
 
   const fmt = (n) => {
     if (!n) return "0";
-    if (n >= 1000000) return `${+(n / 1000000).toFixed(1)} Triệu`;
+    if (n >= 1000000) return `${+(n / 1000000).toFixed(1)}M`;
     if (n >= 1000) return `${+(n / 1000).toFixed(1)}K`;
     return n.toLocaleString();
   };
   const curr = currency === "USD" ? "$" : "";
   if (min && max) return `${fmt(min)} - ${fmt(max)} ${curr}`;
-  if (min) return `Từ ${fmt(min)} ${curr}`;
-  if (max) return `Lên tới ${fmt(max)} ${curr}`;
-  return "Thỏa thuận";
+  if (min) return `From ${fmt(min)} ${curr}`;
+  if (max) return `Up to ${fmt(max)} ${curr}`;
+  return "Negotiable";
 };
 
 const parseStringToArray = (data) => {
@@ -81,16 +76,12 @@ const parseStringToArray = (data) => {
     .filter((item) => item !== "");
 };
 
-// --- SUB-COMPONENTS ---
-
-// 1. Icon tròn màu (Style thống nhất)
 const StatIcon = ({ icon: Icon }) => (
   <div className="w-10 h-10 rounded-full bg-[#6A38C2]/10 flex items-center justify-center text-[#6A38C2] shrink-0">
     <Icon size={20} />
   </div>
 );
 
-// 2. Dòng thông tin sidebar
 const GeneralInfoItem = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-3 mb-4 last:mb-0">
     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0 mt-0.5">
@@ -103,7 +94,6 @@ const GeneralInfoItem = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-// 3. Tiêu đề section
 const SectionTitle = ({ title }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-1 h-6 bg-[#6A38C2] rounded-full"></div>
@@ -111,7 +101,6 @@ const SectionTitle = ({ title }) => (
   </div>
 );
 
-// 4. AI Analysis Card
 const JobFitAnalysisCard = ({ analysis, loading, user }) => {
   if (!user)
     return (
@@ -121,10 +110,10 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
             <Brain className="w-8 h-8 text-[#6A38C2]" />
           </div>
           <h4 className="font-bold text-gray-900 mb-2">
-            Phân tích độ phù hợp AI
+            AI Suitability Analysis
           </h4>
           <p className="text-sm text-gray-600">
-            Đăng nhập để xem mức độ phù hợp của hồ sơ bạn với công việc này.
+            Login to see how well your profile matches this job.
           </p>
         </CardContent>
       </Card>
@@ -139,7 +128,7 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
             <Sparkles className="w-5 h-5 text-yellow-400 absolute -top-1 -right-1 animate-spin" />
           </div>
           <p className="text-sm text-gray-500 font-medium">
-            AI đang phân tích hồ sơ...
+            AI is analyzing your profile...
           </p>
         </CardContent>
       </Card>
@@ -150,7 +139,6 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
   const { fitScore, matchLabel, summary, strengths, missingSkills, advice } =
     analysis;
 
-  // Color logic
   let themeColor =
     fitScore >= 80 ? "emerald" : fitScore >= 50 ? "amber" : "red";
   const colorMap = {
@@ -197,7 +185,6 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
       </div>
 
       <CardContent className="p-5 space-y-5">
-        {/* Score Circle */}
         <div className="flex items-center gap-4">
           <div className="relative w-14 h-14 flex items-center justify-center rounded-full border-4 border-gray-100 shrink-0">
             <svg className="absolute w-full h-full transform -rotate-90">
@@ -222,12 +209,11 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
           </p>
         </div>
 
-        {/* Skills */}
         <div className="space-y-3">
           {strengths?.length > 0 && (
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Điểm mạnh
+                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Strengths
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {strengths.map((skill, idx) => (
@@ -245,7 +231,7 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
           {missingSkills?.length > 0 && (
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 flex items-center gap-1">
-                <XCircle className="w-3 h-3 text-red-500" /> Cần cải thiện
+                <XCircle className="w-3 h-3 text-red-500" /> Needs Improvement
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {missingSkills.map((skill, idx) => (
@@ -272,22 +258,18 @@ const JobFitAnalysisCard = ({ analysis, loading, user }) => {
   );
 };
 
-// --- MAIN COMPONENT ---
 const JobDescription = () => {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Global State
   const { singleJob } = useSelector((s) => s.job);
   const { user } = useSelector((s) => s.auth);
 
-  // Custom Hooks
   const { savedJobs, saveJob, unsaveJob } = useSavedJobs();
   const { cvs, fetchMyCVs } = useCV();
   const { applyJob, isApplying } = useApplyJob();
 
-  // Local State
   const [applicationCount, setApplicationCount] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -299,7 +281,6 @@ const JobDescription = () => {
   const MAX_APPLY_LIMIT = 3;
   const hasFetchedCVs = useRef(false);
 
-  // --- EFFECTS ---
   useEffect(() => {
     if (user && !hasFetchedCVs.current) {
       hasFetchedCVs.current = true;
@@ -336,7 +317,6 @@ const JobDescription = () => {
   }, [jobId, user, dispatch]);
 
   useEffect(() => {
-    // AI Analysis fetch
     const fetchAiAnalysis = async () => {
       if (!user || !jobId) return;
       setIsAiLoading(true);
@@ -360,14 +340,13 @@ const JobDescription = () => {
     setIsSaved(savedJobs?.some((j) => (j._id || j).toString() === jobId));
   }, [savedJobs, jobId, user]);
 
-  // --- HANDLERS ---
   const handleApplyWrapper = async (cvId, coverLetter) => {
     const success = await applyJob(jobId, cvId, coverLetter, singleJob, user);
     if (success) {
       setApplicationCount((prev) => prev + 1);
       setOpenResumeDialog(false);
       toast.success(
-        `Ứng tuyển thành công! (${applicationCount + 1}/${MAX_APPLY_LIMIT})`
+        `Application successful! (${applicationCount + 1}/${MAX_APPLY_LIMIT})`
       );
     }
   };
@@ -376,10 +355,10 @@ const JobDescription = () => {
     if (!user) return navigate("/login");
     if (isSaved) {
       unsaveJob(jobId);
-      toast.info("Đã bỏ lưu tin");
+      toast.info("Job unsaved");
     } else {
       saveJob(jobId);
-      toast.success("Đã lưu tin tuyển dụng!");
+      toast.success("Job saved successfully!");
     }
   };
 
@@ -408,7 +387,6 @@ const JobDescription = () => {
 
   return (
     <div className="min-h-screen bg-[#F3F5F7] pb-10 font-sans">
-      {/* --- HEADER SECTION (Sticky & Clean) --- */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between gap-6">
@@ -417,7 +395,6 @@ const JobDescription = () => {
                 {title}
               </h1>
 
-              {/* Key Stats */}
               <div className="flex flex-wrap gap-4 md:gap-8 mb-4">
                 <div className="flex items-center gap-3">
                   <StatIcon icon={DollarSign} />
@@ -433,7 +410,7 @@ const JobDescription = () => {
                   <div>
                     <p className="text-gray-500 text-xs">Location</p>
                     <p className="text-gray-900 font-bold text-base">
-                      {location?.province || "Hồ Chí Minh"}
+                      {location?.province || "Ho Chi Minh"}
                     </p>
                   </div>
                 </div>
@@ -453,7 +430,7 @@ const JobDescription = () => {
                 <span>
                   Application deadline:{" "}
                   <strong>
-                    {new Date(applicationDeadline).toLocaleDateString("vi-VN")}
+                    {new Date(applicationDeadline).toLocaleDateString("en-US")}
                   </strong>
                 </span>
                 <span
@@ -466,7 +443,6 @@ const JobDescription = () => {
               </div>
             </div>
 
-            {/* Apply Actions */}
             <div className="flex flex-row md:flex-col gap-3 shrink-0 justify-start md:justify-center min-w-[200px]">
               <Button
                 onClick={() =>
@@ -482,7 +458,13 @@ const JobDescription = () => {
                     : "bg-[#6A38C2] hover:bg-[#5b32a8] text-white"
                 }`}
               >
-                <Send className="w-4 h-4 mr-2" />
+                {isApplying ? (
+                  <Send className="w-4 h-4 mr-2" />
+                ) : applicationCount > 0 && !isExpired ? (
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
                 {isApplying
                   ? "Sending..."
                   : isExpired
@@ -511,10 +493,8 @@ const JobDescription = () => {
         </div>
       </div>
 
-      {/* --- BODY CONTENT --- */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT COLUMN: Job Details */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="border-none shadow-sm">
               <CardContent className="p-6 md:p-8">
@@ -524,7 +504,6 @@ const JobDescription = () => {
                   </h2>
                 </div>
 
-                {/* Quick Tags Box */}
                 <div className="bg-gray-50 rounded-xl p-5 mb-8 space-y-4">
                   <div className="flex items-start gap-3">
                     <span className="text-sm font-semibold text-gray-700 min-w-[100px] mt-1">
@@ -567,7 +546,6 @@ const JobDescription = () => {
                   </div>
                 </div>
 
-                {/* Content Sections */}
                 <div className="space-y-8">
                   <section>
                     <SectionTitle title="Job description" />
@@ -625,16 +603,13 @@ const JobDescription = () => {
             </Card>
           </div>
 
-          {/* RIGHT COLUMN: Sidebar */}
           <div className="space-y-6">
-            {/* 1. AI Analysis (Priority) */}
             <JobFitAnalysisCard
               analysis={aiAnalysis}
               loading={isAiLoading}
               user={user}
             />
 
-            {/* 2. Company Info */}
             <Card className="border-none shadow-sm">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-4">
@@ -678,7 +653,6 @@ const JobDescription = () => {
               </CardContent>
             </Card>
 
-            {/* 3. General Info */}
             <Card className="border-none shadow-sm">
               <CardContent className="p-5">
                 <h4 className="font-bold text-gray-900 mb-5 text-base">
@@ -712,7 +686,6 @@ const JobDescription = () => {
               </CardContent>
             </Card>
 
-            {/* 4. Share */}
             <div className="bg-[#E6E0F8] rounded-xl p-5 text-center">
               <h4 className="font-bold text-[#6A38C2] mb-1">Share this job?</h4>
               <p className="text-xs text-gray-600 mb-3">
@@ -722,7 +695,7 @@ const JobDescription = () => {
                 className="bg-white text-[#6A38C2] hover:bg-white/90 w-full shadow-sm h-9 text-sm"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
-                  toast.success("Đã sao chép liên kết!");
+                  toast.success("Link copied!");
                 }}
               >
                 <Share2 size={14} className="mr-2" /> Copy Link

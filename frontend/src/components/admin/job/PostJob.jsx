@@ -39,7 +39,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { Loader2, ArrowLeft, X } from "lucide-react";
+import { Loader2, ArrowLeft, X, Search } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();

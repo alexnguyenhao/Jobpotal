@@ -29,8 +29,8 @@ const Jobs = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="sticky top-[68px] z-30 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 md:px-8">
+      <div className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-8xl mx-auto px-4 py-4 md:px-8">
           <JobFilterBar />
         </div>
       </div>
