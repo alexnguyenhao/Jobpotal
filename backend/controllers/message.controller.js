@@ -30,6 +30,12 @@ export const sendMessage = async (req, res) => {
 
     conversation.updatedAt = new Date();
 
+    if (conversation.hiddenBy.includes(receiverId)) {
+      conversation.hiddenBy = conversation.hiddenBy.filter(
+        (id) => id.toString() !== receiverId.toString()
+      );
+    }
+
     const newMessage = new Message({
       senderId,
       receiverId,
@@ -44,7 +50,6 @@ export const sendMessage = async (req, res) => {
     await Promise.all([conversation.save(), newMessage.save()]);
 
     const receiverSocketId = getReceiverSocketId(receiverId);
-
     const messageToSend = newMessage.toObject();
     messageToSend.conversationId = conversation._id;
     messageToSend.jobId = jobId;
@@ -56,7 +61,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json(messageToSend);
   } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
+    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -81,9 +86,21 @@ export const getMessages = async (req, res) => {
 
     if (!conversation) return res.status(200).json([]);
 
-    res.status(200).json(conversation.messages);
+    const deleteRecord = conversation.deletedBy.find(
+      (d) => d.user.toString() === senderId.toString()
+    );
+
+    let messages = conversation.messages;
+
+    if (deleteRecord) {
+      messages = messages.filter(
+        (msg) => new Date(msg.createdAt) > new Date(deleteRecord.deletedAt)
+      );
+    }
+
+    res.status(200).json(messages);
   } catch (error) {
-    console.log("Error in getMessages controller: ", error.message);
+    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -111,6 +128,29 @@ export const getConversationsUser = async (req, res) => {
       .sort({ updatedAt: -1 });
 
     const chatPartners = existingConversations.reduce((acc, conv) => {
+      // --- FIX LỖI TẠI ĐÂY ---
+      // Kiểm tra xem hiddenBy có tồn tại không trước khi gọi includes
+      if (conv.hiddenBy && conv.hiddenBy.includes(userId)) return acc;
+
+      // Kiểm tra an toàn cho deletedBy
+      const deletedByList = conv.deletedBy || [];
+      const deleteRecord = deletedByList.find(
+        (d) => d.user.toString() === userId.toString()
+      );
+
+      let hasNewMessageAfterDelete = true;
+      if (deleteRecord) {
+        const lastMsg = conv.messages[conv.messages.length - 1];
+        if (
+          !lastMsg ||
+          new Date(lastMsg.createdAt) <= new Date(deleteRecord.deletedAt)
+        ) {
+          hasNewMessageAfterDelete = false;
+        }
+      }
+
+      if (!hasNewMessageAfterDelete) return acc;
+
       const partner = conv.participants.find(
         (p) => p && p._id.toString() !== userId.toString()
       );
@@ -219,6 +259,7 @@ export const getConversationsUser = async (req, res) => {
     potentialPartners.forEach((u) => {
       usersMap.set(generateKey(u), u);
     });
+
     chatPartners.forEach((u) => {
       const key = generateKey(u);
       if (usersMap.has(key)) {
@@ -248,7 +289,7 @@ export const getConversationsUser = async (req, res) => {
 
 export const markAsRead = async (req, res) => {
   try {
-    const conversationId = req.params.id;
+    const { id: conversationId } = req.params;
     const userId = req.user._id;
 
     if (!conversationId) {
@@ -269,7 +310,69 @@ export const markAsRead = async (req, res) => {
 
     res.status(200).json({ success: true, updated: result.modifiedCount });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ error: "Internal Error" });
+  }
+};
+
+export const hideConversation = async (req, res) => {
+  try {
+    const { id: conversationId } = req.params;
+    const userId = req.user._id;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: "Missing conversationId" });
+    }
+
+    const conversation = await Conversation.findByIdAndUpdate(conversationId, {
+      $addToSet: { hiddenBy: userId },
+    });
+
+    if (!conversation)
+      return res.status(404).json({ error: "Conversation not found" });
+
+    res.status(200).json({ success: true, message: "Conversation hidden" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Error" });
+  }
+};
+
+export const deleteConversation = async (req, res) => {
+  try {
+    const { id: conversationId } = req.params;
+    const userId = req.user._id;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: "Missing conversationId" });
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation)
+      return res.status(404).json({ error: "Conversation not found" });
+
+    const existingDelete = conversation.deletedBy.find(
+      (d) => d.user.toString() === userId.toString()
+    );
+
+    if (existingDelete) {
+      existingDelete.deletedAt = new Date();
+    } else {
+      conversation.deletedBy.push({ user: userId, deletedAt: new Date() });
+    }
+
+    if (conversation.hiddenBy.includes(userId)) {
+      conversation.hiddenBy = conversation.hiddenBy.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+    }
+
+    await conversation.save();
+
+    res.status(200).json({ success: true, message: "Conversation deleted" });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Internal Error" });
   }
 };

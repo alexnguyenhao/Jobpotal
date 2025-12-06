@@ -34,7 +34,7 @@ const AppliedJobTable = () => {
   // --- LOADING STATE ---
   if (loading) {
     return (
-      <div className="space-y-4 mt-5">
+      <div className="space-y-4 mt-5 max-w-7xl mx-auto px-4">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -57,7 +57,7 @@ const AppliedJobTable = () => {
   // --- EMPTY STATE ---
   if (!allAppliedJobs || allAppliedJobs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm mt-5">
+      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm mt-5 max-w-7xl mx-auto px-4">
         <div className="bg-purple-50 p-6 rounded-full mb-4 ring-8 ring-purple-50/50">
           <Briefcase className="w-10 h-10 text-[#6A38C2]" />
         </div>
@@ -77,7 +77,7 @@ const AppliedJobTable = () => {
   }
 
   return (
-    <div className="mt-5 max-w-5xl mx-auto">
+    <div className="mt-5 max-w-7xl mx-auto px-4">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-800">Applied Jobs</h2>
@@ -87,11 +87,11 @@ const AppliedJobTable = () => {
       </div>
 
       {/* Table Section */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-        <Table>
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader className="bg-gray-50/80">
             <TableRow className="hover:bg-transparent border-b-gray-100">
-              <TableHead className="w-[400px] py-5 pl-6 font-semibold text-gray-600">
+              <TableHead className="w-[350px] py-5 pl-6 font-semibold text-gray-600">
                 Job & Company
               </TableHead>
               <TableHead className="font-semibold text-gray-600">
@@ -108,7 +108,6 @@ const AppliedJobTable = () => {
               const job = appliedJob?.job;
               const status = appliedJob?.status?.toLowerCase();
 
-              // Config màu sắc status
               const statusConfig = {
                 accepted: {
                   className:
@@ -141,7 +140,7 @@ const AppliedJobTable = () => {
                 >
                   <TableCell className="py-5 pl-6">
                     <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-xl border border-gray-100 bg-white flex items-center justify-center p-1 shadow-sm group-hover:border-[#6A38C2]/30 transition-colors">
+                      <div className="h-12 w-12 min-w-[3rem] rounded-xl border border-gray-100 bg-white flex items-center justify-center p-1 shadow-sm group-hover:border-[#6A38C2]/30 transition-colors">
                         <Avatar className="h-full w-full rounded-lg">
                           <AvatarImage
                             src={job?.company?.logo}
@@ -154,17 +153,23 @@ const AppliedJobTable = () => {
                       </div>
 
                       <div className="space-y-1">
-                        <h3 className="font-bold text-base text-gray-900 group-hover:text-[#6A38C2] transition-colors flex items-center gap-2">
+                        {/* FIX: Thêm truncate và max-w để cắt chữ nếu dài quá */}
+                        <h3
+                          className="font-bold text-base text-gray-900 group-hover:text-[#6A38C2] transition-colors block truncate max-w-[200px] sm:max-w-[300px]"
+                          title={job?.title || "Unknown Position"}
+                        >
                           {job?.title || "Unknown Position"}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
                           <span className="font-medium text-gray-700 flex items-center gap-1">
                             <Building2 size={14} className="text-gray-400" />
                             {job?.company?.name}
                           </span>
                           {job?.location?.province && (
                             <>
-                              <span className="text-gray-300">•</span>
+                              <span className="text-gray-300 hidden sm:inline">
+                                •
+                              </span>
                               <span className="text-xs text-gray-400 flex items-center gap-1">
                                 <MapPin size={12} />
                                 {job.location.province}
@@ -195,7 +200,7 @@ const AppliedJobTable = () => {
                   <TableCell className="text-right pr-6">
                     <Badge
                       variant="outline"
-                      className={`font-medium px-3 py-1.5 rounded-full capitalize border ${currentStatus.className}`}
+                      className={`font-medium px-3 py-1.5 rounded-full capitalize border whitespace-nowrap ${currentStatus.className}`}
                     >
                       {currentStatus.icon}
                       {status}

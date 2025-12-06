@@ -689,11 +689,11 @@ export const saveJob = async (req, res) => {
     await user.save();
 
     return res.status(200).json({
-      message: "✅ Job saved successfully",
+      message: "Job saved successfully",
       success: true,
     });
   } catch (err) {
-    console.error("❌ Save Job Error:", err);
+    console.error("Save Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -718,11 +718,11 @@ export const unsaveJob = async (req, res) => {
 
     await user.save();
     return res.status(200).json({
-      message: "🗑️ Job removed from saved list",
+      message: "Job removed from saved list",
       success: true,
     });
   } catch (err) {
-    console.error("❌ Unsave Job Error:", err);
+    console.error("Unsave Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -743,7 +743,7 @@ export const getSavedJobs = async (req, res) => {
       savedJobs: user.savedJobs || [],
     });
   } catch (err) {
-    console.error("❌ Get Saved Jobs Error:", err);
+    console.error("Get Saved Jobs Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
@@ -767,7 +767,7 @@ export const getUserById = async (req, res) => {
       success: true,
     });
   } catch (err) {
-    console.error("❌ Get User By ID Error:", err);
+    console.error("Get User By ID Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,

@@ -2,67 +2,46 @@ import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
 import { Profile } from "../models/profile.model.js";
 import { analyzeJobFitForStudent } from "../utils/aiService.js";
+// Import hàm lấy tọa độ từ Goong Map
+import { getCoordinates } from "../utils/goongMap.js";
+
+// file: job.controller.js
+
 export const postJob = async (req, res) => {
   try {
+    // 1. Lấy dữ liệu từ req.body (Cấu trúc khớp với Frontend gửi lên)
     const {
       title,
+      professional,
       description,
       requirements,
       benefits,
-      salaryMin,
-      salaryMax,
-      currency,
-      isNegotiable,
-      province,
-      district,
-      address,
+      salary, // Frontend gửi object { min, max, currency, isNegotiable }
+      location, // Frontend gửi object { province, district, ward, address }
       jobType,
-      experience,
-      position,
+      experienceLevel, // Frontend gửi experienceLevel
+      numberOfPositions, // Frontend gửi numberOfPositions
       company,
       category,
       seniorityLevel,
       applicationDeadline,
-      status,
     } = req.body;
 
     const userId = req.id;
-    if (!title || !description || !company || !province) {
-      return res.status(400).json({
-        message: "Missing required fields.",
-        success: false,
-      });
-    }
-    const companyInfo = await Company.findById(company);
 
-    if (!companyInfo) {
-      return res.status(404).json({
-        message: "Company not found.",
-        success: false,
-      });
-    }
-    if (!companyInfo.isVerified) {
-      return res.status(403).json({
-        message: "Company is not verified.",
-        success: false,
-      });
-    }
-
-    if (companyInfo.status === "banned" || companyInfo.status === "inactive") {
-      return res.status(403).json({
-        message: "Company is banned or inactive.",
-        success: false,
-      });
-    }
+    // 2. Validate dữ liệu (Sửa lại logic check)
     if (
       !title ||
+      !professional?.length ||
       !description ||
-      !salaryMin ||
-      !salaryMax ||
-      !province ||
+      !salary?.min || // Check trong object salary
+      !salary?.max ||
+      !location?.province || // Check trong object location
+      !location?.district ||
+      !location?.address ||
       !jobType?.length ||
-      !experience ||
-      !position ||
+      !experienceLevel || // Check experienceLevel
+      !numberOfPositions || // Check numberOfPositions
       !company ||
       !category ||
       !seniorityLevel ||
@@ -74,42 +53,74 @@ export const postJob = async (req, res) => {
       });
     }
 
-    const formattedRequirements =
-      typeof requirements === "string"
-        ? requirements
-            .split(/[•\-–\.]/)
-            .map((i) => i.trim())
-            .filter(Boolean)
-        : requirements;
+    // 3. Kiểm tra Company
+    const companyInfo = await Company.findById(company);
+    if (!companyInfo) {
+      return res
+        .status(404)
+        .json({ message: "Company not found.", success: false });
+    }
+    if (!companyInfo.isVerified) {
+      return res
+        .status(403)
+        .json({ message: "Company is not verified.", success: false });
+    }
+    if (["banned", "inactive"].includes(companyInfo.status)) {
+      return res
+        .status(403)
+        .json({ message: "Company is banned or inactive.", success: false });
+    }
 
-    const formattedBenefits =
-      typeof benefits === "string"
-        ? benefits
-            .split(/\n|^-\s*/gm)
-            .map((i) => i.trim())
-            .filter(Boolean)
-        : benefits;
+    // 4. Xử lý Requirements & Benefits (Frontend đã xử lý thành mảng, nhưng check lại cho chắc)
+    // Nếu Frontend gửi mảng rồi thì dùng luôn, nếu là string thì split
+    const formattedRequirements = Array.isArray(requirements)
+      ? requirements
+      : typeof requirements === "string"
+      ? requirements
+          .split(/[•\-–\.]/)
+          .map((i) => i.trim())
+          .filter(Boolean)
+      : [];
 
+    const formattedBenefits = Array.isArray(benefits)
+      ? benefits
+      : typeof benefits === "string"
+      ? benefits
+          .split(/\n|^-\s*/gm)
+          .map((i) => i.trim())
+          .filter(Boolean)
+      : [];
+
+    // 5. --- XỬ LÝ TỌA ĐỘ (GOONG MAP) ---
+    // Lấy dữ liệu từ object location
+    const fullAddress = `${location.address}, ${location.ward || ""}, ${
+      location.district
+    }, ${location.province}`;
+
+    const coords = await getCoordinates(fullAddress);
+
+    // Cập nhật lại location với tọa độ
+    const locationData = {
+      ...location,
+      coords: {
+        type: "Point",
+        coordinates: coords ? [coords.lng, coords.lat] : [0, 0],
+      },
+    };
+
+    // 6. Tạo Job
     const job = await Job.create({
       title,
+      professional,
       description,
       requirements: formattedRequirements,
       benefits: formattedBenefits,
-      salary: {
-        min: Number(salaryMin),
-        max: Number(salaryMax),
-        currency: currency || "VND",
-        isNegotiable: isNegotiable || false,
-      },
-      location: {
-        province,
-        district: district || "",
-        address: address || "",
-      },
-      experienceLevel: experience,
+      salary, // Lưu nguyên object salary
+      location: locationData, // Lưu object location đã xử lý
+      experienceLevel, // Dùng đúng tên trường trong Schema
       seniorityLevel,
       jobType,
-      numberOfPositions: position,
+      numberOfPositions, // Dùng đúng tên trường trong Schema
       company,
       category,
       applicationDeadline: new Date(applicationDeadline),
@@ -118,18 +129,192 @@ export const postJob = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "✅ New job posted!",
+      message: "✅ New job posted successfully!",
       success: true,
       job,
     });
   } catch (err) {
-    console.error(" Post Job Error:", err);
+    console.error("❌ Post Job Error:", err);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
     });
   }
 };
+
+// file: job.controller.js
+
+export const updateJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    // req.body có thể chứa cấu trúc lồng nhau (location, salary) giống PostJob
+    const updates = req.body;
+
+    if (!jobId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Job ID is required" });
+    }
+
+    const jobCheck = await Job.findById(jobId);
+    if (!jobCheck) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (jobCheck.created_by.toString() !== req.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to update this job",
+      });
+    }
+
+    // --- 1. XỬ LÝ LOCATION & TỌA ĐỘ ---
+    // Ưu tiên lấy từ object updates.location, nếu không thì tìm các biến phẳng (fallback)
+    const incomingLocation = updates.location || {};
+    const newProvince = incomingLocation.province || updates.province;
+    const newDistrict = incomingLocation.district || updates.district;
+    const newWard = incomingLocation.ward || updates.ward;
+    const newAddress = incomingLocation.address || updates.address;
+
+    // Lấy dữ liệu cũ để so sánh
+    let locationUpdate = { ...jobCheck.location.toObject() };
+    let isAddressChanged = false;
+
+    // Kiểm tra từng trường xem có thay đổi không
+    if (newProvince && newProvince !== locationUpdate.province) {
+      locationUpdate.province = newProvince;
+      isAddressChanged = true;
+    }
+    if (newDistrict && newDistrict !== locationUpdate.district) {
+      locationUpdate.district = newDistrict;
+      isAddressChanged = true;
+    }
+    if (newWard && newWard !== locationUpdate.ward) {
+      locationUpdate.ward = newWard;
+      isAddressChanged = true;
+    }
+    if (newAddress && newAddress !== locationUpdate.address) {
+      locationUpdate.address = newAddress;
+      isAddressChanged = true;
+    }
+
+    // Nếu địa chỉ đổi, gọi API lấy lại tọa độ
+    if (isAddressChanged) {
+      const fullAddress = `${locationUpdate.address}, ${
+        locationUpdate.ward || ""
+      }, ${locationUpdate.district}, ${locationUpdate.province}`;
+
+      const newCoords = await getCoordinates(fullAddress);
+
+      if (newCoords) {
+        locationUpdate.coords = {
+          type: "Point",
+          coordinates: [newCoords.lng, newCoords.lat],
+        };
+      } else {
+        // Nếu không tìm thấy tọa độ, có thể set về mặc định hoặc giữ nguyên
+        // Ở đây set về [0,0] để tránh lỗi dữ liệu cũ không khớp
+        locationUpdate.coords = { type: "Point", coordinates: [0, 0] };
+      }
+    }
+
+    // Gán lại location đã xử lý vào updates
+    updates.location = locationUpdate;
+
+    // --- 2. XỬ LÝ SALARY ---
+    // Tương tự, ưu tiên object updates.salary
+    const incomingSalary = updates.salary || {};
+    const oldSalary = jobCheck.salary || {};
+
+    // Merge dữ liệu lương mới vào cũ
+    updates.salary = {
+      min:
+        incomingSalary.min !== undefined
+          ? Number(incomingSalary.min)
+          : updates.salaryMin
+          ? Number(updates.salaryMin)
+          : oldSalary.min,
+      max:
+        incomingSalary.max !== undefined
+          ? Number(incomingSalary.max)
+          : updates.salaryMax
+          ? Number(updates.salaryMax)
+          : oldSalary.max,
+      currency:
+        incomingSalary.currency ||
+        updates.currency ||
+        oldSalary.currency ||
+        "VND",
+      isNegotiable:
+        incomingSalary.isNegotiable !== undefined
+          ? incomingSalary.isNegotiable
+          : updates.isNegotiable !== undefined
+          ? updates.isNegotiable
+          : oldSalary.isNegotiable,
+    };
+
+    // --- 3. XỬ LÝ CÁC MẢNG (Requirements, Benefits, Professional) ---
+    // Kiểm tra nếu là string thì split, nếu là array rồi thì giữ nguyên
+
+    // Professional
+    if (updates.professional) {
+      if (typeof updates.professional === "string") {
+        updates.professional = updates.professional
+          .split(",")
+          .map((i) => i.trim())
+          .filter(Boolean);
+      }
+    }
+
+    // Requirements
+    if (updates.requirements) {
+      if (typeof updates.requirements === "string") {
+        updates.requirements = updates.requirements
+          .split(/[•\-–\.]/)
+          .map((i) => i.trim())
+          .filter(Boolean);
+      }
+    }
+
+    // Benefits
+    if (updates.benefits) {
+      if (typeof updates.benefits === "string") {
+        updates.benefits = updates.benefits
+          .split(/\n|^-\s*/gm)
+          .map((i) => i.trim())
+          .filter(Boolean);
+      }
+    }
+
+    // Xóa các trường phẳng thừa để sạch payload trước khi update
+    delete updates.province;
+    delete updates.district;
+    delete updates.ward;
+    delete updates.address;
+    delete updates.salaryMin;
+    delete updates.salaryMax;
+
+    const job = await Job.findByIdAndUpdate(jobId, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Job updated successfully",
+      job,
+    });
+  } catch (err) {
+    console.error("❌ Update Job Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// --- CÁC HÀM DƯỚI ĐÂY GIỮ NGUYÊN HOẶC CHỈNH SỬA NHỎ ĐỂ KHỚP DATA ---
 
 export const getAllJobs = async (req, res) => {
   try {
@@ -157,7 +342,7 @@ export const searchJobs = async (req, res) => {
       keyword,
       company,
       category,
-      location,
+      location, // Frontend gửi tên Tỉnh (VD: "Hồ Chí Minh")
       jobType,
       experience,
       seniorityLevel,
@@ -165,23 +350,30 @@ export const searchJobs = async (req, res) => {
       salaryMax,
     } = req.query;
 
-    const query = {};
+    const query = { status: "Open" }; // Chỉ tìm job đang mở
+
     if (keyword) {
       query.$or = [
         { title: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
+        // Thêm tìm kiếm theo tên đường/quận
+        { "location.address": { $regex: keyword, $options: "i" } },
+        { "location.district": { $regex: keyword, $options: "i" } },
       ];
     }
 
     if (company) query.company = company;
     if (category) query.category = category;
-    if (location) query["location.province"] = location;
+
+    // Logic tìm theo tỉnh thành (Do cấu trúc mới là location.province)
+    if (location)
+      query["location.province"] = { $regex: location, $options: "i" };
+
     if (jobType) query.jobType = jobType;
     if (experience)
       query.experienceLevel = { $regex: experience, $options: "i" };
     if (seniorityLevel) query.seniorityLevel = seniorityLevel;
 
-    // 💰 Salary range
     if (salaryMin || salaryMax) {
       query.$and = [];
       if (salaryMin)
@@ -227,6 +419,7 @@ export const getJobById = async (req, res) => {
     });
   }
 };
+
 export const getJobFitAnalysis = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -250,8 +443,7 @@ export const getJobFitAnalysis = async (req, res) => {
     const userProfile = await Profile.findOne({ user: userId });
     if (!userProfile) {
       return res.status(400).json({
-        message:
-          "You need to update your profile (Profile) to use this feature.",
+        message: "You need to update your profile to use this feature.",
         success: false,
       });
     }
@@ -265,7 +457,9 @@ export const getJobFitAnalysis = async (req, res) => {
       Description: ${job.description}
       Requirements: ${requirementsText}
       Experience Level: ${job.experienceLevel}
+      Location: ${job.location.address}, ${job.location.district}, ${job.location.province}
     `;
+
     const aiAnalysis = await analyzeJobFitForStudent(
       userProfile,
       fullJobContext
@@ -283,6 +477,7 @@ export const getJobFitAnalysis = async (req, res) => {
     });
   }
 };
+
 export const getAdminJobs = async (req, res) => {
   try {
     const adminId = req.id;
@@ -297,54 +492,6 @@ export const getAdminJobs = async (req, res) => {
     return res.status(500).json({
       message: "Internal server error",
       success: false,
-    });
-  }
-};
-
-export const updateJob = async (req, res) => {
-  try {
-    const jobId = req.params.id;
-
-    // Validate ID
-    if (!jobId) {
-      return res.status(400).json({
-        success: false,
-        message: "Job ID is required",
-      });
-    }
-
-    const jobCheck = await Job.findById(jobId);
-
-    if (!jobCheck) {
-      return res.status(404).json({
-        success: false,
-        message: "Job not found",
-      });
-    }
-
-    // Ownership check
-    if (jobCheck.created_by.toString() !== req.id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not allowed to update this job",
-      });
-    }
-
-    const job = await Job.findByIdAndUpdate(jobId, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Job updated successfully",
-      job,
-    });
-  } catch (err) {
-    console.error("❌ Update Job Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
     });
   }
 };
@@ -415,6 +562,7 @@ export const getJobsByCompany = async (req, res) => {
     });
   }
 };
+
 export const getJobsByCategory = async (req, res) => {
   try {
     const categoryId = req.params.categoryId;

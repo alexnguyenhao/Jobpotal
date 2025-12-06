@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { USER_API_END_POINT } from "@/utils/constant";
+import { APPLICATION_API_END_POINT } from "@/utils/constant";
+
 import {
   Mail,
   Phone,
@@ -21,18 +22,18 @@ import {
   Share2,
   CheckCircle2,
   Calendar,
-  Zap, // Added for Operations
-  Heart, // Added for Interests
-  Github, // Social
-  Linkedin, // Social
-  Twitter, // Social
+  Zap,
+  Heart,
+  Github,
+  Linkedin,
+  Twitter,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-// --- Helper Functions & Components ---
-
+// 🧩 Detect social platform icon
 const getSocialIcon = (platform) => {
   if (!platform) return Globe;
   const p = platform.toLowerCase();
@@ -42,6 +43,7 @@ const getSocialIcon = (platform) => {
   return Globe;
 };
 
+// 🏷 Section Title
 const SectionHeader = ({ title, icon: Icon }) => (
   <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3 mt-8 first:mt-0 print:mt-6 print:border-gray-300">
     <div className="p-2 bg-purple-50 rounded-lg text-[#6A38C2] print:bg-transparent print:text-black print:p-0">
@@ -53,46 +55,49 @@ const SectionHeader = ({ title, icon: Icon }) => (
   </div>
 );
 
+// 📌 Display if no data exists
 const EmptyState = ({ text }) => (
   <div className="py-6 px-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 text-center print:hidden">
     <p className="text-gray-400 text-sm">{text}</p>
   </div>
 );
 
+// 📅 Format date helper
 const formatDate = (str) => {
   if (!str) return "";
   try {
-    const date = new Date(str);
-    return date.toLocaleDateString("en-US", {
+    return new Date(str).toLocaleDateString("en-US", {
       month: "short",
       year: "numeric",
     });
-  } catch (e) {
+  } catch {
     return str;
   }
 };
 
-// --- Main Component ---
-
 const RecruiterResume = () => {
-  const { userId } = useParams();
+  const { userId: applicationId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(state?.applicant || null);
   const [loading, setLoading] = useState(!state?.applicant);
 
+  // 🛠 FETCH APPLICANT FROM APPLICATION
   useEffect(() => {
     if (state?.applicant) return;
 
-    const fetchUser = async () => {
+    const fetchApplicant = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${USER_API_END_POINT}/user/${userId}`, {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${APPLICATION_API_END_POINT}/${applicationId}`,
+          {
+            withCredentials: true,
+          }
+        );
         if (res.data.success) {
-          setUser(res.data.user);
+          setUser(res.data.application.applicant);
         }
       } catch (err) {
         console.error(err);
@@ -101,19 +106,15 @@ const RecruiterResume = () => {
       }
     };
 
-    fetchUser();
-  }, [userId, state]);
+    fetchApplicant();
+  }, [applicationId, state]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
+  const handlePrint = () => window.print();
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard!");
   };
 
-  // --- LOADING STATE ---
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500 bg-gray-50/50">
@@ -123,7 +124,6 @@ const RecruiterResume = () => {
     );
   }
 
-  // --- NOT FOUND STATE ---
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
@@ -140,7 +140,6 @@ const RecruiterResume = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-10 print:bg-white print:p-0">
-      {/* Global Styles for Print */}
       <style>
         {`
           @media print {
@@ -152,7 +151,7 @@ const RecruiterResume = () => {
         `}
       </style>
 
-      {/* --- HEADER ACTIONS --- */}
+      {/* 🔝 HEADER */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between no-print shadow-sm">
         <div className="flex items-center gap-4">
           <Button
@@ -185,7 +184,6 @@ const RecruiterResume = () => {
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </Button>
-
           <Button
             type="button"
             className="bg-[#6A38C2] hover:bg-[#5a2ea6] text-white"
@@ -197,10 +195,10 @@ const RecruiterResume = () => {
         </div>
       </header>
 
-      {/* --- MAIN CONTENT CONTAINER --- */}
+      {/* 📄 BODY */}
       <div className="max-w-5xl mx-auto mt-8 px-4 md:px-0">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden print-container min-h-[800px]">
-          {/* CV HEADER BACKGROUND */}
+          {/* 🟣 Hero */}
           <div className="bg-slate-900 text-white p-8 md:p-12 print:bg-white print:text-black print:border-b-2 print:border-gray-800 print:p-0 print:pb-6 print:mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div className="space-y-2">
@@ -211,7 +209,7 @@ const RecruiterResume = () => {
                   {p.title || "Open to Opportunities"}
                 </p>
 
-                {/* Social Links (UPDATED to match StudentResume) */}
+                {/* 🌐 Social Links */}
                 {p.socialLinks?.length > 0 && (
                   <div className="flex flex-wrap gap-3 mt-4 print:hidden">
                     {p.socialLinks.map((link, i) => {
@@ -233,7 +231,7 @@ const RecruiterResume = () => {
                 )}
               </div>
 
-              {/* Contact Info */}
+              {/* 🏠 Contact */}
               <div className="grid grid-cols-1 gap-2 text-sm text-gray-300 print:text-gray-800 print:text-right">
                 {user.email && (
                   <div className="flex items-center gap-2 md:justify-end">
@@ -256,7 +254,7 @@ const RecruiterResume = () => {
                     <span>{user.address}</span>
                   </div>
                 )}
-                {/* Fallback for static website if socialLinks array is empty */}
+
                 {p.website &&
                   (!p.socialLinks || p.socialLinks.length === 0) && (
                     <div className="flex items-center gap-2 md:justify-end">
@@ -278,25 +276,25 @@ const RecruiterResume = () => {
             </div>
           </div>
 
-          {/* CV BODY */}
-          <div className="p-8 md:p-12 print:p-0">
-            {/* Summary Section */}
-            {(user.bio || p.careerObjective) && (
-              <section className="mb-10 print:break-inside-avoid">
-                <SectionHeader title="Profile Summary" icon={User2} />
-                <p className="text-gray-700 leading-7 text-sm text-justify">
-                  {user.bio || p.careerObjective}
-                </p>
-              </section>
-            )}
+          {/* 🧠 Summary */}
+          {(user.bio?.trim() || p.careerObjective?.trim()) && (
+            <section className="p-8 md:p-12 print:p-0 print:pl-0">
+              <SectionHeader title="Profile Summary" icon={User2} />
+              <p className="text-gray-700 leading-7 text-sm text-justify">
+                {user.bio || p.careerObjective}
+              </p>
+            </section>
+          )}
 
+          {/* 🧾 Content Grid */}
+          <div className="p-8 md:p-12 print:p-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:gap-8">
-              {/* LEFT COLUMN (Experience & Projects) - 8 Cols */}
+              {/* ➤ Left Column */}
               <div className="lg:col-span-8 space-y-10">
-                {/* 1. WORK EXPERIENCE */}
-                <section>
-                  <SectionHeader title="Work Experience" icon={Briefcase} />
-                  {p.workExperience?.length > 0 ? (
+                {/* 💼 Experience */}
+                {p.workExperience?.length > 0 && (
+                  <section>
+                    <SectionHeader title="Work Experience" icon={Briefcase} />
                     <div className="space-y-8 border-l-2 border-gray-100 ml-3 pl-8 print:border-l-0 print:ml-0 print:pl-0">
                       {p.workExperience.map((job, i) => (
                         <div
@@ -304,7 +302,6 @@ const RecruiterResume = () => {
                           className="relative print:break-inside-avoid group"
                         >
                           <span className="absolute -left-[39px] top-1.5 w-4 h-4 rounded-full bg-white border-4 border-gray-200 group-hover:border-[#6A38C2] transition-colors print:hidden"></span>
-
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1.5">
                             <h3 className="font-bold text-gray-900 text-base">
                               {job.position}
@@ -316,26 +313,22 @@ const RecruiterResume = () => {
                                 : "Present"}
                             </span>
                           </div>
-
                           <p className="text-sm font-bold text-[#6A38C2] mb-3 print:text-black">
                             {job.company}
                           </p>
-
                           <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed text-justify">
                             {job.description}
                           </p>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <EmptyState text="No work experience provided." />
-                  )}
-                </section>
+                  </section>
+                )}
 
-                {/* 2. PROJECTS */}
-                <section>
-                  <SectionHeader title="Projects" icon={FolderGit2} />
-                  {p.projects?.length > 0 ? (
+                {/* 📦 Projects */}
+                {p.projects?.length > 0 && (
+                  <section>
+                    <SectionHeader title="Projects" icon={FolderGit2} />
                     <div className="grid grid-cols-1 gap-4">
                       {p.projects.map((proj, i) => (
                         <div
@@ -389,12 +382,10 @@ const RecruiterResume = () => {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <EmptyState text="No projects provided." />
-                  )}
-                </section>
+                  </section>
+                )}
 
-                {/* 3. OPERATIONS / ACTIVITIES (Added to match StudentResume) */}
+                {/* 🏅 Leadership */}
                 {p.operations?.length > 0 && (
                   <section>
                     <SectionHeader title="Leadership & Activities" icon={Zap} />
@@ -423,15 +414,14 @@ const RecruiterResume = () => {
                 )}
               </div>
 
-              {/* RIGHT COLUMN (Skills, Edu, Lang) - 4 Cols */}
+              {/* ➤ Right Column */}
               <div className="lg:col-span-4 space-y-10">
-                {/* 4. SKILLS (Updated Logic) */}
-                <section className="print:break-inside-avoid">
-                  <SectionHeader title="Skills" icon={Star} />
-                  {p.skills?.length > 0 ? (
+                {/* 💡 Skills */}
+                {p.skills?.length > 0 && (
+                  <section className="print:break-inside-avoid">
+                    <SectionHeader title="Skills" icon={Star} />
                     <div className="flex flex-wrap gap-2">
                       {p.skills.map((s, i) => {
-                        // Handle both object skills and string skills
                         const name = typeof s === "object" ? s.name : s;
                         const level = typeof s === "object" ? s.level : null;
                         return (
@@ -449,15 +439,13 @@ const RecruiterResume = () => {
                         );
                       })}
                     </div>
-                  ) : (
-                    <EmptyState text="No skills listed." />
-                  )}
-                </section>
+                  </section>
+                )}
 
-                {/* 5. EDUCATION */}
-                <section className="print:break-inside-avoid">
-                  <SectionHeader title="Education" icon={GraduationCap} />
-                  {p.education?.length > 0 ? (
+                {/* 🎓 Education */}
+                {p.education?.length > 0 && (
+                  <section className="print:break-inside-avoid">
+                    <SectionHeader title="Education" icon={GraduationCap} />
                     <div className="space-y-6">
                       {p.education.map((edu, i) => (
                         <div
@@ -483,15 +471,13 @@ const RecruiterResume = () => {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <EmptyState text="No education listed." />
-                  )}
-                </section>
+                  </section>
+                )}
 
-                {/* 6. LANGUAGES */}
-                <section className="print:break-inside-avoid">
-                  <SectionHeader title="Languages" icon={Languages} />
-                  {p.languages?.length > 0 ? (
+                {/* 🌍 Languages */}
+                {p.languages?.length > 0 && (
+                  <section className="print:break-inside-avoid">
+                    <SectionHeader title="Languages" icon={Languages} />
                     <div className="space-y-3">
                       {p.languages.map((lang, i) => (
                         <div
@@ -507,12 +493,10 @@ const RecruiterResume = () => {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <EmptyState text="No languages listed." />
-                  )}
-                </section>
+                  </section>
+                )}
 
-                {/* 7. CERTIFICATIONS */}
+                {/* 🏅 Awards */}
                 {(p.certifications?.length > 0 ||
                   p.achievements?.length > 0) && (
                   <section className="print:break-inside-avoid">
@@ -527,7 +511,7 @@ const RecruiterResume = () => {
                             <CheckCircle2
                               size={12}
                               className="text-[#6A38C2]"
-                            />
+                            />{" "}
                             {cert.organization}
                           </p>
                           <p className="text-[10px] text-gray-400 mt-1 ml-4">
@@ -541,7 +525,7 @@ const RecruiterResume = () => {
                             {ach.title}
                           </p>
                           <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                            <Award size={12} className="text-yellow-500" />
+                            <Award size={12} className="text-yellow-500" />{" "}
                             {ach.year}
                           </p>
                         </div>
@@ -550,35 +534,35 @@ const RecruiterResume = () => {
                   </section>
                 )}
 
-                {/* 8. INTERESTS (Added to match StudentResume) */}
-                {p.interests &&
-                  (typeof p.interests === "string" ||
-                    Array.isArray(p.interests)) && (
-                    <section className="print:break-inside-avoid">
-                      <SectionHeader title="Interests" icon={Heart} />
-                      <div className="flex flex-wrap gap-2">
-                        {(Array.isArray(p.interests)
-                          ? p.interests
-                          : p.interests.split(",")
-                        ).map((int, i) => {
-                          if (!int.trim()) return null;
-                          return (
-                            <span
-                              key={i}
-                              className="px-2 py-1 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600 font-medium shadow-sm print:shadow-none print:border-gray-400"
-                            >
-                              {int.trim()}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  )}
+                {/* ❤️ Interests */}
+                {(Array.isArray(p.interests)
+                  ? p.interests.length > 0
+                  : p.interests?.trim()) && (
+                  <section className="print:break-inside-avoid">
+                    <SectionHeader title="Interests" icon={Heart} />
+                    <div className="flex flex-wrap gap-2">
+                      {(Array.isArray(p.interests)
+                        ? p.interests
+                        : p.interests.split(",")
+                      ).map((int, i) => {
+                        if (!int.trim()) return null;
+                        return (
+                          <span
+                            key={i}
+                            className="px-2 py-1 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600 font-medium shadow-sm print:shadow-none print:border-gray-400"
+                          >
+                            {int.trim()}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
               </div>
             </div>
           </div>
 
-          {/* FOOTER FOR PRINT */}
+          {/* 📌 Footer Print Only */}
           <div className="hidden print:flex justify-between items-center text-[10px] text-gray-400 px-0 pt-10 mt-auto border-t border-gray-200">
             <span>Candidate Profile - Generated by JobPortal</span>
             <span>{new Date().toLocaleDateString()}</span>

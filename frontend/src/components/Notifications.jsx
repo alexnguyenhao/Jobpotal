@@ -8,8 +8,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Filter,
-  MoreHorizontal,
 } from "lucide-react";
 
 import useNotificationActions from "@/hooks/useNotificationActions";
@@ -34,6 +32,7 @@ const Notifications = () => {
     return true;
   });
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   const timeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -51,7 +50,8 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      {/* Giữ max-w-3xl hoặc 4xl để nội dung thông báo dễ đọc, không bị bè ngang quá mức */}
+      <div className="max-w-4xl mx-auto">
         {/* --- HEADER --- */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -59,7 +59,7 @@ const Notifications = () => {
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 Notifications
                 {unreadCount > 0 && (
-                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 animate-pulse">
                     {unreadCount} new
                   </span>
                 )}
@@ -73,7 +73,7 @@ const Notifications = () => {
               <Button
                 onClick={readAll}
                 variant="outline"
-                className="text-[#6A38C2] border-purple-100 hover:bg-purple-50 hover:text-[#5b30a6]"
+                className="text-[#6A38C2] border-purple-100 hover:bg-purple-50 hover:text-[#5b30a6] whitespace-nowrap"
               >
                 <CheckCheck size={16} className="mr-2" />
                 Mark all as read
@@ -81,20 +81,21 @@ const Notifications = () => {
             )}
           </div>
 
-          <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100 flex gap-2 overflow-x-auto">
+          {/* Filter Tabs */}
+          <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100 flex gap-2 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === "all"
                   ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
-              All
+              All Notifications
             </button>
             <button
               onClick={() => setFilter("unread")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === "unread"
                   ? "bg-white text-[#6A38C2] shadow-sm ring-1 ring-purple-100"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
@@ -104,19 +105,20 @@ const Notifications = () => {
             </button>
           </div>
 
+          {/* Notification List */}
           <div className="divide-y divide-gray-100 min-h-[400px]">
             {filteredNotifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
                 <div className="bg-gray-50 p-4 rounded-full mb-4">
                   <Bell className="w-8 h-8 text-gray-300" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900">
-                  Don't have notification
+                  You're all caught up!
                 </h3>
-                <p className="text-gray-500 mt-1 max-w-sm">
+                <p className="text-gray-500 mt-1 max-w-sm text-sm">
                   {filter === "unread"
-                    ? "You have read all notifications"
-                    : "When you apply or have updates, notifications will appear here."}
+                    ? "No unread notifications at the moment."
+                    : "When you apply for jobs or receive updates, they will appear here."}
                 </p>
               </div>
             ) : (
@@ -133,6 +135,7 @@ const Notifications = () => {
                       !noti.isRead ? "bg-purple-50/40" : "bg-white"
                     }`}
                   >
+                    {/* Icon Status */}
                     <div className="flex-shrink-0 mt-1">
                       <div
                         className={`p-2 rounded-full shadow-sm ${
@@ -151,20 +154,18 @@ const Notifications = () => {
                       </div>
                     </div>
 
+                    {/* Content */}
                     <div className="flex-1 pr-8">
-                      <div className="flex items-start justify-between mb-1">
+                      <div className="flex flex-col gap-1">
                         <p
-                          className={`text-sm sm:text-base leading-snug ${
+                          className={`text-sm sm:text-base leading-snug break-words ${
                             !noti.isRead
-                              ? "font-semibold text-gray-900"
-                              : "text-gray-700"
+                              ? "font-bold text-gray-900"
+                              : "text-gray-700 font-medium"
                           }`}
                         >
                           {noti.message}
                         </p>
-                      </div>
-
-                      <div className="flex items-center gap-3 mt-2">
                         <span className="flex items-center text-xs text-gray-400 font-medium">
                           <Clock size={12} className="mr-1" />
                           {timeAgo(noti.createdAt)}
@@ -172,19 +173,22 @@ const Notifications = () => {
                       </div>
                     </div>
 
+                    {/* Action & Status Indicator */}
                     <div className="flex flex-col items-end justify-between">
+                      {/* Unread Dot Indicator */}
                       {!noti.isRead && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-[#6A38C2] shadow-sm ring-2 ring-white"></span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-[#6A38C2] shadow-sm ring-2 ring-white mb-2"></span>
                       )}
 
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Delete Button - FIX: Luôn hiện trên mobile (opacity-100), chỉ ẩn trên máy tính (sm:opacity-0) */}
+                      <div className="absolute top-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                                className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full bg-white/50 sm:bg-transparent"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   deleteNotice(noti._id);
@@ -209,7 +213,7 @@ const Notifications = () => {
 
         {/* Footer Hint */}
         <div className="text-center mt-8 text-xs text-gray-400">
-          <p>Notifications will be stored for 30 days.</p>
+          <p>Notifications will be automatically removed after 30 days.</p>
         </div>
       </div>
     </div>

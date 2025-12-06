@@ -76,6 +76,17 @@ const conversationSlice = createSlice({
         state.conversations[index].unreadCount = 0;
       }
     },
+    removeConversationFromSidebar: (state, action) => {
+      const conversationId = action.payload;
+      state.conversations = state.conversations.filter(
+        (c) => c.conversationId !== conversationId
+      );
+
+      if (state.selectedConversation?.conversationId === conversationId) {
+        state.selectedConversation = null;
+        state.messages = [];
+      }
+    },
   },
 });
 
@@ -88,6 +99,7 @@ export const {
   resetConversationState,
   updateSidebarOnNewMessage,
   markMessagesAsReadInStore,
+  removeConversationFromSidebar,
 } = conversationSlice.actions;
 
 export default conversationSlice.reducer;

@@ -5,19 +5,24 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils"; // Giả định bạn có file utils này (chuẩn shadcn)
+import { cn } from "@/lib/utils";
 
 // Store & Utils
-import { JOB_API_END_POINT, provinces } from "@/utils/constant";
+import { JOB_API_END_POINT } from "@/utils/constant";
 import { jobSchema } from "@/lib/jobSchema";
 import useGetAllCategories from "@/hooks/useGetAllCategoris";
 import useGetAllCompanies from "@/hooks/useGetAllCompanies";
+import useLocationVN from "@/hooks/useLocationVN"; // 👉 Import Hook địa chính
 
+// Import Data Chuyên môn
+import { ProfessionalSpecializations } from "@/data/professionalSpecializations";
+import SearchableSelect from "@/components/Shared/SearchableSelect";
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectTrigger,
@@ -33,47 +38,47 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
-import { Loader2, ArrowLeft, Check, ChevronsUpDown, X } from "lucide-react";
+import { Loader2, ArrowLeft, X } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [specSearch, setSpecSearch] = useState("");
+  const {
+    provinces,
+    districts,
+    wards,
+    loadDistricts,
+    loadWards,
+    setDistricts,
+    setWards,
+  } = useLocationVN();
 
   const { companies } = useSelector((store) => store.company);
   const { categories } = useSelector((store) => store.category);
 
-  // Lọc và format dữ liệu cho Company
+  // Format Options
   const activeCompanies = companies
-    .filter((company) => company.status === "active" && company.isVerified)
-    .map((company) => ({
-      label: company.name,
-      value: company._id,
-    }));
+    .filter((c) => c.status === "active" && c.isVerified)
+    .map((c) => ({ label: c.name, value: c._id }));
 
-  // Format dữ liệu cho Category
-  const categoryOptions = categories.map((cat) => ({
-    label: cat.name,
-    value: cat._id,
+  const categoryOptions = categories.map((c) => ({
+    label: c.name,
+    value: c._id,
   }));
 
-  // Format dữ liệu cho Province
   const provinceOptions = provinces.map((p) => ({
-    label: p,
-    value: p,
+    label: p.name,
+    value: p.name,
+  }));
+  const districtOptions = districts.map((d) => ({
+    label: d.name,
+    value: d.name,
+  }));
+  const wardOptions = wards.map((w) => ({
+    label: w.name,
+    value: w.name,
   }));
 
   useGetAllCategories();
@@ -83,6 +88,7 @@ const PostJob = () => {
     resolver: zodResolver(jobSchema),
     defaultValues: {
       title: "",
+      professional: [],
       description: "",
       requirements: "",
       benefits: "",
@@ -90,18 +96,37 @@ const PostJob = () => {
       salaryMax: "",
       currency: "VND",
       isNegotiable: false,
-      province: "",
-      district: "",
-      address: "",
+      // 👉 CẤU TRÚC LOCATION LỒNG NHAU (FIXED)
+      location: {
+        province: "",
+        district: "",
+        ward: "",
+        address: "",
+      },
       jobType: [],
-      experience: "",
-      position: 1,
-      companyId: "",
-      categoryId: "",
+      experienceLevel: "", // Lưu ý: Schema bạn dùng experienceLevel hay experience? (Kiểm tra lại schema)
+      numberOfPositions: 1,
+      company: "",
+      category: "",
       seniorityLevel: "",
       applicationDeadline: "",
     },
   });
+
+  // 👉 Handlers cho Location
+  const handleProvinceChange = (provinceName) => {
+    form.setValue("location.district", "");
+    form.setValue("location.ward", "");
+    setDistricts([]);
+    setWards([]);
+    loadDistricts(provinceName);
+  };
+
+  const handleDistrictChange = (districtName) => {
+    form.setValue("location.ward", "");
+    setWards([]);
+    loadWards(districtName);
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -117,14 +142,23 @@ const PostJob = () => {
 
       const payload = {
         ...data,
-        salaryMin: Number(data.salaryMin),
-        salaryMax: Number(data.salaryMax),
-        position: Number(data.position),
-        company: data.companyId,
-        category: data.categoryId,
+        salary: {
+          min: Number(data.salaryMin),
+          max: Number(data.salaryMax),
+          currency: data.currency,
+          isNegotiable: data.isNegotiable,
+        },
+        numberOfPositions: Number(data.numberOfPositions),
         requirements: formattedRequirements,
         benefits: formattedBenefits,
+        applicationDeadline: new Date(data.applicationDeadline),
       };
+
+      // Xóa các trường phẳng thừa (nếu có)
+      delete payload.salaryMin;
+      delete payload.salaryMax;
+      delete payload.currency;
+      delete payload.isNegotiable;
 
       const res = await axios.post(`${JOB_API_END_POINT}/post`, payload, {
         headers: { "Content-Type": "application/json" },
@@ -143,10 +177,14 @@ const PostJob = () => {
     }
   };
 
+  const filteredSpecializations = ProfessionalSpecializations.filter((item) =>
+    item.label.toLowerCase().includes(specSearch.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gray-50/50 py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* --- HEADER --- */}
+        {/* HEADER */}
         <div className="flex items-center gap-4 mb-8">
           <Button
             onClick={() => navigate("/recruiter/jobs")}
@@ -190,10 +228,11 @@ const PostJob = () => {
                       )}
                     />
 
-                    {/* COMPANY SELECTION (Searchable & Clearable) */}
+                    {/* COMPANY */}
                     <SearchableSelect
+                      id="company-select"
                       form={form}
-                      name="companyId"
+                      name="company" // Lưu ý: Schema cũ là companyId hay company? (Ở đây dùng company cho khớp schema mới)
                       label="Company"
                       options={activeCompanies}
                       placeholder="Select company"
@@ -204,10 +243,11 @@ const PostJob = () => {
                       }
                     />
 
-                    {/* CATEGORY SELECTION (Searchable & Clearable) */}
+                    {/* CATEGORY */}
                     <SearchableSelect
+                      id="category-select"
                       form={form}
-                      name="categoryId"
+                      name="category"
                       label="Category"
                       options={categoryOptions}
                       placeholder="Select category"
@@ -217,7 +257,120 @@ const PostJob = () => {
                   </div>
                 </Section>
 
-                {/* --- 2. DETAILS & DESCRIPTION --- */}
+                {/* --- 2. PROFESSIONAL SPECIALIZATION --- */}
+                <Section title="Professional Specialization">
+                  <FormField
+                    control={form.control}
+                    name="professional"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2">
+                          Specializations{" "}
+                          <span className="text-red-500">*</span>
+                        </div>
+
+                        <div className="border rounded-lg p-4 bg-gray-50/50 space-y-3">
+                          {/* Tags */}
+                          {field.value?.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {field.value.map((val) => {
+                                const specLabel =
+                                  ProfessionalSpecializations.find(
+                                    (s) => s.value === val
+                                  )?.label || val;
+                                return (
+                                  <Badge
+                                    key={val}
+                                    variant="secondary"
+                                    className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 text-sm font-medium flex items-center gap-1"
+                                  >
+                                    {specLabel}
+                                    <X
+                                      className="h-3 w-3 cursor-pointer"
+                                      onClick={() => {
+                                        field.onChange(
+                                          field.value.filter((v) => v !== val)
+                                        );
+                                      }}
+                                    />
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Search */}
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input
+                              id="search-specialization"
+                              name="search-specialization"
+                              placeholder="Search specialization..."
+                              value={specSearch}
+                              onChange={(e) => setSpecSearch(e.target.value)}
+                              className="pl-9 bg-white"
+                            />
+                          </div>
+
+                          {/* List */}
+                          <div className="h-48 overflow-y-auto border rounded-md bg-white p-2">
+                            {filteredSpecializations.length === 0 ? (
+                              <p className="text-center text-sm text-gray-500 py-4">
+                                No specialization found.
+                              </p>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {filteredSpecializations.map((item) => (
+                                  <div
+                                    key={item.value}
+                                    className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                                      field.value?.includes(item.value)
+                                        ? "bg-purple-50"
+                                        : "hover:bg-gray-100"
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      id={`spec-${item.value}`}
+                                      name={field.name}
+                                      className="accent-[#6A38C2] h-4 w-4 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+                                      checked={field.value?.includes(
+                                        item.value
+                                      )}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          field.onChange([
+                                            ...(field.value || []),
+                                            item.value,
+                                          ]);
+                                        } else {
+                                          field.onChange(
+                                            field.value?.filter(
+                                              (val) => val !== item.value
+                                            )
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`spec-${item.value}`}
+                                      className="flex-1 text-sm text-gray-700 cursor-pointer font-medium select-none"
+                                    >
+                                      {item.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Section>
+
+                {/* --- 3. DETAILS & BENEFITS (Giữ kiểu TextArea cũ) --- */}
                 <Section title="Job Details & Benefits">
                   <div className="grid grid-cols-1 gap-6">
                     <FormField
@@ -230,7 +383,7 @@ const PostJob = () => {
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Describe the role and responsibilities..."
+                              placeholder="Describe the role..."
                               className="min-h-[120px]"
                               {...field}
                             />
@@ -279,7 +432,7 @@ const PostJob = () => {
                   </div>
                 </Section>
 
-                {/* --- 3. ATTRIBUTES --- */}
+                {/* --- 4. ATTRIBUTES (JobType Checkbox cũ) --- */}
                 <Section title="Job Attributes">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
@@ -296,7 +449,7 @@ const PostJob = () => {
                               "Contract",
                               "Internship",
                             ].map((type) => (
-                              <label
+                              <div
                                 key={type}
                                 className={`flex items-center space-x-2 border rounded-lg px-4 py-2 cursor-pointer transition-colors ${
                                   field.value?.includes(type)
@@ -305,6 +458,7 @@ const PostJob = () => {
                                 }`}
                               >
                                 <Checkbox
+                                  id={`jobType-${type}`}
                                   checked={field.value?.includes(type)}
                                   onCheckedChange={(checked) => {
                                     field.onChange(
@@ -315,10 +469,13 @@ const PostJob = () => {
                                   }}
                                   className="data-[state=checked]:bg-[#6A38C2] data-[state=checked]:border-[#6A38C2]"
                                 />
-                                <span className="text-sm font-medium">
+                                <label
+                                  htmlFor={`jobType-${type}`}
+                                  className="text-sm font-medium cursor-pointer select-none"
+                                >
                                   {type}
-                                </span>
-                              </label>
+                                </label>
+                              </div>
                             ))}
                           </div>
                           <FormMessage />
@@ -328,13 +485,14 @@ const PostJob = () => {
 
                     <FormField
                       control={form.control}
-                      name="experience"
+                      name="experienceLevel" // Khớp với Schema mới
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Experience (Years)</FormLabel>
+                          <FormLabel>Experience</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. 2" {...field} />
+                            <Input placeholder="e.g. 2 Years" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -371,26 +529,28 @@ const PostJob = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
                     <FormField
                       control={form.control}
-                      name="position"
+                      name="numberOfPositions" // Khớp với Schema mới
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Hiring Count</FormLabel>
                           <FormControl>
                             <Input type="number" min="1" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
                 </Section>
 
-                {/* --- 4. SALARY & DEADLINE --- */}
+                {/* --- 5. SALARY --- */}
                 <Section title="Salary & Timeline">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
@@ -402,6 +562,7 @@ const PostJob = () => {
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -414,6 +575,7 @@ const PostJob = () => {
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -449,11 +611,15 @@ const PostJob = () => {
                           <FormItem className="flex items-center gap-2 pb-2">
                             <FormControl>
                               <Checkbox
+                                id="isNegotiable"
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                               />
                             </FormControl>
-                            <FormLabel className="font-normal cursor-pointer m-0 mt-0">
+                            <FormLabel
+                              htmlFor="isNegotiable"
+                              className="font-normal cursor-pointer m-0 mt-0"
+                            >
                               Negotiable
                             </FormLabel>
                           </FormItem>
@@ -474,54 +640,71 @@ const PostJob = () => {
                               {...field}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
                 </Section>
 
+                {/* --- 6. LOCATION (Nested Object + Hook VN) --- */}
                 <Section title="Location" isLast>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SearchableSelect
+                      id="province-select"
                       form={form}
-                      name="province"
+                      name="location.province" // 👉 Truy cập vào object lồng nhau
                       label="City / Province"
                       options={provinceOptions}
                       placeholder="Select City"
                       emptyMessage="No city found."
+                      onChange={handleProvinceChange} // 👉 Gọi API quận huyện
+                    />
+
+                    <SearchableSelect
+                      id="district-select"
+                      form={form}
+                      name="location.district"
+                      label="District"
+                      options={districtOptions}
+                      placeholder="Select District"
+                      emptyMessage="Select province first."
+                      disabled={!form.getValues("location.province")}
+                      onChange={handleDistrictChange} // 👉 Gọi API phường xã
+                    />
+
+                    <SearchableSelect
+                      id="ward-select"
+                      form={form}
+                      name="location.ward"
+                      label="Ward"
+                      options={wardOptions}
+                      placeholder="Select Ward"
+                      emptyMessage="Select district first."
+                      disabled={!form.getValues("location.district")}
                     />
 
                     <FormField
                       control={form.control}
-                      name="district"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>District</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. District 1" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="address"
+                      name="location.address"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
                           <FormLabel>Full Address</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 123 Le Loi Street, Ben Nghe Ward"
+                              placeholder="e.g. 123 Le Loi Street"
                               {...field}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
                 </Section>
               </div>
+
+              {/* FOOTER */}
               <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
                 <Button
                   type="button"
@@ -561,109 +744,5 @@ const Section = ({ title, children, isLast }) => (
     {children}
   </div>
 );
-
-const SearchableSelect = ({
-  form,
-  name,
-  label,
-  options,
-  placeholder,
-  emptyMessage,
-  isRequired,
-  onCreateClick,
-}) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className="flex flex-col">
-          <FormLabel>
-            {label} {isRequired && <span className="text-red-500">*</span>}
-          </FormLabel>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={cn(
-                    "w-full justify-between pl-3 text-left font-normal",
-                    !field.value && "text-muted-foreground"
-                  )}
-                >
-                  {field.value
-                    ? options.find((item) => item.value === field.value)?.label
-                    : placeholder}
-                  <div className="flex items-center ml-2 h-4 w-4 shrink-0 opacity-50">
-                    {field.value ? (
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          form.setValue(name, "");
-                        }}
-                        className="hover:bg-slate-200 rounded-full p-0.5 cursor-pointer transition-colors"
-                      >
-                        <X className="h-3 w-3 text-black" />
-                      </div>
-                    ) : (
-                      <ChevronsUpDown className="h-4 w-4" />
-                    )}
-                  </div>
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0" align="start">
-              <Command>
-                <CommandInput
-                  placeholder={`Search ${label.toLowerCase()}...`}
-                />
-                <CommandList>
-                  <CommandEmpty>
-                    {emptyMessage}
-                    {onCreateClick && (
-                      <Button
-                        variant="link"
-                        className="mt-2 h-auto p-0 text-[#6A38C2]"
-                        onClick={onCreateClick}
-                      >
-                        + Create new
-                      </Button>
-                    )}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {options.map((item) => (
-                      <CommandItem
-                        value={item.label}
-                        key={item.value}
-                        onSelect={() => {
-                          form.setValue(name, item.value);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            item.value === field.value
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        {item.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-};
 
 export default PostJob;

@@ -33,7 +33,7 @@ export const createCV = async (req, res) => {
         phone: user.phoneNumber,
         address: user.address,
         profilePhoto: user.profilePhoto,
-        summary: profile?.careerObjective || "",
+        summary: user.bio || "",
         position: req.body.position || "",
       },
 

@@ -60,7 +60,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const navigate = useNavigate();
 
-  // --- HÀM GỌI AI ---
   const handleAnalyze = async () => {
     try {
       setIsLoadingAI(true);
@@ -82,7 +81,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
     }
   };
 
-  // --- UI BADGE AI ---
   const renderAiBadge = () => {
     if (aiData.aiScore === null || aiData.aiScore === undefined) {
       return (
@@ -167,7 +165,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
     );
   };
 
-  // --- HÀM RENDER LINK CV (ĐÃ SỬA LOGIC) ---
   const renderCVLink = () => {
     const snapshot = item.cvSnapshot;
 
@@ -177,8 +174,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
       );
     }
 
-    // 1. Kiểm tra nếu là CV Upload (Check kiểu mới fileData hoặc kiểu cũ resume)
-    // Ưu tiên lấy từ fileData
     const pdfUrl = snapshot.fileData?.url || snapshot.resume;
     const pdfName =
       snapshot.fileData?.originalName ||
@@ -200,9 +195,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
         </a>
       );
     }
-
-    // 2. Nếu là CV Builder -> Link sang trang view CV chi tiết
-    // (Dùng cvId để view live version, hoặc sau này có thể làm trang view snapshot riêng)
     const originalCVId = item.cvId?._id || item.cvId;
 
     if (!originalCVId) {
@@ -231,7 +223,10 @@ const ApplicantRow = ({ item, statusHandler }) => {
   return (
     <TableRow className="hover:bg-slate-50/80 transition-colors group border-b border-gray-100">
       <TableCell className="py-4 pl-6">
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => navigate(`/recruiter/applicants/resume/${item._id}`)}
+        >
           <Avatar className="h-10 w-10 border border-gray-200 bg-white shadow-sm">
             <AvatarImage
               src={item?.applicant?.profilePhoto}
@@ -268,14 +263,8 @@ const ApplicantRow = ({ item, statusHandler }) => {
           </div>
         </div>
       </TableCell>
-
-      {/* AI Badge */}
       <TableCell>{renderAiBadge()}</TableCell>
-
-      {/* CV Link (Đã update) */}
       <TableCell>{renderCVLink()}</TableCell>
-
-      {/* Cover Letter */}
       <TableCell>
         {item.coverLetter ? (
           <Dialog>
@@ -311,8 +300,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
           {new Date(item.createdAt).toLocaleDateString("en-GB")}
         </div>
       </TableCell>
-
-      {/* Status Badge */}
       <TableCell>
         <Badge
           variant="secondary"
@@ -329,8 +316,6 @@ const ApplicantRow = ({ item, statusHandler }) => {
             : "Pending"}
         </Badge>
       </TableCell>
-
-      {/* Actions */}
       <TableCell className="text-right pr-6">
         <Popover>
           <PopoverTrigger asChild>
